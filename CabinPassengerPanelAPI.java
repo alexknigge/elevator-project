@@ -1,11 +1,5 @@
 import java.util.List;
 
-public enum Direction { 
-    UP, 
-    DOWN, 
-    IDLE 
-}
-
 public interface CabinPassengerPanelAPI {
 
     // Return all floor selections made since last poll, panel queues presses so none are missed.
