@@ -1,3 +1,6 @@
+package DeviceComp;
+
+import Message.Message;
 import java.util.List;
 import java.util.Map;
 

@@ -1,3 +1,5 @@
+package Message;
+
 public class Message {
     private int topic;
     private String subTopic;
