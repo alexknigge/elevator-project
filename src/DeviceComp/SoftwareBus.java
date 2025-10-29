@@ -23,6 +23,7 @@ public class SoftwareBus {
     public SoftwareBus(Device device) {
         this.device = device;
         subscribedTopics = new ArrayList<>();
+        subscribedSubTopics = new ArrayList<>();
     }
 
     /**
