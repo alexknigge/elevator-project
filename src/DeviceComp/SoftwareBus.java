@@ -95,6 +95,33 @@ public class SoftwareBus {
 
     public void get(int topic, String subTopic) {
         //Get message based on topic and subtopic
-        //TODO WHEN WOULD THIS BE CALLED? SEEMS SO STUPID
+ 	//TODO WHEN WOULD THIS BE CALLED? SEEMS SO STUPID
+     	
+	// Check if topic exists
+    	if (!subscribedMessages.containsKey(topic)) {
+            System.out.println("No messages found for topic: " + topic);
+            return;
+    	}
+
+    	Map<String, List<Message>> subMap = subscribedMessages.get(topic);
+
+    	// Check if subtopic exists
+    	if (!subMap.containsKey(subTopic)) {
+            System.out.println("No messages found for topic " + topic + " and subtopic: " + subTopic);
+            return;
+    	}
+
+    	List<Message> messages = subMap.get(subTopic);
+
+    	if (messages == null || messages.isEmpty()) {
+            System.out.println("No messages stored for topic " + topic + " and subtopic: " + subTopic);
+            return;
+    	}
+
+    	// Print all stored messages for that topic/subtopic
+    	System.out.println("Messages for topic " + topic + " and subtopic \"" + subTopic + "\":");
+    	for (Message msg : messages) {
+            System.out.println(msg);
+    	}
     }
 }
