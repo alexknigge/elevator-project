@@ -17,17 +17,17 @@ public class Device implements Runnable {
 
     public Device(int portNumber) {
         this.portNumber = portNumber;
-        try {
-            socket = new Socket("localhost", portNumber);
-
-            out = new ObjectOutputStream(socket.getOutputStream());
-            in = new ObjectInputStream(socket.getInputStream());
-
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            socket = new Socket("localhost", portNumber);
+//
+//            out = new ObjectOutputStream(socket.getOutputStream());
+//            in = new ObjectInputStream(socket.getInputStream());
+//
+//        } catch (UnknownHostException e) {
+//            throw new RuntimeException(e);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     /**

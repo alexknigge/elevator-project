@@ -5,6 +5,11 @@ public class Message {
     private String subTopic;
     private String body;
 
+    public Message() {
+        topic = 1;
+        subTopic = null;
+        body = null;
+    }
     public Message(int topic, String subTopic, String body) {
         this.topic = topic;
         this.subTopic = subTopic;
