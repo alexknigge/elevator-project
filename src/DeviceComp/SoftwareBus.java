@@ -1,31 +1,99 @@
 package DeviceComp;
 
 import Message.Message;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 public class SoftwareBus {
+    private List<Integer> subscribedTopics;
+    private List<String> subscribedSubTopics;
 
-    //List of connected devices to the Software bus
-    private List<Device> connectedDevices;
+    //TODO No clue how to save messages
+    //Messages saved base on topic and subtopic
+    private Map<Integer, Map<String, List<Message>>> subscribedMessages;
+    //Messages saved based on topic only
+    private Map<Integer, List<Message>> topicMessages;
 
-    //String -> Topic, list of devices that are subscribed to this topic
-    private Map<String, List<Device>> topicsToDevices;
+    private final Device device;
 
-
-    public SoftwareBus() {
-
+    public SoftwareBus(Device device) {
+        this.device = device;
+        subscribedTopics = new ArrayList<>();
     }
-    
-    private void publish(Message message) {
 
+    /**
+     * Determines if a message should be saved or not based on this current
+     * device subscribed topics
+     * @param message Message
+     */
+    public void handleMessage(Message message) {
+        int topicNumber = message.getTopic();
+        String subTopic = message.getSubTopic();
+
+        //Do nothing if device isn't subscribed to this message's
+        if(!subscribedTopics.contains(topicNumber) || !subscribedSubTopics.contains(subTopic)) {
+            return;
+        }
+
+        if(topicMessages.containsKey(topicNumber)) {
+            List<Message> messages = topicMessages.get(topicNumber);
+            if(messages != null) {
+                messages.add(message);
+            } else {
+                messages = new ArrayList<>();
+                messages.add(message);
+                topicMessages.put(topicNumber, messages);
+            }
+        } else {
+            List<Message> messages = new ArrayList<>();
+            messages.add(message);
+            topicMessages.put(topicNumber, messages);
+        }
+
+
+        if(subscribedMessages.containsKey(topicNumber)) {
+            Map<String, List<Message>> messages = subscribedMessages.get(topicNumber);
+            //Check if there is a subtopic
+                if(messages != null && messages.containsKey(subTopic)) {
+                    List<Message> messageList = messages.get(subTopic);
+                    if(messageList != null) {
+                        messageList.add(message);
+                    } else {
+                        messageList = new ArrayList<>();
+                        messageList.add(message);
+                        messages.put(subTopic, messageList);
+                    }
+                }
+        } else {
+            Map<String, List<Message>> messages = new HashMap<>();
+            List<Message> messageList = new ArrayList<>();
+            messages.put(subTopic, messageList);
+            subscribedMessages.put(topicNumber, messages);
+        }
     }
 
-    private void subscribe(String topic, String subTopic) {
 
+    /**
+     * Sends a message to the server so that it can be sent out to other
+     * devices
+     *
+     * @param message Message being sent out
+     */
+    public void publish(Message message) {
+        device.sendMessage(message);
     }
-    
-    private void get(String topic, String subTopic) {
-        
+
+    public void subscribe(int topic, String subTopic) {
+        subscribedTopics.add(topic);
+        subscribedSubTopics.add(subTopic);
+    }
+
+    public void get(int topic, String subTopic) {
+        //Get message based on topic and subtopic
+        //TODO WHEN WOULD THIS BE CALLED? SEEMS SO STUPID
     }
 }

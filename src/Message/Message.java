@@ -12,6 +12,7 @@ public class Message {
         subTopic = null;
         body = null;
     }
+
     //TODO MAKE EXAMPLE MESSAGES AS WELL AS TOPIC NUMBERS
     public Message(int topic, String subTopic, String body, int deviceID) {
         this.topic = topic;
@@ -37,6 +38,7 @@ public class Message {
     public String getBody() {
         return body;
     }
+
     public int getDeviceID() {
         return deviceID;
     }

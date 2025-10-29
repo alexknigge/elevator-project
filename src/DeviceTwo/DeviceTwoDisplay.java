@@ -1,5 +1,6 @@
 package DeviceTwo;
 
+import DeviceComp.SoftwareBus;
 import Message.Message;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -11,6 +12,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 
 public class DeviceTwoDisplay {
+    private SoftwareBus softwareBus;
     private DeviceTwo device;
     private DeviceTwoInput input;
     private BorderPane pane;
@@ -19,10 +21,11 @@ public class DeviceTwoDisplay {
     private Label messageStatus;
 
 
-    public DeviceTwoDisplay(DeviceTwo device) {
+    public DeviceTwoDisplay(SoftwareBus softwareBus, DeviceTwo device) {
+        this.softwareBus = softwareBus;
         this.device = device;
 
-        input = new DeviceTwoInput(device,this);
+        input = new DeviceTwoInput(softwareBus, device, this);
 
         pane = new BorderPane();
         buttonGrid = new GridPane();
@@ -31,7 +34,7 @@ public class DeviceTwoDisplay {
         buttonGrid.setVgap(5);
         buttonGrid.setAlignment(Pos.CENTER);
         StackPane buttonPane = new StackPane();
-        buttonPane.setMinSize(200,200);
+        buttonPane.setMinSize(200, 200);
         buttonPane.getChildren().addAll(buttonGrid);
 
         buttonPane.setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
@@ -39,7 +42,7 @@ public class DeviceTwoDisplay {
 
         messageStatus = new Label("");
         StackPane messagePane = new StackPane();
-        messagePane.setMinSize(100,100);
+        messagePane.setMinSize(100, 100);
         messagePane.getChildren().add(messageStatus);
         pane.setTop(messagePane);
 
@@ -48,10 +51,10 @@ public class DeviceTwoDisplay {
 
     private void createButtons() {
         int count = 1;
-        for(int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 2; j++) {
                 Button button = new Button();
-                if(count != 10) {
+                if (count != 10) {
                     button.setText(" Floor " + count + " ");
                 } else {
                     button.setText("Floor " + count);
@@ -65,14 +68,13 @@ public class DeviceTwoDisplay {
         }
     }
 
-    public void  updateReceiveMessage(Message message) {
+    public void updateReceiveMessage(Message message) {
         messageStatus.setText("Message Received!\n" + message.toString());
     }
 
     public void updateSendMessage(Message message) {
         messageStatus.setText("Message Sent!\n" + message.toString());
     }
-
 
 
     public BorderPane getPane() {

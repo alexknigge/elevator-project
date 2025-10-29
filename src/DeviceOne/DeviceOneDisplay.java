@@ -1,6 +1,7 @@
 package DeviceOne;
 
 
+import DeviceComp.SoftwareBus;
 import Message.Message;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -11,7 +12,9 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
 public class DeviceOneDisplay {
+    private SoftwareBus softwareBus;
     private DeviceOne device;
+
     private final DeviceOneInput userInput;
 
     private final BorderPane display;
@@ -21,25 +24,28 @@ public class DeviceOneDisplay {
     private Button submitMessage;
 
 
-    public DeviceOneDisplay(DeviceOne device) {
-        userInput = new DeviceOneInput(device, this);
+    public DeviceOneDisplay(SoftwareBus softwareBus, DeviceOne device) {
+        this.softwareBus = softwareBus;
+        this.device = device;
+
+        userInput = new DeviceOneInput(softwareBus, device, this);
 
         display = new BorderPane();
         messageStatus = new Label("");
         StackPane messagePane = new StackPane();
-        messagePane.setMinSize(100,100);
+        messagePane.setMinSize(100, 100);
         messagePane.getChildren().add(messageStatus);
         display.setTop(messagePane);
 
 
         messageToBeSent = new TextField();
-        messageToBeSent.setMaxSize(250,20);
+        messageToBeSent.setMaxSize(250, 20);
         StackPane textPane = new StackPane();
-        textPane.setMinSize(350,150);
+        textPane.setMinSize(350, 150);
         textPane.getChildren().add(messageToBeSent);
         textPane.setBackground(new Background(new BackgroundFill(Color.LIGHTBLUE,
                 CornerRadii.EMPTY, Insets.EMPTY
-                )));
+        )));
         display.setCenter(textPane);
 
         submitMessage = new Button("Submit Message");

@@ -1,12 +1,17 @@
 package DeviceTwo;
 
 
+import DeviceComp.SoftwareBus;
 import Message.Message;
 
 public class DeviceTwoInput {
     private final DeviceTwoDisplay display;
+    private SoftwareBus softwareBus;
     private final DeviceTwo device;
-    public DeviceTwoInput(DeviceTwo device, DeviceTwoDisplay display) {
+
+    public DeviceTwoInput(SoftwareBus softwareBus,
+                          DeviceTwo device, DeviceTwoDisplay display) {
+        this.softwareBus = softwareBus;
         this.device = device;
         this.display = display;
     }
@@ -17,7 +22,7 @@ public class DeviceTwoInput {
         String buttonNum = String.valueOf(count);
         Message newMessage = new Message(2, "ButtonClick", buttonNum, deviceID);
 
-        device.sendMessage(newMessage);
+        softwareBus.publish(newMessage);
         display.updateSendMessage(newMessage);
     }
 }

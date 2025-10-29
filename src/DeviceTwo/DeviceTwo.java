@@ -10,13 +10,14 @@ public class DeviceTwo extends Device {
 
     public DeviceTwo(int portNumber) {
         super(portNumber);
-        display = new DeviceTwoDisplay(this);
-        softwareBus = new SoftwareBus();
+        softwareBus = new SoftwareBus(this);
+        display = new DeviceTwoDisplay(softwareBus, this);
     }
 
     public DeviceTwoDisplay getDisplay() {
         return display;
     }
+
     public int getDeviceID() {
         return deviceID;
     }

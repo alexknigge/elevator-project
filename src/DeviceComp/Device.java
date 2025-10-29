@@ -1,4 +1,5 @@
 package DeviceComp;
+
 import Message.Message;
 
 import java.io.IOException;
@@ -33,10 +34,11 @@ public class Device implements Runnable {
     /**
      * Send message back to the Software Bus so that it can be sent to
      * subscribed users.
+     *
      * @param message
      */
     public void sendMessage(Message message) {
-        if(out != null) {
+        if (out != null) {
             try {
                 out.writeObject(message);
                 out.flush();
@@ -50,7 +52,7 @@ public class Device implements Runnable {
     @Override
     public void run() {
         try {
-            while(true) {
+            while (true) {
                 Message message = (Message) in.readObject();
                 //When a device receives a message, it should be handled by
                 // the software bus
