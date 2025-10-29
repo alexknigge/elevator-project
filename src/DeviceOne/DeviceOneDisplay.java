@@ -1,6 +1,7 @@
 package DeviceOne;
 
 
+import Message.Message;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -11,11 +12,11 @@ import javafx.scene.paint.Color;
 
 public class DeviceOneDisplay {
     private DeviceOne device;
-    private DeviceOneInput userInput;
+    private final DeviceOneInput userInput;
 
-    private BorderPane display;
+    private final BorderPane display;
 
-    private Label messagesReceived;
+    private Label messageStatus;
     private TextField messageToBeSent;
     private Button submitMessage;
 
@@ -24,10 +25,10 @@ public class DeviceOneDisplay {
         userInput = new DeviceOneInput(device, this);
 
         display = new BorderPane();
-        messagesReceived = new Label("Test");
+        messageStatus = new Label("");
         StackPane messagePane = new StackPane();
         messagePane.setMinSize(100,100);
-        messagePane.getChildren().add(messagesReceived);
+        messagePane.getChildren().add(messageStatus);
         display.setTop(messagePane);
 
 
@@ -48,6 +49,14 @@ public class DeviceOneDisplay {
         buttonPane.setAlignment(Pos.CENTER);
         display.setRight(buttonPane);
 
+    }
+
+    public void handleNewMessage(Message message) {
+        messageStatus.setText("Message Received!\n" + message.toString());
+    }
+
+    public void handleSendMessage(Message message) {
+        messageStatus.setText("Message Sent!\n" + message.toString());
     }
 
     public BorderPane getPane() {

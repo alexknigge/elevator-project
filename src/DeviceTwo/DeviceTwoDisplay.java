@@ -1,0 +1,81 @@
+package DeviceTwo;
+
+import Message.Message;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Label;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.TextAlignment;
+
+public class DeviceTwoDisplay {
+    private DeviceTwo device;
+    private DeviceTwoInput input;
+    private BorderPane pane;
+
+    private GridPane buttonGrid;
+    private Label messageStatus;
+
+
+    public DeviceTwoDisplay(DeviceTwo device) {
+        this.device = device;
+
+        input = new DeviceTwoInput(device,this);
+
+        pane = new BorderPane();
+        buttonGrid = new GridPane();
+        createButtons();
+        buttonGrid.setHgap(5);
+        buttonGrid.setVgap(5);
+        buttonGrid.setAlignment(Pos.CENTER);
+        StackPane buttonPane = new StackPane();
+        buttonPane.setMinSize(200,200);
+        buttonPane.getChildren().addAll(buttonGrid);
+
+        buttonPane.setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
+        pane.setCenter(buttonPane);
+
+        messageStatus = new Label("");
+        StackPane messagePane = new StackPane();
+        messagePane.setMinSize(100,100);
+        messagePane.getChildren().add(messageStatus);
+        pane.setTop(messagePane);
+
+
+    }
+
+    private void createButtons() {
+        int count = 1;
+        for(int i = 0; i < 5; i++) {
+            for (int j = 0; j < 2; j++) {
+                Button button = new Button();
+                if(count != 10) {
+                    button.setText(" Floor " + count + " ");
+                } else {
+                    button.setText("Floor " + count);
+                }
+                button.setAlignment(Pos.CENTER);
+                int buttonNum = count;
+                button.setOnAction(event -> input.handleButtonClick(buttonNum));
+                buttonGrid.add(button, j, i);
+                count++;
+            }
+        }
+    }
+
+    public void  updateReceiveMessage(Message message) {
+        messageStatus.setText("Message Received!\n" + message.toString());
+    }
+
+    public void updateSendMessage(Message message) {
+        messageStatus.setText("Message Sent!\n" + message.toString());
+    }
+
+
+
+    public BorderPane getPane() {
+        return pane;
+    }
+}

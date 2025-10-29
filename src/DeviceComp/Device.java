@@ -55,6 +55,8 @@ public class Device implements Runnable {
                 //When a device receives a message, it should be handled by
                 // the software bus
 
+                //TODO NEED TO DECIDE HOW THE MESSAGE SHOULD BE HANDLED BY A DEVICE
+
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
