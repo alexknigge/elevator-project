@@ -1,13 +1,13 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class CabinPassengerPanel {
+class CabinPassengerPanel implements CabinPassengerPanelAPI {
 
     private final int totalFloors;
     private final boolean[] floorButtons; // this is true if the button is pressed
     private final List<Integer> pressedFloorsQueue;
     private int currentFloor;
-    private String direction; // "UP" "Down" and "IDLE"
+    private Direction direction; // "UP" "Down" and "IDLE"
     private boolean fireKeyActive;
 
     public CabinPassengerPanel(int totalFloors) {
@@ -15,7 +15,7 @@ public class CabinPassengerPanel {
         this.floorButtons = new boolean[totalFloors];
         this.pressedFloorsQueue = new ArrayList<>();
         this.currentFloor = 1;
-        this.direction = "IDLE";
+        this.direction = Direction.IDLE;
         this.fireKeyActive = false;
     }
 
@@ -28,16 +28,19 @@ public class CabinPassengerPanel {
     }
 
     /// Returns all pressed floor numbers since the last poll
+    @Override
     public List<Integer> getPressedFloors() {
         return new ArrayList<>(pressedFloorsQueue);
     }
 
     /// Clears all stored pressed floor events (after being serviced)
+    @Override
     public void clearPressedFloors() {
         pressedFloorsQueue.clear();
     }
 
     /// Resets a specific floor button’s indicator
+    @Override
     public void resetFloorButton(int floorNumber) {
         if (floorNumber >= 1 && floorNumber <= totalFloors) {
             floorButtons[floorNumber - 1] = false;
@@ -45,25 +48,29 @@ public class CabinPassengerPanel {
     }
 
     /// Updates the cabin display to show the current floor and direction
-    public void setDisplay(int currentFloor, String direction) {
+    @Override
+    public void setDisplay(int currentFloor, Direction direction) {
         this.currentFloor = currentFloor;
         this.direction = direction;
         System.out.println("Display: Floor " + currentFloor + " | Direction: " + direction);
     }
 
     /// Plays the arrival chime sound
+    @Override
     public void playCabinArrivalChime() {
         // for now im simulating a DING sound to see if it works
         System.out.println("*Ding!* Elevator arrived at floor " + currentFloor);
     }
 
     /// Plays the overload warning buzz
+    @Override
     public void playCabinOverloadWarning() {
         // same as chime
         System.out.println("*Buzz!* Overload detected — please reduce cabin weight.");
     }
 
     /** Reads the fire key state */
+    @Override
     public boolean isFireKeyActive() {
         return fireKeyActive;
     }
