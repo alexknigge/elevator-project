@@ -59,6 +59,9 @@ public class TestCommandCenterDisplay {
         checkForIncomingMessage();
     }
 
+    /**
+     * Check for messages in the software bus
+     */
     private void checkForIncomingMessage() {
         Thread thread = new Thread(() -> {
             while (true) {
@@ -74,6 +77,9 @@ public class TestCommandCenterDisplay {
         thread.start();
     }
 
+    /**
+     * Handles messages that need to be sent to the software bus
+     */
     private void handleSubmit() {
         String messageString = messageToBeSent.getText();
 
@@ -93,18 +99,33 @@ public class TestCommandCenterDisplay {
         softwareBus.publish(messageToBeSent);
     }
 
+    /**
+     * Update label to show that a message to be sent was invalid
+     */
     private void invalidMessage() {
         messageStatus.setText("Invalid format!\nExpected: <topic>-<subtopic>-<body>");
     }
 
+    /**
+     * Update label to indicate that a message was received
+     * @param message Message received
+     */
     public void handleNewMessage(Message message) {
         messageStatus.setText("Message Received!\n" + message.toString());
     }
 
+    /**
+     * Update label to indicate that a message was sent to the software bus
+     * @param message Message sent to software bus
+     */
     public void handleSendMessage(Message message) {
         messageStatus.setText("Message Sent!\n" + message.toString());
     }
 
+    /**
+     * Border Pane
+     * @return Pane
+     */
     public BorderPane getPane() {
         return display;
     }

@@ -49,6 +49,9 @@ public class TestProcessorDisplay1 {
 
     }
 
+    /**
+     * Create elevator floor buttons
+     */
     private void createButtons() {
         int count = 1;
         for (int i = 0; i < 5; i++) {
@@ -68,6 +71,10 @@ public class TestProcessorDisplay1 {
         }
     }
 
+    /**
+     * Method that handles when a button is clicked on
+     * @param count Button number
+     */
     private void handleButtonClick(int count) {
         //When button is clicked, we should have a message be sent, simulates what happens in the elevator
         String buttonNum = String.valueOf(count);
@@ -77,6 +84,9 @@ public class TestProcessorDisplay1 {
         updateSendMessage(newMessage);
     }
 
+    /**
+     * Check for any incoming messages from the softwarebus
+     */
     private void checkForIncomingMessage() {
         Thread thread = new Thread(() -> {
             while (true) {
@@ -91,15 +101,26 @@ public class TestProcessorDisplay1 {
         thread.start();
     }
 
+    /**
+     * Update label to indicate that a message was received
+     * @param message Message received
+     */
     public void updateReceiveMessage(Message message) {
         messageStatus.setText("Message Received!\n" + message.toString());
     }
 
+    /**
+     * Update label to indicate that a message was sent out
+     * @param message Message sent out
+     */
     public void updateSendMessage(Message message) {
         messageStatus.setText("Message Sent!\n" + message.toString());
     }
 
-
+    /**
+     * Border Pane
+     * @return Pane
+     */
     public BorderPane getPane() {
         return pane;
     }
