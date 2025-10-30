@@ -2,24 +2,20 @@ package Message;
 
 public class Message {
     private int topic;
-    private String subTopic;
+    private int subTopic;
     private String body;
 
-    private int deviceID;
-
     public Message() {
-        topic = 1;
-        subTopic = null;
+        topic = 0;
+        subTopic = 0;
         body = null;
     }
 
     //TODO MAKE EXAMPLE MESSAGES AS WELL AS TOPIC NUMBERS
-    public Message(int topic, String subTopic, String body, int deviceID) {
+    public Message(int topic, int subTopic, String body) {
         this.topic = topic;
         this.subTopic = subTopic;
         this.body = body;
-        this.deviceID = deviceID;
-
     }
 
     @Override
@@ -31,7 +27,7 @@ public class Message {
         return topic;
     }
 
-    public String getSubTopic() {
+    public int getSubTopic() {
         return subTopic;
     }
 
@@ -39,15 +35,11 @@ public class Message {
         return body;
     }
 
-    public int getDeviceID() {
-        return deviceID;
-    }
-
     public void setTopic(int topic) {
         this.topic = topic;
     }
 
-    public void setSubTopic(String subTopic) {
+    public void setSubTopic(int subTopic) {
         this.subTopic = subTopic;
     }
 
@@ -55,7 +47,11 @@ public class Message {
         this.body = body;
     }
 
-    public void setDeviceID(int deviceID) {
-        this.deviceID = deviceID;
+    public static Message parseStringToMsg(String line) {
+        String[] parts = line.split("-", 3);
+        int t = Integer.parseInt(parts[0]);
+        int st = Integer.parseInt(parts[1]);
+        String body = parts[2];
+        return new Message(t, st, body);
     }
 }

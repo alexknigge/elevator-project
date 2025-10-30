@@ -15,8 +15,13 @@ public class SoftwareBus {
 
     private record Subscription(int topic, int subtopic){}
 
+    // Local queue for received messages that match this processor's subscriptions
     private final LinkedList<Message> queue;
+
+    // List of all subscriptions for this bus
     private final Set<Subscription> subscriptions;
+
+    // For server mode: all currently connected client sockets
     private final Set<Socket> clientSockets;
 
     private ServerSocket serverSocket;
@@ -34,6 +39,7 @@ public class SoftwareBus {
         clientSockets = new HashSet<>();
 
         if (isServer) {
+            // Server mode: create a listening socket and start accept thread
             try {
                 serverSocket = new ServerSocket(port);
                 acceptThread();
@@ -41,16 +47,23 @@ public class SoftwareBus {
                 throw new RuntimeException(e);
             }
         } else {
+            // Client mode: connect to the server
             try {
                 socket = new Socket("localhost", port);
                 out = new PrintWriter(socket.getOutputStream(), true);
                 in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                // Start listening for messages from server
+                readerThread(socket);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("No server socket available");
             }
         }
     }
 
+    /**
+     * Accepts incoming client connections in a background thread (server mode only).
+     * For each accepted socket, a reader thread is created to handle incoming messages.
+     */
     private void acceptThread() {
         Thread acceptThread = new Thread(() -> {
             try {
@@ -58,6 +71,7 @@ public class SoftwareBus {
                     Socket newSocket = serverSocket.accept();
                     clientSockets.add(newSocket);
                     System.out.println("Client connected: " + newSocket);
+                    // Start listening for messages from this client
                     readerThread(newSocket);
                 }
             } catch (IOException e) {
@@ -67,16 +81,24 @@ public class SoftwareBus {
         acceptThread.start();
     }
 
+    /**
+     * Starts a thread that listens for messages coming from a given socket.
+     * - In server mode: rebroadcasts received messages to all other clients.
+     * - In client mode: checks message topic/subtopic against subscriptions,
+     *   and stores it in the local queue if relevant.
+     */
     private void readerThread(Socket socket) {
         Thread readerThread = new Thread(() -> {
             try {
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String line;
                 while ((line = in.readLine()) != null) {
-                    System.out.println(line);
                     Message message = Message.parseStringToMsg(line);
 
+                    System.out.println(message);
+
                     if (isServer) {
+                        // Forward to all connected clients except the sender
                         synchronized (clientSockets) {
                             for (Socket client : clientSockets) {
                                 if (client != socket) {
@@ -86,13 +108,16 @@ public class SoftwareBus {
                             }
                         }
                     } else {
+                        // Client mode: filter and enqueue matching messages
                         synchronized (subscriptions) {
                             for (Subscription s : subscriptions) {
                                 if (s.topic() == message.getTopic() &&
                                         (s.subtopic() == 0 || s.subtopic() == message.getSubTopic())) {
                                     synchronized (queue) {
                                         queue.add(message);
+                                        System.out.println(queue.size() + " " + message);
                                     }
+                                    // stop checking once matched
                                     break;
                                 }
                             }
@@ -107,7 +132,11 @@ public class SoftwareBus {
         readerThread.start();
     }
 
-
+    /**
+     * Publishes a message to the bus.
+     * - In server mode: broadcast the message to all connected clients.
+     * - In client mode: send the message to the central server.
+     */
     public void publish(Message message) {
         if (isServer) {
             synchronized (clientSockets) {
@@ -125,10 +154,18 @@ public class SoftwareBus {
         }
     }
 
+    /**
+     * Registers a subscription to a given topic and subtopic.
+     */
     public void subscribe(int topic, int subtopic) {
         subscriptions.add(new Subscription(topic, subtopic));
     }
 
+    /**
+     * Retrieves and removes the first message in the queue matching the given topic/subtopic.
+     * If subtopic = 0, matches all subtopics.
+     * Returns null if no matching message is found.
+     */
     public Message get(int topic, int subtopic) {
         Iterator<Message> queue_iter = queue.iterator();
         while (queue_iter.hasNext()) {
