@@ -76,7 +76,6 @@ public class TestProcessorDisplay {
             while (true) {
                 Message message = softwareBus.get(3, 2);
                 if (message != null) {
-                    System.out.println("ever reach here?");
                     Platform.runLater(() -> {
                         updateReceiveMessage(message);
                     });
