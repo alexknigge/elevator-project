@@ -18,7 +18,7 @@ public class TestCommandCenterMain extends Application {
 
         TestCommandCenterDisplay display = new TestCommandCenterDisplay(softwareBus);
 
-        primaryStage.setTitle("Test Command Center");
+        primaryStage.setTitle("Test Command Center, subscribed to " + topic + ", " + subtopic );
         Scene scene = new Scene(display.getPane());
         primaryStage.setScene(scene);
 
