@@ -8,7 +8,8 @@ import javafx.stage.Stage;
 
 public class TestProcessorMain1 extends Application {
     private int topic = 4;
-    private int subtopic =  2;
+    private int subtopic = 2;
+
     @Override
     public void start(Stage primaryStage) {
         SoftwareBus softwareBus = new SoftwareBus(false);

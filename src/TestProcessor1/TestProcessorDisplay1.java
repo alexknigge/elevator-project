@@ -20,6 +20,13 @@ public class TestProcessorDisplay1 {
     int currentTopic;
     int currentSubtopic;
 
+    /**
+     * Constructor for Processor 1, creates the user interface
+     *
+     * @param softwareBus Software bus for handling messages
+     * @param topic       Topic processor 1 is subscribed to
+     * @param subtopic    Subtopic processor 1 is subscribed to
+     */
     public TestProcessorDisplay1(SoftwareBus softwareBus, int topic, int subtopic) {
         this.softwareBus = softwareBus;
 
@@ -73,6 +80,7 @@ public class TestProcessorDisplay1 {
 
     /**
      * Method that handles when a button is clicked on
+     *
      * @param count Button number
      */
     private void handleButtonClick(int count) {
@@ -103,6 +111,7 @@ public class TestProcessorDisplay1 {
 
     /**
      * Update label to indicate that a message was received
+     *
      * @param message Message received
      */
     public void updateReceiveMessage(Message message) {
@@ -111,6 +120,7 @@ public class TestProcessorDisplay1 {
 
     /**
      * Update label to indicate that a message was sent out
+     *
      * @param message Message sent out
      */
     public void updateSendMessage(Message message) {
@@ -119,6 +129,7 @@ public class TestProcessorDisplay1 {
 
     /**
      * Border Pane
+     *
      * @return Pane
      */
     public BorderPane getPane() {

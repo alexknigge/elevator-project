@@ -24,7 +24,13 @@ public class TestCommandCenterDisplay {
     int currentTopic;
     int currentSubtopic;
 
-
+    /**
+     * Constructor for Command Center Display, creates the user interface
+     *
+     * @param softwareBus Software bus for handling messages
+     * @param topic       Topic Command center is subscribed to
+     * @param subtopic    Subtopic Command center is subscribed to
+     */
     public TestCommandCenterDisplay(SoftwareBus softwareBus, int topic, int subtopic) {
         this.softwareBus = softwareBus;
 
@@ -108,6 +114,7 @@ public class TestCommandCenterDisplay {
 
     /**
      * Update label to indicate that a message was received
+     *
      * @param message Message received
      */
     public void handleNewMessage(Message message) {
@@ -116,6 +123,7 @@ public class TestCommandCenterDisplay {
 
     /**
      * Update label to indicate that a message was sent to the software bus
+     *
      * @param message Message sent to software bus
      */
     public void handleSendMessage(Message message) {
@@ -124,6 +132,7 @@ public class TestCommandCenterDisplay {
 
     /**
      * Border Pane
+     *
      * @return Pane
      */
     public BorderPane getPane() {

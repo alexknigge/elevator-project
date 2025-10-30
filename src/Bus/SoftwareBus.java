@@ -174,8 +174,8 @@ public class SoftwareBus {
      */
     public Message get(int topic, int subtopic) {
         synchronized (queue) {
-            if(isServer) {
-                if(queue.isEmpty()) {
+            if (isServer) {
+                if (queue.isEmpty()) {
                     return null;
                 }
                 Message m = queue.getFirst();

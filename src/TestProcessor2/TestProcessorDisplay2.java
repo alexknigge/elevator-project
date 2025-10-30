@@ -20,6 +20,13 @@ public class TestProcessorDisplay2 {
     int currentTopic;
     int currentSubtopic;
 
+    /**
+     * Constructor for Processor Display 2
+     *
+     * @param softwareBus Software bus for handling messages
+     * @param topic       Topic processor 2 is subscribed to
+     * @param subtopic    Subtopic processor 2 is subscribed to
+     */
     public TestProcessorDisplay2(SoftwareBus softwareBus, int topic, int subtopic) {
         this.softwareBus = softwareBus;
 
@@ -50,6 +57,9 @@ public class TestProcessorDisplay2 {
 
     }
 
+    /**
+     * Create elevator floor buttons
+     */
     private void createButtons() {
         int count = 1;
         for (int i = 0; i < 5; i++) {
@@ -69,6 +79,11 @@ public class TestProcessorDisplay2 {
         }
     }
 
+    /**
+     * Handles when an elevator button is clicked on
+     *
+     * @param count Button number
+     */
     private void handleButtonClick(int count) {
         //When button is clicked, we should have a message be sent, simulates what happens in the elevator
         String buttonNum = String.valueOf(count);
@@ -78,6 +93,9 @@ public class TestProcessorDisplay2 {
         updateSendMessage(newMessage);
     }
 
+    /**
+     * Check for messages in the software bus
+     */
     private void checkForIncomingMessage() {
         Thread thread = new Thread(() -> {
             while (true) {
@@ -92,15 +110,30 @@ public class TestProcessorDisplay2 {
         thread.start();
     }
 
+    /**
+     * Update label indicating that a message was received
+     *
+     * @param message Message received
+     */
     public void updateReceiveMessage(Message message) {
         messageStatus.setText("Message Received!\n" + message.toString());
     }
 
+    /**
+     * Update label indicating that a message was sent
+     *
+     * @param message Message sent
+     */
     public void updateSendMessage(Message message) {
         messageStatus.setText("Message Sent!\n" + message.toString());
     }
 
 
+    /**
+     * Get Border Pane
+     *
+     * @return Pane
+     */
     public BorderPane getPane() {
         return pane;
     }
