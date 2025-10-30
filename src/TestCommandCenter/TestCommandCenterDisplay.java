@@ -49,6 +49,37 @@ public class TestCommandCenterDisplay {
         buttonPane.setAlignment(Pos.CENTER);
         display.setRight(buttonPane);
 
+        checkForIncomingMessage();
+    }
+
+    private void checkForIncomingMessage() {
+        Thread thread = new Thread(() -> {
+            while (true) {
+                Message message = softwareBus.get(2, 1);
+                if(message != null) {
+                    handleNewMessage(message);
+                }
+            }
+        });
+        thread.start();
+    }
+
+    private void handleSubmit() {
+        String messageString = messageToBeSent.getText();
+
+        if (messageString.isEmpty()) {
+            return;
+        }
+
+        if (!messageString.matches("\\d+-\\d+-.+")) {
+            System.out.println("Invalid format. Expected: <topic>-<subtopic>-<body>");
+            return;
+        }
+
+        Message messageToBeSent = Message.parseStringToMsg(messageString);
+        handleSendMessage(messageToBeSent);
+
+        softwareBus.publish(messageToBeSent);
     }
 
     public void handleNewMessage(Message message) {
@@ -63,15 +94,7 @@ public class TestCommandCenterDisplay {
         return display;
     }
 
-    public void handleSubmit() {
-        String message = messageToBeSent.getText();
-        if (!message.isEmpty()) {
-            int topic = 1;
-            int subtopic = 0;
-            Message messageToBeSent = new Message(topic, subtopic, message);
-            handleSendMessage(messageToBeSent);
 
-            softwareBus.publish(messageToBeSent);
-        }
-    }
+
+
 }
