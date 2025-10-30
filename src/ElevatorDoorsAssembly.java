@@ -3,6 +3,13 @@ public class ElevatorDoorsAssembly {
     private boolean isObstructed;
     private boolean isMoving;
 
+    // Optional GUI listener
+    private static gui.listener guiListener = null;
+
+    public static void setGuiListener(gui.listener l) {
+        guiListener = l;
+    }
+
     public ElevatorDoorsAssembly() {
         this.isOpen = false;
         this.isObstructed = false;
@@ -17,15 +24,18 @@ public class ElevatorDoorsAssembly {
     public void open(){
         if(isObstructed) {
             System.out.println("[Doors} Cannot open - obstruction detected.");
+            if (guiListener != null) guiListener.notify("Doors.openAttemptBlocked", null);
             return;
         }
         if (!isOpen) {
             isMoving = true;
             System.out.println("[Doors] Opening...");
-            simulateDelay(1000);
+            if (guiListener != null) guiListener.notify("Doors.opening", null);
+            simulateDelay(2000);
             isOpen = true;
             isMoving = false;
             System.out.println("[Doors] Fully open.");
+            if (guiListener != null) guiListener.notify("Doors.opened", null);
         }
     }
 
@@ -36,16 +46,19 @@ public class ElevatorDoorsAssembly {
     public void close() {
         if (isObstructed) {
             System.out.println("[Doors] obstruction detected reopening.");
+            if (guiListener != null) guiListener.notify("Doors.closeBlockedObstruction", null);
             open();;
             return;
         }
         if (isOpen) {
             isMoving = true;
             System.out.println("[Doors] Closing...");
+            if (guiListener != null) guiListener.notify("Doors.closing", null);
             simulateDelay(1000);
             if (!isObstructed) {
                 isOpen = false;
                 System.out.println("[Doors] Fully closed.");
+                if (guiListener != null) guiListener.notify("Doors.closed", null);
             } else {
                 System.out.println("[Doors] Reopening due to obstruction.");
                 open();
@@ -78,6 +91,7 @@ public class ElevatorDoorsAssembly {
      */
     public void setObstruction(boolean obstructed) {
         this.isObstructed = obstructed;
+        if (guiListener != null) guiListener.notify("Doors.obstructionSet", Boolean.toString(obstructed));
     }
 
     /**

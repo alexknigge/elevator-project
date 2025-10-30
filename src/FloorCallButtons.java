@@ -1,5 +1,12 @@
 class FloorCallButtons implements FloorCallButtonsAPI {
 
+    // Optional GUI listener
+    private static gui.listener guiListener = null;
+
+    public static void setGuiListener(gui.listener l) {
+        guiListener = l;
+    }
+
     private final int floorNumber;           // which landing this panel belongs to
     private final int totalFloors;           // total number of building floors
     private final boolean hasUp;             // top floor has no Up
@@ -21,6 +28,7 @@ class FloorCallButtons implements FloorCallButtonsAPI {
     public void pressUpCall() {
         if (hasUp) {
             upPressed = true;
+            if (guiListener != null) guiListener.notify("FloorCall.pressUp", Integer.toString(floorNumber));
         }
     }
 
@@ -28,6 +36,7 @@ class FloorCallButtons implements FloorCallButtonsAPI {
     public void pressDownCall() {
         if (hasDown) {
             downPressed = true;
+            if (guiListener != null) guiListener.notify("FloorCall.pressDown", Integer.toString(floorNumber));
         }
     }
 
@@ -45,11 +54,13 @@ class FloorCallButtons implements FloorCallButtonsAPI {
 
     // Reset the specified call indicator ("Up" or "Down") after service.
     @Override
-    public void resetCallButton(Direction direction) {
-        if (direction == Direction.UP && hasUp) {
+    public void resetCallButton(String direction) {
+        if (direction.equals("UP") && hasUp) {
             upPressed = false;
-        } else if (direction == Direction.DOWN && hasDown) {
+            if (guiListener != null) guiListener.notify("FloorCall.resetCallButton", "UP:" + floorNumber);
+        } else if (direction.equals("DOWN") && hasDown) {
             downPressed = false;
+            if (guiListener != null) guiListener.notify("FloorCall.resetCallButton", "DOWN:" + floorNumber);
         }
     }
 }

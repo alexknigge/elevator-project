@@ -2,6 +2,13 @@ public class ElevatorFloorDisplay {
     private int currentFloor;
     private String direction; // "UP" "DOWN" "IDLE"
 
+    // Optional GUI listener
+    private static gui.listener guiListener = null;
+
+    public static void setGuiListener(gui.listener l) {
+        guiListener = l;
+    }
+
     public ElevatorFloorDisplay() {
         this.currentFloor = 1;
         this.direction = "IDLE";
@@ -16,6 +23,7 @@ public class ElevatorFloorDisplay {
         this.currentFloor = currentFloor;
         this.direction = direction;
         System.out.println("[Display]");
+        if (guiListener != null) guiListener.notify("FloorDisplay.update", currentFloor + ":" + direction);
     }
 
     /**
@@ -24,6 +32,7 @@ public class ElevatorFloorDisplay {
     public void playArrivalChime() {
         // again simulating the Ding noise
         System.out.println("*Ding! Elevator has arrived at floor");
+        if (guiListener != null) guiListener.notify("FloorDisplay.arrivalChime", Integer.toString(currentFloor));
     }
 
     /**
@@ -32,6 +41,7 @@ public class ElevatorFloorDisplay {
     public void playOverLoadWarning() {
         // simulating the buzzing noise
         System.out.println("*Buzz! Warning: Overload detected at floor" + currentFloor);
+        if (guiListener != null) guiListener.notify("FloorDisplay.overloadWarning", Integer.toString(currentFloor));
     }
 
     /**

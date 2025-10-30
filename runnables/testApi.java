@@ -1,4 +1,4 @@
-public class testPfdApi {
+public class testApi {
     public static void main(String[] args) {
         ElevatorFloorDisplay display = new ElevatorFloorDisplay();
         ElevatorDoorsAssembly doors = new ElevatorDoorsAssembly();

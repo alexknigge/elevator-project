@@ -12,7 +12,7 @@ public interface CabinPassengerPanelAPI {
     void resetFloorButton(int floorNumber);
 
     // Update the in-cabin display with current floor and travel direction.
-    void setDisplay(int currentFloor, Direction direction);
+    void setDisplay(int currentFloor, String direction);
 
     // Play the arrival chime (“ding”) upon arrival/leveling.
     void playCabinArrivalChime();
@@ -33,5 +33,5 @@ interface FloorCallButtonsAPI {
     boolean isDownCallPressed();
 
     // Reset the specified call indicator ("Up" or "Down") after service.
-    void resetCallButton(Direction direction);
+    void resetCallButton(String direction);
 }

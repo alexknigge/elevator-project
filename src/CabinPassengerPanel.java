@@ -3,11 +3,18 @@ import java.util.List;
 
 class CabinPassengerPanel implements CabinPassengerPanelAPI {
 
+    // Optional GUI listener (static so the simple GUI can register once).
+    private static gui.listener guiListener = null;
+
+    public static void setGuiListener(gui.listener l) {
+        guiListener = l;
+    }
+
     private final int totalFloors;
     private final boolean[] floorButtons; // this is true if the button is pressed
     private final List<Integer> pressedFloorsQueue;
     private int currentFloor;
-    private Direction direction; // "UP" "Down" and "IDLE"
+    private String direction; // "UP" "DOWN" and "IDLE"
     private boolean fireKeyActive;
 
     public CabinPassengerPanel(int totalFloors) {
@@ -15,7 +22,7 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
         this.floorButtons = new boolean[totalFloors];
         this.pressedFloorsQueue = new ArrayList<>();
         this.currentFloor = 1;
-        this.direction = Direction.IDLE;
+        this.direction = "IDLE";
         this.fireKeyActive = false;
     }
 
@@ -24,12 +31,14 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
         if (floorNumber >= 1 && floorNumber <= totalFloors && !floorButtons[floorNumber - 1]) {
             floorButtons[floorNumber - 1] = true;
             pressedFloorsQueue.add(floorNumber);
+            if (guiListener != null) guiListener.notify("Cabin.pressFloorButton", Integer.toString(floorNumber));
         }
     }
 
     /// Returns all pressed floor numbers since the last poll
     @Override
     public List<Integer> getPressedFloors() {
+        if (guiListener != null) guiListener.notify("Cabin.getPressedFloors", null);
         return new ArrayList<>(pressedFloorsQueue);
     }
 
@@ -37,6 +46,7 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
     @Override
     public void clearPressedFloors() {
         pressedFloorsQueue.clear();
+        if (guiListener != null) guiListener.notify("Cabin.clearPressedFloors", null);
     }
 
     /// Resets a specific floor button’s indicator
@@ -44,15 +54,17 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
     public void resetFloorButton(int floorNumber) {
         if (floorNumber >= 1 && floorNumber <= totalFloors) {
             floorButtons[floorNumber - 1] = false;
+            if (guiListener != null) guiListener.notify("Cabin.resetFloorButton", Integer.toString(floorNumber));
         }
     }
 
     /// Updates the cabin display to show the current floor and direction
     @Override
-    public void setDisplay(int currentFloor, Direction direction) {
+    public void setDisplay(int currentFloor, String direction) {
         this.currentFloor = currentFloor;
         this.direction = direction;
         System.out.println("Display: Floor " + currentFloor + " | Direction: " + direction);
+        if (guiListener != null) guiListener.notify("Cabin.setDisplay", currentFloor + ":" + direction);
     }
 
     /// Plays the arrival chime sound
@@ -60,6 +72,7 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
     public void playCabinArrivalChime() {
         // for now im simulating a DING sound to see if it works
         System.out.println("*Ding!* Elevator arrived at floor " + currentFloor);
+        if (guiListener != null) guiListener.notify("Cabin.playCabinArrivalChime", Integer.toString(currentFloor));
     }
 
     /// Plays the overload warning buzz
@@ -67,6 +80,7 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
     public void playCabinOverloadWarning() {
         // same as chime
         System.out.println("*Buzz!* Overload detected — please reduce cabin weight.");
+        if (guiListener != null) guiListener.notify("Cabin.playCabinOverloadWarning", null);
     }
 
     /** Reads the fire key state */
@@ -78,5 +92,6 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
     /** Toggles the fire key (for simulation) */
     public void toggleFireKey() {
         this.fireKeyActive = !this.fireKeyActive;
+        if (guiListener != null) guiListener.notify("Cabin.fireKeyToggled", Boolean.toString(this.fireKeyActive));
     }
 }
