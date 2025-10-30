@@ -16,7 +16,7 @@ public class TestProcessorMain2 extends Application {
         TestProcessorDisplay2 display = new TestProcessorDisplay2(softwareBus, topic, subtopic);
         softwareBus.subscribe(topic, subtopic);
 
-        primaryStage.setTitle("Test Processor 2, subscribed to " + topic + ", " + subtopic );
+        primaryStage.setTitle("Test Processor 2, subscribed to t" + topic + ":s" + subtopic );
 
         Scene scene = new Scene(display.getPane());
         primaryStage.setScene(scene);

@@ -22,7 +22,7 @@ public class TestCommandCenterMain extends Application {
         TestCommandCenterDisplay display = new TestCommandCenterDisplay(softwareBus, topic, subtopic);
 
         primaryStage.setTitle("Test Command Center, subscribed to t" +
-                topic + ":s" + subtopic + ",t:" + otherTopic + "s:" + otherSubtopic);
+                topic + ":s" + subtopic + ", t" + otherTopic + "s:" + otherSubtopic);
         Scene scene = new Scene(display.getPane());
         primaryStage.setScene(scene);
 
