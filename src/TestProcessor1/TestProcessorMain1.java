@@ -7,7 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class TestProcessorMain1 extends Application {
-    private int topic = 3;
+    private int topic = 4;
     private int subtopic =  2;
     @Override
     public void start(Stage primaryStage) {
