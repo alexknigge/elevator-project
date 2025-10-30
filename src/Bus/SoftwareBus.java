@@ -13,7 +13,8 @@ import java.util.*;
 
 public class SoftwareBus {
 
-    private record Subscription(int topic, int subtopic){}
+    private record Subscription(int topic, int subtopic) {
+    }
 
     // Local queue for received messages that match this processor's subscriptions
     private final LinkedList<Message> queue;
@@ -51,7 +52,7 @@ public class SoftwareBus {
             try {
                 socket = new Socket("localhost", port);
                 out = new PrintWriter(socket.getOutputStream(), true);
-                in  = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 // Start listening for messages from server
                 readerThread(socket);
             } catch (IOException e) {
@@ -85,7 +86,7 @@ public class SoftwareBus {
      * Starts a thread that listens for messages coming from a given socket.
      * - In server mode: rebroadcasts received messages to all other clients.
      * - In client mode: checks message topic/subtopic against subscriptions,
-     *   and stores it in the local queue if relevant.
+     * and stores it in the local queue if relevant.
      */
     private void readerThread(Socket socket) {
         Thread readerThread = new Thread(() -> {

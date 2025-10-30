@@ -56,7 +56,7 @@ public class TestCommandCenterDisplay {
         Thread thread = new Thread(() -> {
             while (true) {
                 Message message = softwareBus.get(2, 1);
-                if(message != null) {
+                if (message != null) {
                     handleNewMessage(message);
                 }
             }
@@ -93,8 +93,6 @@ public class TestCommandCenterDisplay {
     public BorderPane getPane() {
         return display;
     }
-
-
 
 
 }
