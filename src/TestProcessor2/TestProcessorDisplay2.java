@@ -1,4 +1,4 @@
-package TestProcessor;
+package TestProcessor2;
 
 import Bus.SoftwareBus;
 import Message.Message;
@@ -10,14 +10,14 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
-public class TestProcessorDisplay {
+public class TestProcessorDisplay2 {
     private SoftwareBus softwareBus;
     private BorderPane pane;
 
     private GridPane buttonGrid;
     private Label messageStatus;
 
-    public TestProcessorDisplay(SoftwareBus softwareBus) {
+    public TestProcessorDisplay2(SoftwareBus softwareBus) {
         this.softwareBus = softwareBus;
 
         pane = new BorderPane();
@@ -74,7 +74,7 @@ public class TestProcessorDisplay {
     private void checkForIncomingMessage() {
         Thread thread = new Thread(() -> {
             while (true) {
-                Message message = softwareBus.get(3, 2);
+                Message message = softwareBus.get(5, 5);
                 if (message != null) {
                     Platform.runLater(() -> {
                         updateReceiveMessage(message);

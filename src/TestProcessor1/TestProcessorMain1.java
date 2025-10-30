@@ -1,4 +1,4 @@
-package TestProcessor;
+package TestProcessor1;
 
 import Bus.SoftwareBus;
 import javafx.application.Application;
@@ -6,16 +6,16 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-public class TestProcessorMain extends Application {
+public class TestProcessorMain1 extends Application {
     private int topic = 3;
     private int subtopic =  2;
     @Override
     public void start(Stage primaryStage) {
         SoftwareBus softwareBus = new SoftwareBus(false);
-        TestProcessorDisplay display = new TestProcessorDisplay(softwareBus);
+        TestProcessorDisplay1 display = new TestProcessorDisplay1(softwareBus);
         softwareBus.subscribe(topic, subtopic);
 
-        primaryStage.setTitle("Test Command Center");
+        primaryStage.setTitle("Test Processor 1, subscribed to " + topic + ", " + subtopic );
         Scene scene = new Scene(display.getPane());
         primaryStage.setScene(scene);
 
