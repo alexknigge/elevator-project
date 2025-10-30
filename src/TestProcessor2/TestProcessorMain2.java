@@ -13,7 +13,7 @@ public class TestProcessorMain2 extends Application {
     @Override
     public void start(Stage primaryStage) {
         SoftwareBus softwareBus = new SoftwareBus(false);
-        TestProcessorDisplay2 display = new TestProcessorDisplay2(softwareBus);
+        TestProcessorDisplay2 display = new TestProcessorDisplay2(softwareBus, topic, subtopic);
         softwareBus.subscribe(topic, subtopic);
 
         primaryStage.setTitle("Test Processor 2, subscribed to " + topic + ", " + subtopic );

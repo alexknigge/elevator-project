@@ -21,9 +21,15 @@ public class TestCommandCenterDisplay {
     private TextField messageToBeSent;
     private Button submitMessage;
 
+    int currentTopic;
+    int currentSubtopic;
 
-    public TestCommandCenterDisplay(SoftwareBus softwareBus) {
+
+    public TestCommandCenterDisplay(SoftwareBus softwareBus, int topic, int subtopic) {
         this.softwareBus = softwareBus;
+
+        currentTopic = topic;
+        currentSubtopic = subtopic;
 
         display = new BorderPane();
         messageStatus = new Label("");
@@ -56,7 +62,7 @@ public class TestCommandCenterDisplay {
     private void checkForIncomingMessage() {
         Thread thread = new Thread(() -> {
             while (true) {
-                Message message = softwareBus.get(2, 1);
+                Message message = softwareBus.get(currentTopic, currentSubtopic);
                 if (message != null) {
                     Platform.runLater(() -> {
                         handleNewMessage(message);

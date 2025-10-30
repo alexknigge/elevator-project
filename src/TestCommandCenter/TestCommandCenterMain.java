@@ -10,15 +10,19 @@ public class TestCommandCenterMain extends Application {
     private int topic = 2;
     private int subtopic = 0;
 
+    private int otherTopic = 3;
+    private int otherSubtopic = 0;
+
     @Override
     public void start(Stage primaryStage) {
         SoftwareBus softwareBus = new SoftwareBus(true);
         softwareBus.subscribe(topic, subtopic);
-        softwareBus.subscribe(topic, 1);
+        softwareBus.subscribe(otherTopic, otherSubtopic);
 
-        TestCommandCenterDisplay display = new TestCommandCenterDisplay(softwareBus);
+        TestCommandCenterDisplay display = new TestCommandCenterDisplay(softwareBus, topic, subtopic);
 
-        primaryStage.setTitle("Test Command Center, subscribed to " + topic + ", " + subtopic );
+        primaryStage.setTitle("Test Command Center, subscribed to t" +
+                topic + ":s" + subtopic + ",t:" + otherTopic + "s:" + otherSubtopic);
         Scene scene = new Scene(display.getPane());
         primaryStage.setScene(scene);
 

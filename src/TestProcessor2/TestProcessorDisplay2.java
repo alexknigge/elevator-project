@@ -17,8 +17,14 @@ public class TestProcessorDisplay2 {
     private GridPane buttonGrid;
     private Label messageStatus;
 
-    public TestProcessorDisplay2(SoftwareBus softwareBus) {
+    int currentTopic;
+    int currentSubtopic;
+
+    public TestProcessorDisplay2(SoftwareBus softwareBus, int topic, int subtopic) {
         this.softwareBus = softwareBus;
+
+        currentTopic = topic;
+        currentSubtopic = subtopic;
 
         pane = new BorderPane();
         buttonGrid = new GridPane();
@@ -65,7 +71,7 @@ public class TestProcessorDisplay2 {
     private void handleButtonClick(int count) {
         //When button is clicked, we should have a message be sent, simulates what happens in the elevator
         String buttonNum = String.valueOf(count);
-        Message newMessage = new Message(2, 1, buttonNum);
+        Message newMessage = new Message(3, 1, buttonNum);
 
         softwareBus.publish(newMessage);
         updateSendMessage(newMessage);
@@ -74,7 +80,7 @@ public class TestProcessorDisplay2 {
     private void checkForIncomingMessage() {
         Thread thread = new Thread(() -> {
             while (true) {
-                Message message = softwareBus.get(5, 5);
+                Message message = softwareBus.get(currentTopic, currentSubtopic);
                 if (message != null) {
                     Platform.runLater(() -> {
                         updateReceiveMessage(message);

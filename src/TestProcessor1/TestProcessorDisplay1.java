@@ -17,8 +17,14 @@ public class TestProcessorDisplay1 {
     private GridPane buttonGrid;
     private Label messageStatus;
 
-    public TestProcessorDisplay1(SoftwareBus softwareBus) {
+    int currentTopic;
+    int currentSubtopic;
+
+    public TestProcessorDisplay1(SoftwareBus softwareBus, int topic, int subtopic) {
         this.softwareBus = softwareBus;
+
+        this.currentTopic = topic;
+        this.currentSubtopic = subtopic;
 
         pane = new BorderPane();
         buttonGrid = new GridPane();
@@ -74,7 +80,7 @@ public class TestProcessorDisplay1 {
     private void checkForIncomingMessage() {
         Thread thread = new Thread(() -> {
             while (true) {
-                Message message = softwareBus.get(3, 2);
+                Message message = softwareBus.get(currentTopic, currentSubtopic);
                 if (message != null) {
                     Platform.runLater(() -> {
                         updateReceiveMessage(message);
