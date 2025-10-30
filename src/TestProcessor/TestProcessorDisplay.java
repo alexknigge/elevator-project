@@ -1,31 +1,23 @@
-package DeviceTwo;
+package TestProcessor;
 
-import DeviceComp.SoftwareBus;
+import Bus.SoftwareBus;
 import Message.Message;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.text.TextAlignment;
 
-public class DeviceTwoDisplay {
+public class TestProcessorDisplay {
     private SoftwareBus softwareBus;
-    private DeviceTwo device;
-    private DeviceTwoInput input;
     private BorderPane pane;
 
     private GridPane buttonGrid;
     private Label messageStatus;
 
-
-    public DeviceTwoDisplay(SoftwareBus softwareBus, DeviceTwo device) {
+    public TestProcessorDisplay(SoftwareBus softwareBus) {
         this.softwareBus = softwareBus;
-        this.device = device;
-
-        input = new DeviceTwoInput(softwareBus, device, this);
 
         pane = new BorderPane();
         buttonGrid = new GridPane();
@@ -61,11 +53,20 @@ public class DeviceTwoDisplay {
                 }
                 button.setAlignment(Pos.CENTER);
                 int buttonNum = count;
-                button.setOnAction(event -> input.handleButtonClick(buttonNum));
+                button.setOnAction(event -> handleButtonClick(buttonNum));
                 buttonGrid.add(button, j, i);
                 count++;
             }
         }
+    }
+
+    private void handleButtonClick(int count) {
+        //When button is clicked, we should have a message be sent, simulates what happens in the elevator
+        String buttonNum = String.valueOf(count);
+        Message newMessage = new Message(2, 1, buttonNum);
+
+        softwareBus.publish(newMessage);
+        updateSendMessage(newMessage);
     }
 
     public void updateReceiveMessage(Message message) {
@@ -80,4 +81,6 @@ public class DeviceTwoDisplay {
     public BorderPane getPane() {
         return pane;
     }
+
+
 }
