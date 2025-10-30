@@ -26,7 +26,7 @@ public class SoftwareBus {
     private final Set<Socket> clientSockets;
 
     private ServerSocket serverSocket;
-    private Socket socket;
+    private Socket busSocket;
     private PrintWriter out;
     private BufferedReader in;
 
@@ -50,13 +50,14 @@ public class SoftwareBus {
         } else {
             // Client mode: connect to the server
             try {
-                socket = new Socket("localhost", port);
-                out = new PrintWriter(socket.getOutputStream(), true);
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                busSocket = new Socket("localhost", port);
+                out = new PrintWriter(busSocket.getOutputStream(), true);
+                in = new BufferedReader(new InputStreamReader(busSocket.getInputStream()));
                 // Start listening for messages from server
-                readerThread(socket);
+                readerThread(busSocket);
             } catch (IOException e) {
-                throw new RuntimeException("No server socket available");
+                System.err.println("Please launch the Command Center first.");
+                System.exit(1);
             }
         }
     }
@@ -95,11 +96,8 @@ public class SoftwareBus {
                 String line;
                 while ((line = in.readLine()) != null) {
                     Message message = Message.parseStringToMsg(line);
-
-
-
                     if (isServer) {
-                        System.out.println("Server received message:" + message);
+                        System.out.println("Bus (Server) received message:" + message);
                         // Forward to all connected clients except the sender
                         synchronized (clientSockets) {
                             for (Socket client : clientSockets) {
@@ -113,7 +111,7 @@ public class SoftwareBus {
                             queue.add(message);
                         }
                     } else {
-                        System.out.println("Client received message:" + message);
+                        System.out.println("Bus (Client) received message:" + message);
                         // Client mode: filter and enqueue matching messages
                         synchronized (subscriptions) {
                             for (Subscription s : subscriptions) {
@@ -132,7 +130,8 @@ public class SoftwareBus {
 
                 }
             } catch (IOException e) {
-                throw new RuntimeException("Connection error in reader thread");
+                System.err.println("Connection error: " + e.getMessage());
+                cleanupSocket(socket);
             }
         });
         readerThread.start();
@@ -151,7 +150,8 @@ public class SoftwareBus {
                         PrintWriter temp = new PrintWriter(client.getOutputStream(), true);
                         temp.println(message.toString());
                     } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        System.err.println("Connection error: " + e.getMessage());
+                        cleanupSocket(client);
                     }
                 }
             }
@@ -195,4 +195,17 @@ public class SoftwareBus {
             return null;
         }
     }
+
+    private void cleanupSocket(Socket socket) {
+        try {
+            synchronized (clientSockets) {
+                clientSockets.remove(socket);
+            }
+            socket.close();
+            System.out.println("Closed socket: " + socket);
+        } catch (IOException e) {
+            System.err.println("Error closing socket: " + e.getMessage());
+        }
+    }
+
 }
