@@ -2,6 +2,7 @@ package TestProcessor;
 
 import Bus.SoftwareBus;
 import Message.Message;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -38,6 +39,7 @@ public class TestProcessorDisplay {
         messagePane.getChildren().add(messageStatus);
         pane.setTop(messagePane);
 
+        checkForIncomingMessage();
 
     }
 
@@ -67,6 +69,21 @@ public class TestProcessorDisplay {
 
         softwareBus.publish(newMessage);
         updateSendMessage(newMessage);
+    }
+
+    private void checkForIncomingMessage() {
+        Thread thread = new Thread(() -> {
+            while (true) {
+                Message message = softwareBus.get(3, 2);
+                if (message != null) {
+                    System.out.println("ever reach here?");
+                    Platform.runLater(() -> {
+                        updateReceiveMessage(message);
+                    });
+                }
+            }
+        });
+        thread.start();
     }
 
     public void updateReceiveMessage(Message message) {

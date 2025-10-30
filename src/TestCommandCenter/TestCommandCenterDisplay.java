@@ -3,6 +3,7 @@ package TestCommandCenter;
 
 import Bus.SoftwareBus;
 import Message.Message;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -57,7 +58,10 @@ public class TestCommandCenterDisplay {
             while (true) {
                 Message message = softwareBus.get(2, 1);
                 if (message != null) {
-                    handleNewMessage(message);
+                    Platform.runLater(() -> {
+                        handleNewMessage(message);
+                    });
+
                 }
             }
         });

@@ -96,9 +96,10 @@ public class SoftwareBus {
                 while ((line = in.readLine()) != null) {
                     Message message = Message.parseStringToMsg(line);
 
-                    System.out.println(message);
+
 
                     if (isServer) {
+                        System.out.println("Server received message:" + message);
                         // Forward to all connected clients except the sender
                         synchronized (clientSockets) {
                             for (Socket client : clientSockets) {
@@ -108,7 +109,11 @@ public class SoftwareBus {
                                 }
                             }
                         }
+                        synchronized (queue) {
+                            queue.add(message);
+                        }
                     } else {
+                        System.out.println("Client received message:" + message);
                         // Client mode: filter and enqueue matching messages
                         synchronized (subscriptions) {
                             for (Subscription s : subscriptions) {
@@ -116,7 +121,7 @@ public class SoftwareBus {
                                         (s.subtopic() == 0 || s.subtopic() == message.getSubTopic())) {
                                     synchronized (queue) {
                                         queue.add(message);
-                                        System.out.println(queue.size() + " " + message);
+                                        System.out.println("Client saved message\n" + queue.size() + " " + message);
                                     }
                                     // stop checking once matched
                                     break;
@@ -168,14 +173,26 @@ public class SoftwareBus {
      * Returns null if no matching message is found.
      */
     public Message get(int topic, int subtopic) {
-        Iterator<Message> queue_iter = queue.iterator();
-        while (queue_iter.hasNext()) {
-            Message m = queue_iter.next();
-            if (m.getTopic() == topic && (subtopic == 0 || m.getSubTopic() == subtopic)) {
-                queue_iter.remove();
+        synchronized (queue) {
+            if(isServer) {
+                if(queue.isEmpty()) {
+                    return null;
+                }
+                Message m = queue.getFirst();
+                queue.removeFirst();
                 return m;
             }
+
+            Iterator<Message> queue_iter = queue.iterator();
+            while (queue_iter.hasNext()) {
+                Message m = queue_iter.next();
+                System.out.println(m.toString());
+                if (m.getTopic() == topic && (subtopic == 0 || m.getSubTopic() == subtopic)) {
+                    queue_iter.remove();
+                    return m;
+                }
+            }
+            return null;
         }
-        return null;
     }
 }

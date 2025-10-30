@@ -7,11 +7,13 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class TestProcessorMain extends Application {
-
+    private int topic = 3;
+    private int subtopic =  2;
     @Override
     public void start(Stage primaryStage) {
         SoftwareBus softwareBus = new SoftwareBus(false);
         TestProcessorDisplay display = new TestProcessorDisplay(softwareBus);
+        softwareBus.subscribe(topic, subtopic);
 
         primaryStage.setTitle("Test Command Center");
         Scene scene = new Scene(display.getPane());

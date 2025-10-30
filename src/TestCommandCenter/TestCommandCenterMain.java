@@ -13,8 +13,8 @@ public class TestCommandCenterMain extends Application {
     @Override
     public void start(Stage primaryStage) {
         SoftwareBus softwareBus = new SoftwareBus(true);
-
         softwareBus.subscribe(topic, subtopic);
+        softwareBus.subscribe(topic, 1);
 
         TestCommandCenterDisplay display = new TestCommandCenterDisplay(softwareBus);
 
