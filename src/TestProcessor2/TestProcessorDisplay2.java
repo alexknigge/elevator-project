@@ -36,7 +36,8 @@ public class TestProcessorDisplay2 {
         buttonPane.setMinSize(200, 200);
         buttonPane.getChildren().addAll(buttonGrid);
 
-        buttonPane.setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
+        buttonPane.setBackground(new Background(new BackgroundFill(Color.ANTIQUEWHITE,
+                CornerRadii.EMPTY, Insets.EMPTY)));
         pane.setCenter(buttonPane);
 
         messageStatus = new Label("");

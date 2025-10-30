@@ -21,6 +21,8 @@ public class TestProcessorMain1 extends Application {
 
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(500);
+        primaryStage.setX(500);
+        primaryStage.setY(0);
         primaryStage.setOnCloseRequest(event -> {
             Platform.exit();
             System.exit(0);

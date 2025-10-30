@@ -25,6 +25,8 @@ public class TestCommandCenterMain extends Application {
                 topic + ":s" + subtopic + ", t" + otherTopic + "s:" + otherSubtopic);
         Scene scene = new Scene(display.getPane());
         primaryStage.setScene(scene);
+        primaryStage.setX(0);
+        primaryStage.setY(0);
 
         primaryStage.setOnCloseRequest(event -> {
             Platform.exit();
