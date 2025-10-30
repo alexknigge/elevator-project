@@ -1,7 +1,7 @@
-package DeviceOne;
+package TestCommandCenter;
 
 
-import DeviceComp.SoftwareBus;
+import Bus.SoftwareBus;
 import Message.Message;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -11,11 +11,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 
-public class DeviceOneDisplay {
+public class TestCommandCenterDisplay {
     private SoftwareBus softwareBus;
-    private DeviceOne device;
-
-    private final DeviceOneInput userInput;
 
     private final BorderPane display;
 
@@ -24,11 +21,8 @@ public class DeviceOneDisplay {
     private Button submitMessage;
 
 
-    public DeviceOneDisplay(SoftwareBus softwareBus, DeviceOne device) {
+    public TestCommandCenterDisplay(SoftwareBus softwareBus) {
         this.softwareBus = softwareBus;
-        this.device = device;
-
-        userInput = new DeviceOneInput(softwareBus, device, this);
 
         display = new BorderPane();
         messageStatus = new Label("");
@@ -49,7 +43,7 @@ public class DeviceOneDisplay {
         display.setCenter(textPane);
 
         submitMessage = new Button("Submit Message");
-        submitMessage.setOnAction(event -> userInput.handleSubmit());
+        submitMessage.setOnAction(event -> handleSubmit());
         StackPane buttonPane = new StackPane();
         buttonPane.getChildren().add(submitMessage);
         buttonPane.setAlignment(Pos.CENTER);
@@ -69,7 +63,15 @@ public class DeviceOneDisplay {
         return display;
     }
 
-    public TextField getMessageToBeSent() {
-        return messageToBeSent;
+    public void handleSubmit() {
+        String message = messageToBeSent.getText();
+        if (!message.isEmpty()) {
+            int topic = 1;
+            int subtopic = 0;
+            Message messageToBeSent = new Message(topic, subtopic, message);
+            handleSendMessage(messageToBeSent);
+
+            softwareBus.publish(messageToBeSent);
+        }
     }
 }
