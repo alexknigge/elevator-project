@@ -93,7 +93,7 @@ public class TestCommandCenterDisplay {
             return;
         }
 
-        if (!messageString.matches("\\d+-\\d+-.+")) {
+        if (!messageString.matches("\\d+-\\d+-\\d+")) {
             invalidMessage();
             System.out.println("Invalid format. Expected: <topic>-<subtopic>-<body>");
             return;

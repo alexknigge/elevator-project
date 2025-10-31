@@ -3,9 +3,9 @@ package Message;
 public class Message {
     private int topic;
     private int subTopic;
-    private String body;
+    //private String body;
+    private int body;
 
-    //TODO MAKE EXAMPLE MESSAGES AS WELL AS TOPIC NUMBERS
 
     /**
      * Message constructor
@@ -14,7 +14,7 @@ public class Message {
      * @param subTopic Subtopic
      * @param body     Body
      */
-    public Message(int topic, int subTopic, String body) {
+    public Message(int topic, int subTopic, int body) {
         this.topic = topic;
         this.subTopic = subTopic;
         this.body = body;
@@ -53,7 +53,7 @@ public class Message {
      *
      * @return Body
      */
-    public String getBody() {
+    public int getBody() {
         return body;
     }
 
@@ -67,7 +67,7 @@ public class Message {
         String[] parts = line.split("-", 3);
         int t = Integer.parseInt(parts[0]);
         int st = Integer.parseInt(parts[1]);
-        String body = parts[2];
+        int body = Integer.parseInt(parts[2]);
         return new Message(t, st, body);
     }
 }

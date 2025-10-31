@@ -85,8 +85,8 @@ public class TestProcessorDisplay1 {
      */
     private void handleButtonClick(int count) {
         //When button is clicked, we should have a message be sent, simulates what happens in the elevator
-        String buttonNum = String.valueOf(count);
-        Message newMessage = new Message(2, 1, buttonNum);
+        //String buttonNum = String.valueOf(count);
+        Message newMessage = new Message(2, 1, count);
 
         softwareBus.publish(newMessage);
         updateSendMessage(newMessage);
