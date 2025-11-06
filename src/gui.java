@@ -48,20 +48,47 @@ public class gui extends Application {
         // Initialize the multiplexor
         multiplexor = DeviceMultiplexor.getInstance();
         multiplexor.registerCar(1); // Register a default car
+        multiplexor.registerCar(2);
+        multiplexor.registerCar(3);
+        multiplexor.registerCar(4);
         multiplexor.initialize();
         
         // Set up a listener to handle multiplexor events
         multiplexor.setListener(new DeviceMultiplexor.DeviceListener() {
+
             @Override
             public void onDisplayUpdate(int carId, String text) {
                 System.out.println("Multiplexor: Display update for car " + carId + ": " + text);
+
+            int listIndex = carId - 1;
+                if (text == null) return;
+
+                if (text.contains("UP")) {
+                    setImg(1, listIndex, 2);
+                } else if (text.contains("DOWN")) {
+                    setImg(1, listIndex, 1);
+                } else {
+                    setImg(1, listIndex, 0);
+                }
             }
-            
-            @Override
+        @Override
             public void onDoorStateChanged(int carId, String state) {
                 System.out.println("Multiplexor: Door state changed for car " + carId + ": " + state);
+
+                int listIndex = carId - 1;
+                if (listIndex < 0) listIndex = 0;
+
+                if (state == null) return;
+                String s = state.toUpperCase();
+
+                if (s.startsWith("OPEN")) {
+                    setImg(2, listIndex, 6);
+                } else if (s.startsWith("CLOSE")) {
+                    setImg(2, listIndex, 3);
+                } else {
+                    setImg(2, listIndex, 4);
+                }
             }
-            
             @Override
             public void onCarArrived(int carId, int floor, String direction) {
                 System.out.println("Multiplexor: Car " + carId + " arrived at floor " + floor + " going " + direction);
@@ -92,6 +119,8 @@ public class gui extends Application {
                 System.out.println("Multiplexor: Button interaction - OverloadWeight[" + buttonIndex + "] WeightExceeded: OVERLOAD");
             }
         });
+
+
 
         // load images via utility
         loader = new imageLoader();
@@ -158,80 +187,80 @@ public class gui extends Application {
 
     // NOT SURE WE NEED THIS STILL
     private void handleEvent(String event, String payload) {
-        int payloadNum;
+        // int payloadNum;
 
-        try {
-            if (event == null) return;
-            switch (event) {
-                case "Cabin.pressFloorButton":
-                    payloadNum = Integer.parseInt(payload);
-                    buttonLabels.get(payloadNum-1).setStyle("-fx-text-fill: white;");
-                    break;
-                case "Cabin.setDisplay":
-                if (payload != null) {
-                        String[] parts = payload.split(":", 2);
-                        floorLabel1.setText(parts[0]);
-                        if ("UP".equals(parts[1])) setImg(1, 0, 2);
-                        else if ("DOWN".equals(parts[1])) setImg(1, 0, 1);
-                        else setImg(1, 0, 0);
-                    }
-                    break;
-                case "Cabin.playCabinArrivalChime": // 0-2 indices are cabin panels
-                    break;
-                case "Cabin.playCabinOverloadWarning":
-                    break;
-                case "Cabin.clearPressedFloors":
-                    setImg(1, 0, 0);
-                    break;
-                case "Cabin.resetFloorButton":
-                    payloadNum = Integer.parseInt(payload);
-                    buttonLabels.get(payloadNum-1).setStyle("-fx-text-fill: black;");
-                    break;
-                case "FloorCall.pressUp": // 11-13 indices are call buttons
-                    setImg(3, 0, 13);
-                    break;
-                case "FloorCall.pressDown":
-                    setImg(3, 0, 12);
-                    break;
-                case "FloorCall.resetCallButton":
-                    setImg(3, 0, 11);
-                    break;
-                case "Doors.opening": // 3-7 indices are cabin doors
-                    setImg(2, 0, 4);
-                    break;
-                case "Doors.opened":
-                    setImg(2, 0, 6);
-                    break;
-                case "Doors.closing":
-                    setImg(2, 0, 4);
-                    break;
-                case "Doors.closed":
-                    setImg(2, 0, 3);
-                    break;
-                case "Doors.obstructionSet":
-                    if ("true".equals(payload)) setImg(2, 0, 5);
-                    else setImg(2, 0, 7);
-                    break;
-                case "FloorDisplay.update": // 8-10 indices are floor displays
-                    if (payload != null) {
-                        String[] parts = payload.split(":", 2);
-                        floorLabel2.setText(parts[0]);
-                        if (parts[1].equals("UP")) setImg(4, 0, 10);
-                        else if (parts[1].equals("DOWN")) setImg(4, 0, 9);
-                        else setAllListImgs(4, 8);
-                    }
-                    break;
-                case "FloorDisplay.arrivalChime":
-                    break;
-                case "FloorDisplay.overloadWarning":
-                    break;
-                default:
-                    // unknown event
-                    break;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // try {
+        //     if (event == null) return;
+        //     switch (event) {
+        //         case "Cabin.pressFloorButton":
+        //             payloadNum = Integer.parseInt(payload);
+        //             buttonLabels.get(payloadNum-1).setStyle("-fx-text-fill: white;");
+        //             break;
+        //         case "Cabin.setDisplay":
+        //         if (payload != null) {
+        //                 String[] parts = payload.split(":", 2);
+        //                 floorLabel1.setText(parts[0]);
+        //                 if ("UP".equals(parts[1])) setImg(1, 0, 2);
+        //                 else if ("DOWN".equals(parts[1])) setImg(1, 0, 1);
+        //                 else setImg(1, 0, 0);
+        //             }
+        //             break;
+        //         case "Cabin.playCabinArrivalChime": // 0-2 indices are cabin panels
+        //             break;
+        //         case "Cabin.playCabinOverloadWarning":
+        //             break;
+        //         case "Cabin.clearPressedFloors":
+        //             setImg(1, 0, 0);
+        //             break;
+        //         case "Cabin.resetFloorButton":
+        //             payloadNum = Integer.parseInt(payload);
+        //             buttonLabels.get(payloadNum-1).setStyle("-fx-text-fill: black;");
+        //             break;
+        //         case "FloorCall.pressUp": // 11-13 indices are call buttons
+        //             setImg(3, 0, 13);
+        //             break;
+        //         case "FloorCall.pressDown":
+        //             setImg(3, 0, 12);
+        //             break;
+        //         case "FloorCall.resetCallButton":
+        //             setImg(3, 0, 11);
+        //             break;
+        //         case "Doors.opening": // 3-7 indices are cabin doors
+        //             setImg(2, 0, 4);
+        //             break;
+        //         case "Doors.opened":
+        //             setImg(2, 0, 6);
+        //             break;
+        //         case "Doors.closing":
+        //             setImg(2, 0, 4);
+        //             break;
+        //         case "Doors.closed":
+        //             setImg(2, 0, 3);
+        //             break;
+        //         case "Doors.obstructionSet":
+        //             if ("true".equals(payload)) setImg(2, 0, 5);
+        //             else setImg(2, 0, 7);
+        //             break;
+        //         case "FloorDisplay.update": // 8-10 indices are floor displays
+        //             if (payload != null) {
+        //                 String[] parts = payload.split(":", 2);
+        //                 floorLabel2.setText(parts[0]);
+        //                 if (parts[1].equals("UP")) setImg(4, 0, 10);
+        //                 else if (parts[1].equals("DOWN")) setImg(4, 0, 9);
+        //                 else setAllListImgs(4, 8);
+        //             }
+        //             break;
+        //         case "FloorDisplay.arrivalChime":
+        //             break;
+        //         case "FloorDisplay.overloadWarning":
+        //             break;
+        //         default:
+        //             // unknown event
+        //             break;
+        //     }
+        // } catch (Exception e) {
+        //     e.printStackTrace();
+        // }
     }
 
     private class Panel{
@@ -241,9 +270,11 @@ public class gui extends Application {
         private double scaleFactor = 1;
         private int yTranslation = -30; // adjust as needed for non 1:1 scales
         private int panelIndex; // Track which panel this is
+        private int carId;
 
         private Panel(int index){ 
             this.panelIndex = index;
+            this.carId = index + 1;
             makePanel(); 
         }
 
@@ -275,7 +306,9 @@ public class gui extends Application {
                 final int floorNumber = i;
                 left.setOnMouseClicked(event -> {
                     left.setStyle("-fx-text-fill: white;");
-                    multiplexor.emitCabinPanelClick(panelIndex, floorNumber);
+                    multiplexor.emitCabinPanelClick(carId, panelIndex, floorNumber);
+                    multiplexor.onDoorCON(carId, "OPEN");  // open the doors for THIS car
+
                 });
 
                 panelOverlay.getChildren().add(left);
@@ -294,7 +327,7 @@ public class gui extends Application {
                 final int rightFloorNumber = i + 1;
                 right.setOnMouseClicked(event -> {
                     right.setStyle("-fx-text-fill: white;");
-                    multiplexor.emitCabinPanelClick(panelIndex, rightFloorNumber);
+                    multiplexor.emitCabinPanelClick(carId, panelIndex, rightFloorNumber);
                 });
 
                 panelOverlay.getChildren().add(right);
@@ -307,9 +340,11 @@ public class gui extends Application {
         public ImageView elevDoorsImg = new ImageView();
         public StackPane doorOverlay = new StackPane(elevDoorsImg);
         private int doorIndex;
+            private int carId;
 
         private ElevatorDoor(int index){ 
             this.doorIndex = index;
+            this.carId = index + 1;
             makeDoor(); 
         }
 
@@ -321,7 +356,7 @@ public class gui extends Application {
             elevDoorsImg.setOnMouseClicked(event -> {
                 boolean isActive = elevDoorsImg.getImage() == loader.imageList.get(6); // Allow place box if fully open
 
-                multiplexor.emitDoorClick(doorIndex, "USER_CLICK");
+                multiplexor.emitDoorClick(carId, doorIndex, "USER_CLICK");
 
                 if (isActive) {
                     // currently active → turn OFF
@@ -370,12 +405,12 @@ public class gui extends Application {
                 if (distToUp <= radius) {
                     // Upper button clicked
                     elevCallButtonsImg.setImage(loader.imageList.get(15)); // up pressed
-                    multiplexor.emitCallButtonClick(buttonIndex, "UP", buttonIndex);
+                    multiplexor.emitCallButtonClick(1, buttonIndex, "UP", buttonIndex);
                 } 
                 else if (distToDown <= radius) {
                     // Lower button clicked
                     elevCallButtonsImg.setImage(loader.imageList.get(14)); // down pressed
-                    multiplexor.emitCallButtonClick(buttonIndex, "DOWN", buttonIndex);
+                    multiplexor.emitCallButtonClick(1, buttonIndex, "DOWN", buttonIndex);
                 } 
                 else {
                     // Clicked outside both button circles — ignore
@@ -417,7 +452,7 @@ public class gui extends Application {
             
             // Add click handler for floor display
             floorDispImg.setOnMouseClicked(event -> {
-                multiplexor.emitFloorDisplayClick(displayIndex);
+                multiplexor.emitFloorDisplayClick(1, displayIndex);
             });
         }
     }
@@ -439,11 +474,11 @@ public class gui extends Application {
                 if (isActive) {
                     // currently active → turn OFF
                     fireAlarmImg.setImage(loader.imageList.get(11)); // Normal state
-                    multiplexor.emitFireAlarmClick();
+                    multiplexor.emitFireAlarmClick(1);
                 } else {
                     // currently inactive → turn ON
                     fireAlarmImg.setImage(loader.imageList.get(12)); // Activated state
-                    multiplexor.emitFireAlarmClick();
+                    multiplexor.emitFireAlarmClick(1);
                 }
             });
         }
@@ -452,9 +487,11 @@ public class gui extends Application {
     private class OverloadWeightTrigger{
         public Button weightTriggerButton = new Button("Overload");
         private int buttonIndex;
+        private int carId;
 
         public OverloadWeightTrigger(int index){ 
             this.buttonIndex = index; 
+            this.carId = index + 1;
             makeTrigger();
         }
 
@@ -465,7 +502,7 @@ public class gui extends Application {
             weightTriggerButton.setFont(Font.font("Times New Roman", FontWeight.BOLD, 22));
 
             weightTriggerButton.setOnMouseClicked(event -> {
-                multiplexor.emitOverloadWeightClick(buttonIndex);
+                multiplexor.emitOverloadWeightClick(carId, buttonIndex);
             });
         }
     }

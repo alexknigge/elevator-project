@@ -56,11 +56,14 @@ public class DeviceMultiplexor {
     // operate doors on a car
     public void onDoorCON(int carId, String action) {
         System.out.println("door " + carId + " " + action);
+        if (listener != null) listener.onDoorStateChanged(carId, action);
     }
 
     // set text/arrow on car display
     public void onDisplaySet(int carId, String text) {
         System.out.println("display " + carId + " " + text);
+        if (listener != null) listener.onDisplayUpdate(carId, text);
+
     }
 
     // hall panel pressed at floor with direction
@@ -104,33 +107,34 @@ public class DeviceMultiplexor {
     }
 
     // Specific methods for different image types ***** Clean up later maybe *****
-    public void emitCabinPanelClick(int panelIndex, int floorNumber) {
+    public void emitCabinPanelClick(int carId, int panelIndex, int floorNumber) {
         emitImageInteraction("CabinPanel", panelIndex, "FloorButtonPress", String.valueOf(floorNumber));
-        emitCabinSelect(panelIndex + 1, floorNumber); // Assuming car IDs start from 1
+        emitCabinSelect(carId, floorNumber); // Assuming car IDs start from 1
     }
 
-    public void emitCallButtonClick(int buttonIndex, String direction, int floor) {
+    public void emitCallButtonClick(int carId, int buttonIndex, String direction, int floor) {
         emitImageInteraction("CallButton", buttonIndex, "DirectionPress", direction + "_FLOOR_" + (floor + 1));
         emitHallCall(floor + 1, direction); // floor + 1 because arrays are 0-indexed but floors start at 1
     }
 
-    public void emitDoorClick(int doorIndex, String clickType) {
+    public void emitDoorClick(int carId, int doorIndex, String clickType) {
         emitImageInteraction("ElevatorDoor", doorIndex, "DoorClick", clickType);
     }
 
-    public void emitFloorDisplayClick(int displayIndex) {
+    public void emitFloorDisplayClick(int carId, int displayIndex) {
         emitImageInteraction("FloorDisplay", displayIndex, "DisplayClick", "FLOOR_" + (displayIndex + 1));
     }
 
-    public void emitFireAlarmClick() {
+    public void emitFireAlarmClick(int carId) {
         emitImageInteraction("FireAlarm", 0, "AlarmActivated", "EMERGENCY");
-        onModeSet(1, "EMERGENCY"); // Set all cars to emergency mode
+        onModeSet(carId, "EMERGENCY"); // Set all cars to emergency mode
     }
 
-    public void emitOverloadWeightClick(int buttonIndex) {
+    public void emitOverloadWeightClick(int carId, int buttonIndex) {
         emitImageInteraction("OverloadWeight", buttonIndex, "WeightExceeded", "OVERLOAD");
-        onModeSet(1, "OVERLOAD"); // Set all cars to overload mode
+        onModeSet(carId, "OVERLOAD"); // Set all cars to overload mode
     }
+
 
     // notifications to listener
     public void notifyDisplaySet(int carId, String text) {
