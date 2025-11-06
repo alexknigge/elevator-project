@@ -75,9 +75,9 @@ public class SoftwareBusInternalNetwork {
     /**
      * Starts a thread that listens for messages coming from a given socket.
      * Server mode:
-     *    - Rebroadcasts received messages to all other clients.
+     * - Rebroadcasts received messages to all other clients.
      * Client mode:
-     *    - Checks message topic/subtopic against subscriptions and stores it in the local queue if relevant.
+     * - Checks message topic/subtopic against subscriptions and stores it in the local queue if relevant.
      */
     private void readerThread(Socket socket) {
         Thread readerThread = new Thread(() -> {
@@ -129,10 +129,10 @@ public class SoftwareBusInternalNetwork {
     /**
      * Sends a message into the network.
      * Server mode:
-     *    - Deliver message locally to server listener
-     *    - Broadcast message to all connected clients
+     * - Deliver message locally to server listener
+     * - Broadcast message to all connected clients
      * Client mode:
-     *    - Send message upstream to server
+     * - Send message upstream to server
      */
     public void broadcast(Message message) {
         if (isServer) {
