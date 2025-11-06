@@ -1,3 +1,4 @@
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Application;
@@ -41,6 +42,11 @@ public class gui extends Application {
     List<Label> buttonLabels = new ArrayList<>();
     ImageView elevDoorsImg = new ImageView();
     ImageView elevCallButtonsImg = new ImageView();
+    ArrayList<Panel> cabinPanelList = new ArrayList<>();
+    ArrayList<ElevatorDoor> elevDoorList = new ArrayList<>();
+    ArrayList<CallButton> callButtonList = new ArrayList<>();
+    ArrayList<FloorDisplay> floorDisplayList = new ArrayList<>();
+    FireAlarm fireAlarm = new FireAlarm();
 
     @Override
     public void start(Stage primaryStage) {
@@ -65,7 +71,9 @@ public class gui extends Application {
         for (int j = 0; j < 10; j++) {
             HBox h = new HBox();
             FloorDisplay floorDisplay = new FloorDisplay();
+            floorDisplayList.add(floorDisplay);
             CallButton callButton = new CallButton();
+            callButtonList.add(callButton);
             h.getChildren().addAll(floorDisplay.floorDisplayOverlay, callButton.callButtonOverlay);
             vbox.getChildren().add(h);
         }
@@ -76,7 +84,9 @@ public class gui extends Application {
         for (int i = 0; i < 4; i++) {
             VBox v = new VBox();
             Panel cabinPanel = new Panel();
+            cabinPanelList.add(cabinPanel);
             ElevatorDoor elevatorDoor = new ElevatorDoor();
+            elevDoorList.add(elevatorDoor);
             v.getChildren().addAll(cabinPanel.panelOverlay, elevatorDoor.doorOverlay);
             hbox.getChildren().add(v);
         }
@@ -167,9 +177,9 @@ public class gui extends Application {
                     if (payload != null) {
                         String[] parts = payload.split(":", 2);
                         floorLabel2.setText(parts[0]);
-                        if (parts[1].equals("UP")) setImg(floorDispImg, 10);
-                        else if (parts[1].equals("DOWN")) setImg(floorDispImg, 9);
-                        else setImg(floorDispImg, 8);
+                        if (parts[1].equals("UP")) setAllListImgs(4, 10);
+                        else if (parts[1].equals("DOWN")) setAllListImgs(4, 9);
+                        else setAllListImgs(4, 8);
                     }
                     break;
                 case "FloorDisplay.arrivalChime":
@@ -186,7 +196,7 @@ public class gui extends Application {
     }
 
     private class Panel{
-        private ImageView elevPanelImg = new ImageView();
+        public  ImageView elevPanelImg = new ImageView();
         public StackPane panelOverlay = new StackPane(elevPanelImg);
         private double scaleFactor = 1;
         private int yTranslation = -30; // adjust as needed for non 1:1 scales
@@ -234,26 +244,8 @@ public class gui extends Application {
         }
     }
 
-    private class FloorDisplay{
-        ImageView floorDispImg = new ImageView();
-        public StackPane floorDisplayOverlay = new StackPane(floorDispImg);
-
-        private FloorDisplay(){ makeDisplay(); }
-
-        private void makeDisplay(){
-            floorDispImg.setPreserveRatio(true);
-            floorDispImg.setFitWidth(120);
-            floorDispImg.setImage(loader.imageList.get(8)); // 8-10 indices are floor displays
-
-            Label floorLabel2 = new Label("1");
-            floorLabel2.setStyle("-fx-text-fill: white;");
-            floorLabel2.setFont(Font.font("Verdana", FontWeight.BOLD, 22));
-            floorLabel2.setTranslateY(-185);
-        }
-    }
-
     private class ElevatorDoor{
-        ImageView elevDoorsImg = new ImageView();
+        public ImageView elevDoorsImg = new ImageView();
         public StackPane doorOverlay = new StackPane(elevDoorsImg);
 
         private ElevatorDoor(){ makeDoor(); }
@@ -266,7 +258,7 @@ public class gui extends Application {
     }
 
     private class CallButton{
-        private ImageView elevCallButtonsImg = new ImageView();
+        public  ImageView elevCallButtonsImg = new ImageView();
         public StackPane callButtonOverlay = new StackPane(elevCallButtonsImg);
 
         private CallButton(){ makeCallButton(); }
@@ -292,8 +284,27 @@ public class gui extends Application {
         }
     }
 
+    private class FloorDisplay{
+        public ImageView floorDispImg = new ImageView();
+        public StackPane floorDisplayOverlay = new StackPane(floorDispImg);
+
+        private FloorDisplay(){ makeDisplay(); }
+
+        private void makeDisplay(){
+            floorDispImg.setPreserveRatio(true);
+            floorDispImg.setFitWidth(120);
+            floorDispImg.setImage(loader.imageList.get(8)); // 8-10 indices are floor displays
+
+            Label floorLabel2 = new Label("1");
+            floorLabel2.setStyle("-fx-text-fill: white;");
+            floorLabel2.setFont(Font.font("Verdana", FontWeight.BOLD, 22));
+            floorLabel2.setTranslateY(-185);
+        }
+    }
+
     private class FireAlarm{
-        ImageView fireAlarmImg = new ImageView();
+        public ImageView fireAlarmImg = new ImageView();
+        public StackPane fireAlarmOverlay = new StackPane(fireAlarmImg);
 
         private FireAlarm(){ makeFireAlarm(); }
 
@@ -303,16 +314,96 @@ public class gui extends Application {
             fireAlarmImg.setImage(loader.imageList.get(14)); // 14-15 indices are fire alarms
         }
     }
-    
-    // Change image in one of the 4 slots by index in the image list
-    private void setImg(ImageView currImg, int newIndex) {
-        try {
-            if (newIndex < 0 || newIndex >= loader.imageList.size()) return;
-            Image newImg = loader.imageList.get(newIndex);
-            currImg.setImage(newImg);
-        } catch (Exception e) {
-            // guard against any GUI update errors
-            e.printStackTrace();
+
+    // Change image
+    private void setImg(int ListNumber, int ListIdx, int newImageIdx) {
+        if(ListNumber < 1 || ListNumber > 4) ListNumber = 1; // default to cabin panel list
+        if (ListNumber == 1) {
+            for (int i = 0; i < cabinPanelList.size(); i++) {
+                if(i != ListIdx) continue;
+                try {
+                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
+                    Image newImg = loader.imageList.get(newImageIdx);
+                    cabinPanelList.get(i).elevPanelImg.setImage(newImg);
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+        } else if (ListNumber == 2) {
+            for (int i = 0; i < elevDoorList.size(); i++) {
+                if(i != ListIdx) continue;
+                try {
+                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
+                    Image newImg = loader.imageList.get(newImageIdx);
+                    elevDoorList.get(i).elevDoorsImg.setImage(newImg);
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+        } else if (ListNumber == 3) {
+            for (int i = 0; i < callButtonList.size(); i++) {
+                if(i != ListIdx) continue;
+                try {
+                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
+                    Image newImg = loader.imageList.get(newImageIdx);
+                    callButtonList.get(i).elevCallButtonsImg.setImage(newImg);
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+        } else if (ListNumber == 4) {
+            for (int i = 0; i < floorDisplayList.size(); i++) {
+                if(i != ListIdx) continue;
+                try {
+                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
+                    Image newImg = loader.imageList.get(newImageIdx);
+                    floorDisplayList.get(i).floorDispImg.setImage(newImg);
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+        } else if (ListNumber == 5) {
+            try {
+                if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
+                Image newImg = loader.imageList.get(newImageIdx);
+                fireAlarm.fireAlarmImg.setImage(newImg);
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+    }
+
+    // Change all images in a list
+    private void setAllListImgs(int ListNumber, int newImageIdx) {
+        if(ListNumber < 1 || ListNumber > 4) ListNumber = 1; // default to cabin panel list
+        if (ListNumber == 1) {
+            for (int i = 0; i < cabinPanelList.size(); i++) {
+                try {
+                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
+                    Image newImg = loader.imageList.get(newImageIdx);
+                    cabinPanelList.get(i).elevPanelImg.setImage(newImg);
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+        } else if (ListNumber == 2) {
+            for (int i = 0; i < elevDoorList.size(); i++) {
+                try {
+                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
+                    Image newImg = loader.imageList.get(newImageIdx);
+                    elevDoorList.get(i).elevDoorsImg.setImage(newImg);
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+        } else if (ListNumber == 3) {
+            for (int i = 0; i < callButtonList.size(); i++) {
+                try {
+                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
+                    Image newImg = loader.imageList.get(newImageIdx);
+                    callButtonList.get(i).elevCallButtonsImg.setImage(newImg);
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+        } else if (ListNumber == 4) {
+            for (int i = 0; i < floorDisplayList.size(); i++) {
+                try {
+                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
+                    Image newImg = loader.imageList.get(newImageIdx);
+                    floorDisplayList.get(i).floorDispImg.setImage(newImg);
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+        } else if (ListNumber == 5) {
+            try {
+                if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
+                Image newImg = loader.imageList.get(newImageIdx);
+                fireAlarm.fireAlarmImg.setImage(newImg);
+            } catch (Exception e) { e.printStackTrace(); }
         }
     }
 }
