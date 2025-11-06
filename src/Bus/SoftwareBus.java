@@ -39,15 +39,6 @@ public class SoftwareBus {
     }
 
     /**
-     * Publishes a message to the bus.
-     * - In server mode: broadcast the message to all connected clients.
-     * - In client mode: send the message to the central server.
-     */
-    public void publish(Message message) {
-        network.broadcast(message);
-    }
-
-    /**
      * Registers a subscription to a given topic and subtopic.
      */
     public void subscribe(int topic, int subtopic) {
@@ -55,6 +46,15 @@ public class SoftwareBus {
             subscriptions.add(new Subscription(topic, subtopic));
             System.out.println("subscribed to " + topic + " " + subtopic);
         }
+    }
+
+    /**
+     * Publishes a message to the bus.
+     * - In server mode: broadcast the message to all connected clients.
+     * - In client mode: send the message to the central server.
+     */
+    public void publish(Message message) {
+        network.broadcast(message);
     }
 
     /**
