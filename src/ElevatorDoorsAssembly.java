@@ -2,6 +2,7 @@ public class ElevatorDoorsAssembly {
     private boolean isOpen;
     private boolean isObstructed;
     private boolean isMoving;
+    private int carId;
 
     // Optional GUI listener
     private static gui.listener guiListener = null;
@@ -10,10 +11,11 @@ public class ElevatorDoorsAssembly {
         guiListener = l;
     }
 
-    public ElevatorDoorsAssembly() {
+    public ElevatorDoorsAssembly(int carId) {
         this.isOpen = false;
         this.isObstructed = false;
         this.isMoving = false;
+        this.carId = carId;
 
     }
 
@@ -31,11 +33,14 @@ public class ElevatorDoorsAssembly {
             isMoving = true;
             System.out.println("[Doors] Opening...");
             if (guiListener != null) guiListener.notify("Doors.opening", null);
+            DeviceMultiplexor.getInstance().notifyDoorChanged(carId, "OPENING");
             simulateDelay(2000);
             isOpen = true;
             isMoving = false;
             System.out.println("[Doors] Fully open.");
             if (guiListener != null) guiListener.notify("Doors.opened", null);
+            DeviceMultiplexor.getInstance().notifyDoorChanged(carId, "OPENED");
+
         }
     }
 
@@ -47,6 +52,7 @@ public class ElevatorDoorsAssembly {
         if (isObstructed) {
             System.out.println("[Doors] obstruction detected reopening.");
             if (guiListener != null) guiListener.notify("Doors.closeBlockedObstruction", null);
+            DeviceMultiplexor.getInstance().emitDoorSensor(carId, true);
             open();;
             return;
         }
@@ -54,11 +60,13 @@ public class ElevatorDoorsAssembly {
             isMoving = true;
             System.out.println("[Doors] Closing...");
             if (guiListener != null) guiListener.notify("Doors.closing", null);
+            DeviceMultiplexor.getInstance().notifyDoorChanged(carId, "CLOSING");
             simulateDelay(1000);
             if (!isObstructed) {
                 isOpen = false;
                 System.out.println("[Doors] Fully closed.");
                 if (guiListener != null) guiListener.notify("Doors.closed", null);
+                DeviceMultiplexor.getInstance().notifyDoorChanged(carId, "CLOSED");
             } else {
                 System.out.println("[Doors] Reopening due to obstruction.");
                 open();
@@ -92,6 +100,8 @@ public class ElevatorDoorsAssembly {
     public void setObstruction(boolean obstructed) {
         this.isObstructed = obstructed;
         if (guiListener != null) guiListener.notify("Doors.obstructionSet", Boolean.toString(obstructed));
+        DeviceMultiplexor.getInstance().emitDoorSensor(carId, obstructed);
+
     }
 
     /**

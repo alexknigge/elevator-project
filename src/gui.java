@@ -47,10 +47,18 @@ public class gui extends Application {
     public void start(Stage primaryStage) {
         // Initialize the multiplexor
         multiplexor = DeviceMultiplexor.getInstance();
-        multiplexor.registerCar(1); // Register a default car
-        multiplexor.registerCar(2);
-        multiplexor.registerCar(3);
-        multiplexor.registerCar(4);
+
+        // create 4 elevators and register them with the mux
+        Elevator e1 = new Elevator(1, 10);
+        Elevator e2 = new Elevator(2, 10);
+        Elevator e3 = new Elevator(3, 10);
+        Elevator e4 = new Elevator(4, 10);
+
+        multiplexor.registerCar(e1);
+        multiplexor.registerCar(e2);
+        multiplexor.registerCar(e3);
+        multiplexor.registerCar(e4);
+
         multiplexor.initialize();
         
         // Set up a listener to handle multiplexor events
@@ -100,7 +108,7 @@ public class gui extends Application {
             }
             
             @Override
-            public void onCabinLoadChanged(int carId, int weight) {
+            public void onCabinLoad(int carId, int weight) {
                 System.out.println("Multiplexor: Cabin load changed for car " + carId + ": " + weight);
             }
             
@@ -118,6 +126,22 @@ public class gui extends Application {
             public void emitOverloadWeightClick(int buttonIndex) {
                 System.out.println("Multiplexor: Button interaction - OverloadWeight[" + buttonIndex + "] WeightExceeded: OVERLOAD");
             }
+            @Override
+            public void onHallCall(int floor, String direction) {
+            }
+            @Override
+            public void onCabinSelect(int carId, int floor) {
+            }
+            @Override
+            public void onDoorSensor(int carId, boolean blocked) {
+ 
+            }
+            @Override
+            public void onCarPosition(int carId, int floor, String direction) {
+
+            }
+
+            
         });
 
 

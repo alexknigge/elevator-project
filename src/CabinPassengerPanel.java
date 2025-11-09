@@ -16,8 +16,11 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
     private int currentFloor;
     private String direction; // "UP" "DOWN" and "IDLE"
     private boolean fireKeyActive;
+    
+    private final int carId;
 
-    public CabinPassengerPanel(int totalFloors) {
+    public CabinPassengerPanel(int carId, int totalFloors) {
+        this.carId = carId;
         this.totalFloors = totalFloors;
         this.floorButtons = new boolean[totalFloors];
         this.pressedFloorsQueue = new ArrayList<>();
@@ -32,6 +35,8 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
             floorButtons[floorNumber - 1] = true;
             pressedFloorsQueue.add(floorNumber);
             if (guiListener != null) guiListener.notify("Cabin.pressFloorButton", Integer.toString(floorNumber));
+            DeviceMultiplexor.getInstance().emitCabinPanelClick(carId, carId - 1, floorNumber);
+            DeviceMultiplexor.getInstance().emitCabinSelect(carId, floorNumber);
         }
     }
 
@@ -41,7 +46,7 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
         if (guiListener != null) guiListener.notify("Cabin.getPressedFloors", null);
         return new ArrayList<>(pressedFloorsQueue);
     }
-
+ 
     /// Clears all stored pressed floor events (after being serviced)
     @Override
     public void clearPressedFloors() {
@@ -55,6 +60,7 @@ class CabinPassengerPanel implements CabinPassengerPanelAPI {
         if (floorNumber >= 1 && floorNumber <= totalFloors) {
             floorButtons[floorNumber - 1] = false;
             if (guiListener != null) guiListener.notify("Cabin.resetFloorButton", Integer.toString(floorNumber));
+            DeviceMultiplexor.getInstance().onDisplaySet(carId, currentFloor + " " + direction);
         }
     }
 

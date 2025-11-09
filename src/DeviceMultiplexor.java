@@ -1,17 +1,24 @@
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class DeviceMultiplexor {
-    public interface DeviceListener {
+public interface DeviceListener {
     void onDisplayUpdate(int carId, String text);
     void onDoorStateChanged(int carId, String state);
     void onCarArrived(int carId, int floor, String direction);
     void onCallReset(int floor);
-    void onCabinLoadChanged(int carId, int weight);
     void onModeChanged(int carId, String mode);
     void onImageInteraction(String imageType, int imageIndex, String interactionType, String additionalData);
     void emitOverloadWeightClick(int buttonIndex);
-    }
+
+    void onHallCall(int floor, String direction);
+    void onCabinSelect(int carId, int floor);
+    void onDoorSensor(int carId, boolean blocked);
+    void onCabinLoad(int carId, int weight);
+    void onCarPosition(int carId, int floor, String direction);
+}
 
     private DeviceListener listener;
 
@@ -35,12 +42,18 @@ public class DeviceMultiplexor {
     // cars known to the mux (ids only for now)
     Set<Integer> cars = new HashSet<>();
 
+    private final Map<Integer, Elevator> carsById = new HashMap<>();
+
+
 
     public DeviceMultiplexor() {}
 
-    // register a car so the mux can target it by id
-    public void registerCar(int carId) {
-        cars.add(carId);
+
+    // register a elevator so the mux can target it by id
+    public void registerCar(Elevator elev) {
+        if (elev == null) return;
+        cars.add(elev.carId);
+        carsById.put(elev.carId, elev);
     }
 
     // initilize the Multiplexor  (placeholder initialize)
@@ -56,8 +69,20 @@ public class DeviceMultiplexor {
     // operate doors on a car
     public void onDoorCON(int carId, String action) {
         System.out.println("door " + carId + " " + action);
+        Elevator e = carsById.get(carId);
+        if (e != null) {
+            String a = action.toUpperCase();
+            if ("OPEN".equals(a)) {
+                e.doors.open();
+            } else if ("CLOSE".equals(a)) {
+                e.doors.close();
+            } else {
+            }
+        }
         if (listener != null) listener.onDoorStateChanged(carId, action);
     }
+
+
 
     // set text/arrow on car display
     public void onDisplaySet(int carId, String text) {
@@ -69,33 +94,43 @@ public class DeviceMultiplexor {
     // hall panel pressed at floor with direction
     public void emitHallCall(int floor, String direction) {
         System.out.println("hall " + floor + " " + direction);
+        if (listener != null) listener.onHallCall(floor, direction);
     }
 
     //cabin panel chose a floor on a given car
     public void emitCabinSelect(int carId, int floor) {
         System.out.println("select " + carId + " " + floor);
+        if (listener != null) listener.onCabinSelect(carId, floor);
     }
 
         // elevator position with direction 
     public void emitCarPosition(int carId, int floor, String direction) {
         System.out.println("position " + carId + " " + floor + " " + direction);
+        if (listener != null) listener.onCarPosition(carId, floor, direction);
+
     }
 
 
     // door sensor feedback
     public void emitDoorSensor(int carId, boolean blocked) {
         System.out.println("doorSensor " + carId + " " + blocked);
+        if (listener != null) listener.onDoorSensor(carId, blocked);
+
     }
 
     // cabin load in weight
     public void emitCabinLoad(int carId, int weight) {
         System.out.println("load " + carId + " " + weight);
+        if (listener != null) listener.onCabinLoad(carId, weight);
+
     }
 
 
     // mode set
     public void onModeSet(int carId, String mode) {
         System.out.println("mode " + carId + " " + mode);
+        if (listener != null) listener.onModeChanged(carId, mode);
+
     }
 
     // image interaction tracking
@@ -166,30 +201,30 @@ public class DeviceMultiplexor {
         instance = mux;
     }
 
-    public static void main(String[] args) {
+    // public static void main(String[] args) {
 
-        // demo 
-        DeviceMultiplexor mux = new DeviceMultiplexor();
+    //     // demo 
+    //     DeviceMultiplexor mux = new DeviceMultiplexor();
 
-        mux.registerCar(1);  // add car 1
-        mux.registerCar(35);  // add car 35
+    //     mux.registerCar(1);  // add car 1
+    //     mux.registerCar(35);  // add car 35
 
-        mux.initialize(); //initialize the Multiplexor
+    //     mux.initialize(); //initialize the Multiplexor
 
-        // hallway pressed UP at floor 3
-        mux.emitHallCall(3, "UP");
-        // inside car 1, passenger chose floor 7
-        mux.emitCabinSelect(1, 7);  
-        mux.onCarDispatch(1, 7); // tell car 1 to go to 7
-        mux.onDoorCON(1, "OPEN");   // open doors on car 1
+    //     // hallway pressed UP at floor 3
+    //     mux.emitHallCall(3, "UP");
+    //     // inside car 1, passenger chose floor 7
+    //     mux.emitCabinSelect(1, 7);  
+    //     mux.onCarDispatch(1, 7); // tell car 1 to go to 7
+    //     mux.onDoorCON(1, "OPEN");   // open doors on car 1
 
-        mux.onDisplaySet(1, "7 UP"); // set car 1 display text
+    //     mux.onDisplaySet(1, "7 UP"); // set car 1 display text
 
-        mux.emitCarPosition(1, 4, "UP");// elevator position with direction
-        mux.emitDoorSensor(1, true);// door sensor feedback
-        // cabin load in weight
-        mux.emitCabinLoad(1, 980);
+    //     mux.emitCarPosition(1, 4, "UP");// elevator position with direction
+    //     mux.emitDoorSensor(1, true);// door sensor feedback
+    //     // cabin load in weight
+    //     mux.emitCabinLoad(1, 980);
 
-        mux.onModeSet(1, "EMERGENCY"); // mode set
-    }
+    //     mux.onModeSet(1, "EMERGENCY"); // mode set
+    // }
 }

@@ -1,7 +1,8 @@
 public class ElevatorFloorDisplay {
     private int currentFloor;
     private String direction; // "UP" "DOWN" "IDLE"
-
+    
+    private final int carId;
     // Optional GUI listener
     private static gui.listener guiListener = null;
 
@@ -9,7 +10,8 @@ public class ElevatorFloorDisplay {
         guiListener = l;
     }
 
-    public ElevatorFloorDisplay() {
+    public ElevatorFloorDisplay(int carId) {
+        this.carId = carId;
         this.currentFloor = 1;
         this.direction = "IDLE";
     }
@@ -24,6 +26,9 @@ public class ElevatorFloorDisplay {
         this.direction = direction;
         System.out.println("[Display]");
         if (guiListener != null) guiListener.notify("FloorDisplay.update", currentFloor + ":" + direction);
+        DeviceMultiplexor.getInstance().onDisplaySet(carId, currentFloor + " " + direction);
+        DeviceMultiplexor.getInstance().emitCarPosition(carId, currentFloor, direction);
+
     }
 
     /**

@@ -1,7 +1,7 @@
 public class testApi {
     public static void main(String[] args) {
-        ElevatorFloorDisplay display = new ElevatorFloorDisplay();
-        ElevatorDoorsAssembly doors = new ElevatorDoorsAssembly();
+        ElevatorFloorDisplay display = new ElevatorFloorDisplay(1);
+        ElevatorDoorsAssembly doors = new ElevatorDoorsAssembly(1);
 
         // Display updates
         display.updateFloorIndicator(4, "UP");

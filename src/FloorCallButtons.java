@@ -15,7 +15,11 @@ class FloorCallButtons implements FloorCallButtonsAPI {
     private boolean upPressed;               // true if Up call is active
     private boolean downPressed;             // true if Down call is active
 
-    public FloorCallButtons(int floorNumber, int totalFloors) {
+    private final int carId;
+
+
+    public FloorCallButtons(int carId, int floorNumber, int totalFloors) {
+        this.carId = carId;
         this.floorNumber = floorNumber;
         this.totalFloors = totalFloors;
         this.hasUp = floorNumber < totalFloors;
@@ -29,6 +33,8 @@ class FloorCallButtons implements FloorCallButtonsAPI {
         if (hasUp) {
             upPressed = true;
             if (guiListener != null) guiListener.notify("FloorCall.pressUp", Integer.toString(floorNumber));
+            DeviceMultiplexor.getInstance().emitCallButtonClick(carId, floorNumber - 1, "UP", floorNumber - 1);
+
         }
     }
 
@@ -37,6 +43,8 @@ class FloorCallButtons implements FloorCallButtonsAPI {
         if (hasDown) {
             downPressed = true;
             if (guiListener != null) guiListener.notify("FloorCall.pressDown", Integer.toString(floorNumber));
+            DeviceMultiplexor.getInstance().emitCallButtonClick(carId, floorNumber - 1, "DOWN", floorNumber - 1);
+
         }
     }
 
