@@ -24,6 +24,8 @@ import utils.imageLoader;
  */
 public class gui extends Application {
     private imageLoader loader;
+    private SoftwareBus bus;
+    private listener getListenerImpl;
 
     /**
      * Public nested listener type so other classes can refer to it as `gui.listener`.
