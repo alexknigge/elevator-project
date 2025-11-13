@@ -331,7 +331,7 @@ public class gui extends Application {
                 left.setOnMouseClicked(event -> {
                     left.setStyle("-fx-text-fill: white;");
                     multiplexor.emitCabinPanelClick(carId, panelIndex, floorNumber);
-                    multiplexor.onDoorCON(carId, "OPEN");  // open the doors for THIS car
+                    multiplexor.onDoorCON(carId, 1);  // open the doors for THIS car
 
                 });
 

@@ -9,7 +9,7 @@ public class Elevator {
         this.carId = carId;
         this.doors  = new ElevatorDoorsAssembly(carId);
         this.panel  = new CabinPassengerPanel(carId, totalFloors);
-        this.display= new ElevatorFloorDisplay(carId);
+        this.display = new ElevatorFloorDisplay(carId);
         this.hall   = new FloorCallButtons(carId, 1, totalFloors);
     }
 }

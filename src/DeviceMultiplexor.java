@@ -3,7 +3,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+
 public class DeviceMultiplexor {
+
 public interface DeviceListener {
     void onDisplayUpdate(int carId, String text);
     void onDoorStateChanged(int carId, String state);
@@ -25,29 +27,30 @@ public interface DeviceListener {
     public void setListener(DeviceListener listener) {
         this.listener = listener;
     }
-
-    // simple message tags used
-    String CarDispatch = "CAR.DISPATCH";   // move car to a floor
-    String DoorCmd     = "DOOR.CON";       // door control ( open or close)
-    String DisplaySet  = "DISPLAY.SET";    // update car display 
-    String HallCall    = "HALL.CALL";      // hall button pressed with direction 
-    String CabinSelect = "CABIN.SELECT";   // cabin floor selected
-    String CarPosition  = "CAR.POSITION";   // car at floor with direction 
-    String DoorSensor   = "DOOR.SENSOR";    // obstruction 
-    String CabinLoad   = "CABIN.LOAD";     // load (weight)
-    String ModeSet     = "MODE.SET";       // mode change
-    String ImageClick  = "IMAGE.CLICK";    // image clicked/interacted with
-    String FloorSelect = "FLOOR.SELECT";   // floor button selected
     
     // cars known to the mux (ids only for now)
     Set<Integer> cars = new HashSet<>();
 
     private final Map<Integer, Elevator> carsById = new HashMap<>();
 
+    int DOOR_OPEN = 1;
+    int DOOR_CLOSE = 2;
+
+    int DIR_IDLE = 0;
+    int DIR_UP = 1;
+    int DIR_DOWN = 2;
+
+    int MODE_OFF = 0;
+    int MODE_ON = 1;
+    int MODE_FIRE_SAFETY = 2;
+
+    // initilize Software bus
+    private final SoftwareBus bus = new SoftwareBus(false);
 
 
-    public DeviceMultiplexor() {}
+    public DeviceMultiplexor(){
 
+    }
 
     // register a elevator so the mux can target it by id
     public void registerCar(Elevator elev) {
@@ -59,6 +62,50 @@ public interface DeviceListener {
     // initilize the Multiplexor  (placeholder initialize)
     public void initialize() {
         System.out.println("ready " + cars);
+        bus.subscribe(Topic.DOOR_CON, 0);
+        bus.subscribe(Topic.DISPLAY_FLOOR, 0);
+        bus.subscribe(Topic.DISPLAY_DIR, 0);
+        bus.subscribe(Topic.CAR_DISPATCH, 0);
+        bus.subscribe(Topic.MODE_SET, 0);
+        bus.subscribe(Topic.CALL_RESET, 0);
+        startBusPoller();
+    }
+
+
+    // Controller -> PFD (Notifiers)
+    public void startBusPoller() {
+        Thread t = new Thread(() -> {
+            // keep polling
+            while (true) {
+
+                Message msg;
+                msg = bus.get(Topic.DOOR_CON, 0);
+                if (msg != null) {
+                    onDoorCON(msg.getSubTopic(), msg.getBody());
+                }
+                msg = bus.get(Topic.DISPLAY_FLOOR, 0);
+                if (msg != null) {
+                    handleDisplayFloor(msg);
+                }
+                msg = bus.get(Topic.DISPLAY_DIR, 0);
+                if (msg != null) {
+                    handleDisplayDir(msg);
+                }
+                msg = bus.get(Topic.CAR_DISPATCH, 0);
+                if (msg != null) {
+                    handleCarDispatch(msg);
+                }
+                msg = bus.get(Topic.MODE_SET, 0);
+                if (msg != null) {
+                    handleModeSet(msg);
+                }
+                msg = bus.get(Topic.CALL_RESET, 0);
+                if (msg != null) {
+                    handleCallReset(msg);
+                }
+            }
+        });
+        t.start();
     }
 
     // send car to targetFloor
@@ -67,71 +114,189 @@ public interface DeviceListener {
     }
 
     // operate doors on a car
-    public void onDoorCON(int carId, String action) {
+    public void onDoorCON(int carId, int action) {
         System.out.println("door " + carId + " " + action);
+
         Elevator e = carsById.get(carId);
-        if (e != null) {
-            String a = action.toUpperCase();
-            if ("OPEN".equals(a)) {
-                e.doors.open();
-            } else if ("CLOSE".equals(a)) {
-                e.doors.close();
-            } else {
+        if (e == null) {
+            return;
+        }
+        if (action == DOOR_OPEN) {
+            e.doors.open();
+            if (listener != null) {
+                listener.onDoorStateChanged(carId, "OPEN");
+            }
+        } else if (action == DOOR_CLOSE) {
+            e.doors.close();
+            if (listener != null) {
+                listener.onDoorStateChanged(carId, "CLOSE");
             }
         }
-        if (listener != null) listener.onDoorStateChanged(carId, action);
     }
 
+    private final Map<Integer, Integer> lastFloor = new HashMap<>();
+    private final Map<Integer, Integer> lastDir = new HashMap<>();
+
+    public void handleDisplayFloor(Message msg) {
+        int carId = msg.getSubTopic();
+
+        int floor = msg.getBody();
+        lastFloor.put(carId, floor);
+        int dir = lastDir.get(carId);
+
+        String dirStr;
+
+        if (dir == DIR_UP) {
+            dirStr = "UP";
+        } else if (dir == DIR_DOWN) {
+            dirStr = "DOWN";
+        } else {
+            dirStr = "IDLE";
+        }
+
+        onDisplaySet(carId, floor + " " + dirStr);
+    }
+
+    public void handleDisplayDir(Message msg) {
+        int carId = msg.getSubTopic();
+
+        int dir = msg.getBody();
+
+        lastDir.put(carId, dir);
+        int floor = lastFloor.get(carId);
+
+        String dirStr;
+        if (dir == DIR_UP) {
+            dirStr = "UP";
+        } else if (dir == DIR_DOWN) {
+            dirStr = "DOWN";
+        } else {
+            dirStr = "IDLE";
+        }
+        onDisplaySet(carId, floor + " " + dirStr);
+    }
+
+    public void handleCarDispatch(Message msg) {
+        int carId = msg.getSubTopic();
+        int targetFloor = msg.getBody();
+        onCarDispatch(carId, targetFloor);
+    }
+
+    public void handleModeSet(Message msg) {
+        
+        int carId = msg.getSubTopic();
+        int modeCode = msg.getBody();
+
+        String modeStr = " ";
+        if (modeCode == MODE_OFF) {
+            modeStr = "OFF";
+        } else if (modeCode == MODE_ON) {
+            modeStr = "ON";
+        } else if (modeCode == MODE_FIRE_SAFETY) {
+
+            modeStr = "FIRE";
+        } 
+
+        if (carId == 0) {
+            Integer[] ids = cars.toArray(new Integer[0]);
+            for (int i = 0; i < ids.length; i++) {
+
+                onModeSet(ids[i], modeStr);
+            }
+        } else {
+
+            onModeSet(carId, modeStr);
+        }
+    }
+
+    public void handleCallReset(Message msg) {
+        int floor = msg.getSubTopic();
+
+        notifyCallReset(floor);
+    }
+
+
+
+    // PFD -> Controller (Events)
 
 
     // set text/arrow on car display
     public void onDisplaySet(int carId, String text) {
-        System.out.println("display " + carId + " " + text);
-        if (listener != null) listener.onDisplayUpdate(carId, text);
-
+        if (listener != null) {
+            listener.onDisplayUpdate(carId, text);
+        }
     }
 
     // hall panel pressed at floor with direction
     public void emitHallCall(int floor, String direction) {
-        System.out.println("hall " + floor + " " + direction);
-        if (listener != null) listener.onHallCall(floor, direction);
+        int d = 0;
+        if (direction != null) {
+            String dir = direction.toUpperCase();
+            if ("UP".equals(dir)) {
+                d = 1;
+            } else if ("DOWN".equals(dir)) {
+                d = 2;
+            }
+        }
+        bus.publish(new Message(Topic.HALL_CALL, floor, d)); // publish: HALL_CALL (subtopic=floor, body=dir code)
+        if (listener != null) {
+            listener.onHallCall(floor, direction);
+        }
     }
 
-    //cabin panel chose a floor on a given car
+    // cabin panel chose a floor on a given car
     public void emitCabinSelect(int carId, int floor) {
-        System.out.println("select " + carId + " " + floor);
-        if (listener != null) listener.onCabinSelect(carId, floor);
+        bus.publish(new Message(Topic.CABIN_SELECT, carId, floor)); // publish: CABIN_SELECT (subtopic=carId, body=floor)
+        if (listener != null) {
+            listener.onCabinSelect(carId, floor);
+        }
     }
 
-        // elevator position with direction 
+    // elevator position with direction 
     public void emitCarPosition(int carId, int floor, String direction) {
-        System.out.println("position " + carId + " " + floor + " " + direction);
-        if (listener != null) listener.onCarPosition(carId, floor, direction);
-
+        int d = 0;
+        if (direction != null) {
+            String dir = direction.toUpperCase();
+            if ("UP".equals(dir)) {
+                d = 1;
+            } else if ("DOWN".equals(dir)) {
+                d = 2;
+            }
+        }
+        int packed = floor * 10 + d;
+        bus.publish(new Message(Topic.CAR_POSITION, carId, packed)); // publish: CAR_POSITION (subtopic=carId, body=floor*10+dir)
+        if (listener != null) {
+            listener.onCarPosition(carId, floor, direction);
+        }
     }
-
 
     // door sensor feedback
     public void emitDoorSensor(int carId, boolean blocked) {
-        System.out.println("doorSensor " + carId + " " + blocked);
-        if (listener != null) listener.onDoorSensor(carId, blocked);
-
+        int code = 0;
+        if (blocked) {
+            code = 1;
+        }
+        bus.publish(new Message(Topic.DOOR_SENSOR, carId, code)); // publish: DOOR_SENSOR (subtopic=carId, body=0/1)
+        if (listener != null) {
+            listener.onDoorSensor(carId, blocked);
+        }
     }
 
     // cabin load in weight
     public void emitCabinLoad(int carId, int weight) {
-        System.out.println("load " + carId + " " + weight);
-        if (listener != null) listener.onCabinLoad(carId, weight);
-
+        bus.publish(new Message(Topic.CABIN_LOAD, carId, weight)); // publish: CABIN_LOAD (subtopic=carId, body=weight)
+        if (listener != null) {
+            listener.onCabinLoad(carId, weight);
+        }
     }
-
 
     // mode set
     public void onModeSet(int carId, String mode) {
-        System.out.println("mode " + carId + " " + mode);
-        if (listener != null) listener.onModeChanged(carId, mode);
-
+        if (listener != null) {
+            listener.onModeChanged(carId, mode);
+        }
     }
+
 
     // image interaction tracking
     public void emitImageInteraction(String imageType, int imageIndex, String interactionType, String additionalData) {
@@ -172,20 +337,19 @@ public interface DeviceListener {
 
 
     // notifications to listener
-    public void notifyDisplaySet(int carId, String text) {
-        if (listener != null) listener.onDisplayUpdate(carId, text);
-    }
-
     public void notifyDoorChanged(int carId, String state) {
-        if (listener != null) listener.onDoorStateChanged(carId, state);
+        if (listener != null) {
+            listener.onDoorStateChanged(carId, state);
+        }
+    }
+    
+    public void notifyCallReset(int floor) {
+        if (listener != null) {
+            listener.onCallReset(floor);
+        }
     }
 
-    public void notifyCarArrived(int carId, int floor, String direction) {
-        if (listener != null) listener.onCarArrived(carId, floor, direction);
-    }
-    public void notifyCallReset(int floor) {
-        if (listener != null) listener.onCallReset(floor);
-    }
+
 
     // getter for accessing the multiplexor instance from GUI
     private static DeviceMultiplexor instance = null;
@@ -200,31 +364,4 @@ public interface DeviceListener {
     public static void setInstance(DeviceMultiplexor mux) {
         instance = mux;
     }
-
-    // public static void main(String[] args) {
-
-    //     // demo 
-    //     DeviceMultiplexor mux = new DeviceMultiplexor();
-
-    //     mux.registerCar(1);  // add car 1
-    //     mux.registerCar(35);  // add car 35
-
-    //     mux.initialize(); //initialize the Multiplexor
-
-    //     // hallway pressed UP at floor 3
-    //     mux.emitHallCall(3, "UP");
-    //     // inside car 1, passenger chose floor 7
-    //     mux.emitCabinSelect(1, 7);  
-    //     mux.onCarDispatch(1, 7); // tell car 1 to go to 7
-    //     mux.onDoorCON(1, "OPEN");   // open doors on car 1
-
-    //     mux.onDisplaySet(1, "7 UP"); // set car 1 display text
-
-    //     mux.emitCarPosition(1, 4, "UP");// elevator position with direction
-    //     mux.emitDoorSensor(1, true);// door sensor feedback
-    //     // cabin load in weight
-    //     mux.emitCabinLoad(1, 980);
-
-    //     mux.onModeSet(1, "EMERGENCY"); // mode set
-    // }
 }

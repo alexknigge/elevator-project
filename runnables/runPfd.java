@@ -1,30 +1,65 @@
 import javafx.application.Application;
+import java.math.*;
+import java.util.Random;
 
 public class runPfd {
     public static void main(String[] args) throws InterruptedException {
         DeviceMultiplexor mux = DeviceMultiplexor.getInstance();
+        Random rand = new Random();
 
         // Start GUI
-        new Thread(() -> Application.launch(gui.class)).start();
-        Thread.sleep(1200); // brief warm-up; shorten/remove if your GUI is instant
+        Thread guiThread = new Thread(() -> Application.launch(gui.class));
+        guiThread.start();
+        Thread.sleep(3000); // Wait for GUI to initialize
 
+        int startingFloor = 6;
         int carId = 1;
-        int floor = 6;
+        int currentFloor = startingFloor;
 
-        // Show we're at floor 6 and idle
-        mux.onDisplaySet(carId, floor + " IDLE");
-        mux.notifyCarArrived(carId, floor, "IDLE");
+        // API Calls
+        mux.onDisplaySet(carId, startingFloor + " IDLE");
+        mux.onDisplaySet(carId, startingFloor + " IDLE");
+        Thread.sleep(2000);
+        mux.emitHallCall(startingFloor, "UP");
+        Thread.sleep(2000);
+        mux.notifyCallReset(startingFloor);
+        Thread.sleep(2000);
+        for(int n = 0; n < 5; n++) {
+            int i = rand.nextInt(10);
+            Thread.sleep(2000);
+            mux.onDoorCON(carId, 1);
+            Thread.sleep(2000);
+            mux.emitDoorSensor(carId, true);
+            Thread.sleep(2000);
+            if(rand.nextInt(10) > 5) mux.onModeSet(carId, "OVERLOAD"); // 50% chance to simulate weight overload call
+            Thread.sleep(2000);
+            mux.onDoorCON(carId, 2);  // Should detect obstruction and reopen
+            Thread.sleep(2000);
+            mux.emitDoorSensor(carId, false);
+            Thread.sleep(2000);
+            mux.onDoorCON(carId, 2);  // Now closes successfully
+            Thread.sleep(2000);
 
-        // Open, wait, close
-        mux.onDoorCON(carId, "OPEN");
-        Thread.sleep(800);
-        mux.onDoorCON(carId, "CLOSE");
+            // Simulate passing floors
+            for(int j = 0; j < 3; j++) {
+                if(i > currentFloor) {
+                    currentFloor++;
+                    mux.onDisplaySet(carId, currentFloor + " UP");
+                    mux.onDisplaySet(carId, currentFloor + " UP");
+                } else if(i < currentFloor) {
+                    currentFloor--;
+                    mux.onDisplaySet(carId, currentFloor + " DOWN");
+                    mux.onDisplaySet(carId, currentFloor + " DOWN");
+                } else {
+                    continue;
+                }
+                Thread.sleep(1000);
+            }
 
-        // Update upper display: move UP to 7, then idle at 7
-        Thread.sleep(500);
-        mux.onDisplaySet(carId, (floor + 1) + " UP");   // shows arrow UP and "7"
-        Thread.sleep(600);
-        mux.notifyCarArrived(carId, floor + 1, "UP");
-        mux.onDisplaySet(carId, (floor + 1) + " IDLE"); // now idle on 7
-    }
+            mux.emitCabinSelect(carId, i);
+            Thread.sleep(2000);
+            mux.onDisplaySet(carId, i + " IDLE");
+            mux.onDisplaySet(carId, i + " IDLE");
+        }
+    } 
 }
