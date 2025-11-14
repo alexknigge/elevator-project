@@ -1,3 +1,6 @@
+package center;
+
+import bus.SoftwareBus;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;

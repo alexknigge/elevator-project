@@ -1,3 +1,6 @@
+package pfdAPI;
+import mux.DeviceMultiplexor;
+
 /**
  * Class that defines a given Elevator (4 in total).
  * Elevators each have their own doors and floor displays for
@@ -13,19 +16,19 @@ public class Elevator {
     public final CabinPassengerPanel panel;
     // The elevator's floor display
     public final ElevatorFloorDisplay display;
-    // TODO: Unsure of why an elevator would hold a floor call button panel for the first floor.
-    public final FloorCallButtons hall;
+    public final DeviceMultiplexor mux;
 
     /**
      * Constructs an Elevator.
      * @param carId the ID of the elevator (1-4)
      * @param totalFloors the number of floors in the building (=10)
+     * @param mux the DeviceMultiplexor instance
      */
-    public Elevator(int carId, int totalFloors) {
+    public Elevator(int carId, int totalFloors, DeviceMultiplexor mux) {
         this.carId = carId;
-        this.doors  = new ElevatorDoorsAssembly(carId);
-        this.panel  = new CabinPassengerPanel(carId, totalFloors);
-        this.display = new ElevatorFloorDisplay(carId);
-        this.hall   = new FloorCallButtons(carId, 1, totalFloors);
+        this.mux = mux;
+        this.doors  = new ElevatorDoorsAssembly(carId, mux);
+        this.panel  = new CabinPassengerPanel(carId, totalFloors, mux);
+        this.display = new ElevatorFloorDisplay(carId, mux);
     }
 }

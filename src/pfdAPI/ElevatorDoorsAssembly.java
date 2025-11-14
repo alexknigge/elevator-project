@@ -1,3 +1,7 @@
+package pfdAPI;
+
+import mux.DeviceMultiplexor;
+
 /**
  * Class that defines the functionality of the Elevator doors. Represents
  * the pair of doors that open to a specific elevator on each floor.
@@ -7,9 +11,6 @@
  *      public boolean isObstructed()
  *      public boolean isFullyOpen()
  *      public boolean isFullyClosed()
- * For GUI purposes:
- *      public void setObstruction(boolean obstructed)
- *      public static void setGuiListener(gui.listener l)
  */
 public class ElevatorDoorsAssembly {
     // False when the doors are fully closed
@@ -20,28 +21,18 @@ public class ElevatorDoorsAssembly {
     private boolean isMoving;
     // The ID of the associated elevator
     private int carId;
-
-    // Optional GUI listener
-    private static gui.listener guiListener = null;
-
-    /**
-     * Sets the ElevatorDoorsAssembly's guiListener.
-     * @param l The ElevatorDoorsAssembly's guiListener.
-     */
-    public static void setGuiListener(gui.listener l) {
-        guiListener = l;
-    }
+    private final DeviceMultiplexor mux;
 
     /**
      * Constructor of the ElevatorDoorsAssembly.
      * @param carId The ID of the associated elevator
      */
-    public ElevatorDoorsAssembly(int carId) {
+    public ElevatorDoorsAssembly(int carId, DeviceMultiplexor mux) {
         this.isOpen = false;
         this.isObstructed = false;
         this.isMoving = false;
         this.carId = carId;
-
+        this.mux = mux;
     }
 
     /**
@@ -49,23 +40,20 @@ public class ElevatorDoorsAssembly {
      * If an obstruction is detected, opening is halted automatically.
      * TODO: An obstruction should make opening a MANDATORY action, rather than halting it
      */
-    public void open(){
+    public synchronized void open(){
         if(isObstructed) {
             System.out.println("[Doors} Cannot open - obstruction detected.");
-            if (guiListener != null) guiListener.notify("Doors.openAttemptBlocked", null);
             return;
         }
         if (!isOpen) {
             isMoving = true;
             System.out.println("[Doors] Opening...");
-            if (guiListener != null) guiListener.notify("Doors.opening", null);
-            DeviceMultiplexor.getInstance().notifyDoorChanged(carId, "OPENING");
+            mux.notifyDoorChanged(carId, "OPENING");
             simulateDelay(2000);
             isOpen = true;
             isMoving = false;
             System.out.println("[Doors] Fully open.");
-            if (guiListener != null) guiListener.notify("Doors.opened", null);
-            DeviceMultiplexor.getInstance().notifyDoorChanged(carId, "OPENED");
+            mux.notifyDoorChanged(carId, "OPENED");
 
         }
     }
@@ -74,25 +62,22 @@ public class ElevatorDoorsAssembly {
      * Commands the door assembly to close.
      * If obstruction occurs during closing, doors reopen automatically.
      */
-    public void close() {
+    public synchronized void close() {
         if (isObstructed) {
             System.out.println("[Doors] obstruction detected reopening.");
-            if (guiListener != null) guiListener.notify("Doors.closeBlockedObstruction", null);
-            DeviceMultiplexor.getInstance().emitDoorSensor(carId, true);
-            open();;
+            mux.getListener().onDoorSensor(carId, true);
+            open();
             return;
         }
         if (isOpen) {
             isMoving = true;
             System.out.println("[Doors] Closing...");
-            if (guiListener != null) guiListener.notify("Doors.closing", null);
-            DeviceMultiplexor.getInstance().notifyDoorChanged(carId, "CLOSING");
+            mux.notifyDoorChanged(carId, "CLOSING");
             simulateDelay(1000);
             if (!isObstructed) {
                 isOpen = false;
                 System.out.println("[Doors] Fully closed.");
-                if (guiListener != null) guiListener.notify("Doors.closed", null);
-                DeviceMultiplexor.getInstance().notifyDoorChanged(carId, "CLOSED");
+                mux.notifyDoorChanged(carId, "CLOSED");
             } else {
                 System.out.println("[Doors] Reopening due to obstruction.");
                 open();
@@ -105,7 +90,7 @@ public class ElevatorDoorsAssembly {
      * Simulates time delay for the open and close animations. For simulation purposes.
      * @param ms time to be elapsed
      */
-    private void simulateDelay(long ms) {
+    private synchronized void simulateDelay(long ms) {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
@@ -117,19 +102,17 @@ public class ElevatorDoorsAssembly {
      * Returns whether the doors are currently obstructed.
      * @return boolean isObstructed
      */
-    public boolean isObstructed() {
+    public synchronized boolean isObstructed() {
         return isObstructed;
     }
 
     /**
      * Sets obstruction state manually for simulation/testing.
-     * TODO: Make sure this isn't possible when the doors are fully closed in the mult
      * @param obstructed whether the GUI has the obstruction box present
      */
-    public void setObstruction(boolean obstructed) {
+    public synchronized void setObstruction(boolean obstructed) {
         this.isObstructed = obstructed;
-        if (guiListener != null) guiListener.notify("Doors.obstructionSet", Boolean.toString(obstructed));
-        DeviceMultiplexor.getInstance().emitDoorSensor(carId, obstructed);
+        mux.emit(carId + " obstructed: " + obstructed, false);
 
     }
 
@@ -138,7 +121,7 @@ public class ElevatorDoorsAssembly {
      * Elevator cannot be allowed to move.
      * @return boolean isOpen
      */
-    public boolean isFullyOpen() {
+    public synchronized boolean isFullyOpen() {
         return isOpen;
     }
 
@@ -148,7 +131,7 @@ public class ElevatorDoorsAssembly {
      * TODO: This returns true when the doors are half-open. This should not be possible. Need separate variables.
      * @return boolean isOpen
      */
-    public boolean isFullyClosed() {
+    public synchronized boolean isFullyClosed() {
         return !isOpen;
     }
 

@@ -1,3 +1,7 @@
+package pfdAPI;
+
+import mux.DeviceMultiplexor;
+
 /**
  * Class that defines the functionality of the Elevator floor displays. Represents
  * the panel above elevator doors that show the elevator's location and direction of movement.
@@ -15,24 +19,15 @@ public class ElevatorFloorDisplay {
     private String direction;
     // The ID of the associated elevator
     private final int carId;
-
-    // Optional GUI listener
-    private static gui.listener guiListener = null;
-
-    /**
-     * Sets the ElevatorFloorDisplay's guiListener.
-     * @param l The ElevatorFloorDisplay's guiListener.
-     */
-    public static void setGuiListener(gui.listener l) {
-        guiListener = l;
-    }
+    private final DeviceMultiplexor mux;
 
     /**
      * Constructs the ElevatorFloorDisplay.
      * @param carId the ID of the associated elevator
      */
-    public ElevatorFloorDisplay(int carId) {
+    public ElevatorFloorDisplay(int carId, DeviceMultiplexor mux) {
         this.carId = carId;
+        this.mux = mux;
         this.currentFloor = 1;
         this.direction = "IDLE";
     }
@@ -42,32 +37,28 @@ public class ElevatorFloorDisplay {
      * @param currentFloor the floor currently displayed
      * @param direction the direction the elevator is going
      */
-    public void updateFloorIndicator(int currentFloor, String direction) {
+    public synchronized void updateFloorIndicator(int currentFloor, String direction) {
         this.currentFloor = currentFloor;
         this.direction = direction;
         System.out.println("[Display]");
-        if (guiListener != null) guiListener.notify("FloorDisplay.update",
-                currentFloor + ":" + direction);
-        DeviceMultiplexor.getInstance().onDisplaySet(carId, currentFloor + " " + direction);
-        DeviceMultiplexor.getInstance().emitCarPosition(carId, currentFloor, direction);
+        mux.getListener().onDisplayUpdate(carId, currentFloor, direction);
+        mux.emit(carId + " " + currentFloor + " " + direction, false);
     }
 
     /**
      * Simulates the arrival noise.
      */
-    public void playArrivalChime() {
+    public synchronized void playArrivalChime() {
         // again simulating the Ding noise
         System.out.println("*Ding! Elevator has arrived at floor");
-        if (guiListener != null) guiListener.notify("FloorDisplay.arrivalChime", Integer.toString(currentFloor));
     }
 
     /**
      * Simulates the overload buzz.
      */
-    public void playOverLoadWarning() {
+    public synchronized void playOverLoadWarning() {
         // simulating the buzzing noise
         System.out.println("*Buzz! Warning: Overload detected at floor" + currentFloor);
-        if (guiListener != null) guiListener.notify("FloorDisplay.overloadWarning", Integer.toString(currentFloor));
     }
 
     /**
@@ -76,11 +67,11 @@ public class ElevatorFloorDisplay {
      * we need them in the future they just return direction
      * and the current floor.
      */
-    public int getCurrentFloor() {
+    public synchronized int getCurrentFloor() {
         return currentFloor;
     }
 
-    public String getDirection() {
+    public synchronized String getDirection() {
         return direction;
     }
 }

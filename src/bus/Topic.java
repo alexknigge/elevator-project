@@ -1,3 +1,4 @@
+package bus;
 /**
  * SOFTWARE BUS: Topic Class obtained from a separate group.
  * Defines the type of information sent across the software bus.

@@ -1,3 +1,4 @@
+package bus;
 /**
  * SOFTWARE BUS: Message Class obtained from a separate group.
  * Defines the format of information sent across the software bus.

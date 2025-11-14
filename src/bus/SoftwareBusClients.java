@@ -1,3 +1,4 @@
+package bus;
 /**
  * SOFTWARE BUS: SoftwareBusClients Class obtained from a separate group.
  * TODO: This doesn't even do anything lol what the helly

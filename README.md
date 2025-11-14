@@ -41,11 +41,16 @@ Elevator-Project/
 `runPfd.java` starts the GUI and then simulates calls like pressing floor buttons and opening/closing doors. The GUI swaps images from `res/` to show the current state.
 
 ## Notes
-- Images used by the GUI are in the `res/` directory. The `utils.imageLoader`
-	loads and sorts them so the GUI can reference them by index.
-- Floor numbering: `FloorCallButtons` is constructed with a floor number and
-	total floors (e.g. `new FloorCallButtons(1, 10)`).
+- Reworked the MUX to be cleaner
+- Deleted old gui listener to use only the MUX listener
+- - GUI now purely relies on the MUX listner functions
+- Reintegrated MUX listeners into the API
+- Made the MUX multithreading safe (hopefully)
 
-## Next steps / Debugging
-- Down call button doesnt light up even on non-ground level floors.
-- Further testing would be wise.
+## TODO Still
+- Need firealarm and mtx/fire key API integration
+- Need chime sound
+- Need to fully implement all the MUX listener event handling functions in the GUI
+- Need to integrate official topics/subtopics into MUX
+- Need to test external command integrations once official topics are integrated
+- Need to test motion sim once integrated

@@ -1,3 +1,7 @@
+package pfdAPI;
+
+import mux.DeviceMultiplexor;
+
 /**
  * Class that defines the functionality of the Floor Call Buttons. Represents
  * the pair of buttons on each floor that allow users to call an elevator for a
@@ -11,18 +15,7 @@
  *      public void pressDownCall()
  *      public static void setGuiListener(gui.listener l)
  */
-class FloorCallButtons implements FloorCallButtonsAPI {
-
-    // Optional GUI listener
-    private static gui.listener guiListener = null;
-
-    /**
-     * Sets the ElevatorFloorDisplay's guiListener.
-     * @param l The ElevatorFloorDisplay's guiListener.
-     */
-    public static void setGuiListener(gui.listener l) {
-        guiListener = l;
-    }
+public class FloorCallButtons implements FloorCallButtonsAPI {
 
     // Which landing this panel belongs to
     private final int floorNumber;
@@ -36,17 +29,15 @@ class FloorCallButtons implements FloorCallButtonsAPI {
     private boolean upPressed;
     // True if Down call is active
     private boolean downPressed;
-    // TODO: Floor call buttons don't have their own elevators and vice-versa.
-    private final int carId;
+    private final DeviceMultiplexor mux;
 
     /**
      * Constructs the floor call button panel.
-     * @param carId the ID of the elevator TODO: Should only belong to a floor
      * @param floorNumber the floor the panel is located on
      * @param totalFloors total number of floors in the building (=10)
      */
-    public FloorCallButtons(int carId, int floorNumber, int totalFloors) {
-        this.carId = carId;
+    public FloorCallButtons(int floorNumber, int totalFloors, DeviceMultiplexor mux) {
+        this.mux = mux;
         this.floorNumber = floorNumber;
         this.totalFloors = totalFloors;
         this.hasUp = floorNumber < totalFloors;
@@ -58,11 +49,11 @@ class FloorCallButtons implements FloorCallButtonsAPI {
     /**
      * Simulate pressing the Up call
      */
-    public void pressUpCall() {
+    public synchronized void pressUpCall() {
         if (hasUp) {
             upPressed = true;
-            if (guiListener != null) guiListener.notify("FloorCall.pressUp", Integer.toString(floorNumber));
-            DeviceMultiplexor.getInstance().emitCallButtonClick(carId, floorNumber - 1, "UP", floorNumber - 1);
+            mux.imgInteracted("CallButton", floorNumber, "DirectionPress:", "UP" + "_FLOOR_" + floorNumber);
+            mux.emit(floorNumber + "", false);
 
         }
     }
@@ -70,11 +61,11 @@ class FloorCallButtons implements FloorCallButtonsAPI {
     /**
      * Simulate pressing the Down call
      */
-    public void pressDownCall() {
+    public synchronized void pressDownCall() {
         if (hasDown) {
             downPressed = true;
-            if (guiListener != null) guiListener.notify("FloorCall.pressDown", Integer.toString(floorNumber));
-            DeviceMultiplexor.getInstance().emitCallButtonClick(carId, floorNumber - 1, "DOWN", floorNumber - 1);
+            mux.imgInteracted("CallButton", floorNumber, "DirectionPress:", "DOWN" + "_FLOOR_" + floorNumber);
+            mux.emit(floorNumber + "", false);
 
         }
     }
@@ -84,7 +75,7 @@ class FloorCallButtons implements FloorCallButtonsAPI {
      * @return boolean hasUp (false when top floor) && upPressed
      */
     @Override
-    public boolean isUpCallPressed() {
+    public synchronized boolean isUpCallPressed() {
         return hasUp && upPressed;
     }
 
@@ -93,7 +84,7 @@ class FloorCallButtons implements FloorCallButtonsAPI {
      * @return boolean hasDown (false when bottom floor) && downPressed
      */
     @Override
-    public boolean isDownCallPressed() {
+    public synchronized boolean isDownCallPressed() {
         return hasDown && downPressed;
     }
 
@@ -103,13 +94,11 @@ class FloorCallButtons implements FloorCallButtonsAPI {
      * @param direction the button to be reset
      */
     @Override
-    public void resetCallButton(String direction) {
+    public synchronized void resetCallButton(String direction) {
         if (direction.equals("UP") && hasUp) {
             upPressed = false;
-            if (guiListener != null) guiListener.notify("FloorCall.resetCallButton", "UP:" + floorNumber);
         } else if (direction.equals("DOWN") && hasDown) {
             downPressed = false;
-            if (guiListener != null) guiListener.notify("FloorCall.resetCallButton", "DOWN:" + floorNumber);
         }
     }
 }
