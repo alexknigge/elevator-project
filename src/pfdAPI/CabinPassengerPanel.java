@@ -1,7 +1,11 @@
 package pfdAPI;
 import java.util.ArrayList;
 import java.util.List;
+import java.net.URL;
 
+import javafx.application.Platform;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import mux.DeviceMultiplexor;
 
 /**
@@ -16,10 +20,6 @@ import mux.DeviceMultiplexor;
  *      public void playCabinArrivalChime()
  *      public void playCabinOverloadWarning()
  *      public boolean isFireKeyActive()
- * For GUI purposes:
- *      public void pressFloorButton(int floorNumber)
- *      public void toggleFireKey()
- *      public static void setGuiListener(gui.listener l)
  */
 public class CabinPassengerPanel implements CabinPassengerPanelAPI {
 
@@ -119,9 +119,29 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
      * Plays the arrival chime sound. Called when travel requests have been successfully serviced.
      */
     @Override
-    public synchronized void playCabinArrivalChime() {
-        // for now im simulating a DING sound to see if it works
-        System.out.println("*Ding!* Elevator arrived at floor " + currentFloor);
+    public void playCabinArrivalChime() {
+        int floor;
+        synchronized (this) {
+            floor = currentFloor;
+        }
+
+        System.out.println("*Ding!* Elevator arrived at floor " + floor);
+
+        Platform.runLater(() -> {
+            try {
+                URL sound = getClass().getResource("/sounds/ding.mp3");
+                if (sound == null) {
+                    System.err.println("Sound file not found.");
+                    return;
+                }
+
+                Media media = new Media(sound.toExternalForm());
+                MediaPlayer player = new MediaPlayer(media);
+                player.play();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     /**

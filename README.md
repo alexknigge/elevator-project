@@ -48,9 +48,8 @@ Elevator-Project/
 - Made the MUX multithreading safe (hopefully)
 
 ## TODO Still
-- Need firealarm and mtx/fire key API integration
-- Need chime sound
 - Need to fully implement all the MUX listener event handling functions in the GUI
 - Need to integrate official topics/subtopics into MUX
 - Need to test external command integrations once official topics are integrated
 - Need to test motion sim once integrated
+- Need sound implementations
