@@ -12,7 +12,9 @@ import pfdAPI.Elevator;
 /**
  * Class that defines the DeviceMultiplexor, which coordinates communication from the Elevator
  * Command Center to the relevant devices. Communication is accomplished via the software bus,
- * and both the PFDs and the motor assembly devices are subject to control.
+ * and both the PFDs and the motion devices are subject to control.
+ * 
+ * Note: car and elevator are used interchangeably in this context.
  */
 public class DeviceMultiplexor {
 
@@ -100,13 +102,6 @@ public class DeviceMultiplexor {
      * Outgoing Emitter Functions
      */
 
-    // Change the mode of a car or all cars (scale overload, fire safety, etc.)
-    public void setMode(int carId, String mode) {
-        if (listener != null) {
-            Platform.runLater(() -> listener.onModeChanged(carId, mode));
-        }
-    }
-
     // GUI image interaction tracking
     public void imgInteracted(String imageType, int imageIndex, String interactionType, String additionalData) {
         System.out.println("Image interaction: " + imageType + "[" + imageIndex + "] - " + interactionType + " : " + additionalData);
@@ -130,33 +125,19 @@ public class DeviceMultiplexor {
      * Listener Functions for GUI reflection
      */
 
-    // Device Listener Interface
+    // Device Listener Interface (Event handling)
     public interface DeviceListener {
-        void onDisplayUpdate(int carId, int floor, String text);
-        void onDoorStateChanged(int carId, String state);
-        void onCarArrived(int carId, int floor, String direction);
-        void onCallReset(int floor);
-        void onModeChanged(int carId, String mode);
         void onImageInteraction(String imageType, int imageIndex, String interactionType, String additionalData);
 
-        void onHallCall(int floor, String direction);
-        void onCabinSelect(int carId, int floor);
-        void onDoorSensor(int carId, boolean blocked);
-        void onCabinLoad(int carId, int weight);
-        void onCarPosition(int carId, int floor, String direction);
-    }
+        void onDisplayUpdate(int carId, int floor, String text);
+        void onCallCar(int floor, String direction);
+        void onCallReset(int floor);
 
-    // Notify gui of door state changes
-    public void notifyDoorChanged(int carId, String state) {
-        if (listener != null) {
-            Platform.runLater(() -> listener.onDoorStateChanged(carId, state));
-        }
-    }
-    
-    // Notify gui to reset call button lights
-    public void notifyCallReset(int floor) {
-        if (listener != null) {
-            Platform.runLater(() ->  listener.onCallReset(floor));
-        }
+        void onPanelButtonSelect(int carId, int floor);
+        void onDoorStateChanged(int carId, String state);
+        void onDoorObstructed(int carId, boolean blocked);
+
+        void onCabinOverload(int carId, boolean overloaded);
+        void onFireAlarm(boolean active);
     }
 }

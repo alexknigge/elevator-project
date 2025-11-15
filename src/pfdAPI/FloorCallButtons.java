@@ -52,8 +52,7 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
     public synchronized void pressUpCall() {
         if (hasUp) {
             upPressed = true;
-            mux.imgInteracted("CallButton", floorNumber, "DirectionPress:", "UP" + "_FLOOR_" + floorNumber);
-            mux.emit(floorNumber + "", false);
+            mux.emit("PFDAPI-Call-UP", true); // Example for future implementation - ideally will trickle through MUX and invoke the GUI listener
 
         }
     }
@@ -66,7 +65,6 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
             downPressed = true;
             mux.imgInteracted("CallButton", floorNumber, "DirectionPress:", "DOWN" + "_FLOOR_" + floorNumber);
             mux.emit(floorNumber + "", false);
-
         }
     }
 

@@ -5,6 +5,7 @@ import java.util.List;
 
 import bus.SoftwareBus;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.stage.Stage;
 import mux.DeviceMultiplexor;
@@ -19,7 +20,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import utils.imageLoader;
 
@@ -31,32 +31,23 @@ public class gui extends Application {
     private imageLoader loader;
     private SoftwareBus bus;
 
-    private Label floorLabel1;
-    private Label floorLabel2;
-    private DeviceMultiplexor multiplexor;
+    private final DeviceMultiplexor multiplexor = new DeviceMultiplexor();
     List<Label> buttonLabels = new ArrayList<>();
     ArrayList<Panel> cabinPanelList = new ArrayList<>();
     ArrayList<ElevatorDoor> elevDoorList = new ArrayList<>();
     ArrayList<CallButton> callButtonList = new ArrayList<>();
     ArrayList<FloorDisplay> floorDisplayList = new ArrayList<>();
-    ArrayList<Elevator> eList = new ArrayList<>();
+    ArrayList<OverloadWeightTrigger> overloadTriggerList = new ArrayList<>();
     FireAlarm fireAlarm;
 
     @Override
     public void start(Stage primaryStage) {
-        // Initialize the multiplexor
-        multiplexor = new DeviceMultiplexor();
 
         // Create 4 elevators, store them for later use, and register them with the MUX
         Elevator e1 = new Elevator(1, 10, multiplexor);
         Elevator e2 = new Elevator(2, 10, multiplexor);
         Elevator e3 = new Elevator(3, 10, multiplexor);
         Elevator e4 = new Elevator(4, 10, multiplexor);
-
-        eList.add(e1);
-        eList.add(e2);
-        eList.add(e3);
-        eList.add(e4);
 
         multiplexor.registerCar(e1);
         multiplexor.registerCar(e2);
@@ -69,88 +60,117 @@ public class gui extends Application {
         multiplexor.setListener(new DeviceMultiplexor.DeviceListener() {
 
             @Override
+            // Image interaction tracker
+            public void onImageInteraction(String imageType, int imageIndex, String interactionType, String additionalData) {
+                System.out.println("Image interaction - " + imageType + "[" + imageIndex + "] " + interactionType + ": " + additionalData);
+            }
+
+            @Override
             // Display update event handling
-            public void onDisplayUpdate(int carId, int floor, String text) {
-                System.out.println("Multiplexor: Display update for car " + carId + ": " + text);
-
-            int listIndex = carId - 1;
-                if (text == null) return;
-
-                // Change direction arrow on display
-                if (text.contains("UP")) {
-                    setImg(1, listIndex, 2);
-                } else if (text.contains("DOWN")) {
-                    setImg(1, listIndex, 1);
-                } else {
-                    setImg(1, listIndex, 0);
-                }
-
-                // Change floor number on display
-                if(floorDisplayList.get(listIndex) != null) { floorDisplayList.get(listIndex).digitalLabel.setText(Integer.toString(floor)); }
-            }
-            @Override
-            // Door state change event handling
-            public void onDoorStateChanged(int carId, String state) {
-                System.out.println("Multiplexor: Door state changed for car " + carId + ": " + state);
-
+            public void onDisplayUpdate(int carId, int floor, String direction) {
                 int listIndex = carId - 1;
-                if (listIndex < 0) listIndex = 0;
+                ImageView img = floorDisplayList.get(listIndex).floorDispImg;
 
-                if (state == null) return;
-                String s = state.toUpperCase();
-
-                // Change door image based on state
-                if (s.contains("OPEN")) {
-                    setImg(2, listIndex, 6);
-                } else if (s.contains("CLOSE")) {
-                    setImg(2, listIndex, 3);
-                } else {
-                    setImg(2, listIndex, 4);
+                // Change floor number on display and the direction arrow
+                if(floorDisplayList.get(listIndex) != null) { 
+                    floorDisplayList.get(listIndex).digitalLabel.setText(Integer.toString(floor)); 
+                    if (direction.contains("UP")) {
+                        img.setImage(loader.imageList.get(10));
+                    } else if (direction.contains("DOWN")) {
+                        img.setImage(loader.imageList.get(9));
+                    } else {
+                        img.setImage(loader.imageList.get(8));
+                    }
                 }
-            }
-            @Override
-            // Car arrival event handling
-            public void onCarArrived(int carId, int floor, String direction) {
-                System.out.println("Multiplexor: Car " + carId + " arrived at floor " + floor + " going " + direction);
             }
             
+            @Override
+            // Call button event handling
+            public void onCallCar(int floor, String direction) {
+                int listIndex = floor - 1;
+                ImageView img = callButtonList.get(listIndex).elevCallButtonsImg;
+
+                // Change call button image based on direction
+                if(callButtonList.get(listIndex) != null && img.getImage() == loader.imageList.get(13)) { 
+                    if (direction.contains("UP")) {
+                        img.setImage(loader.imageList.get(15));
+                    } else if (direction.contains("DOWN")) {
+                        img.setImage(loader.imageList.get(14));
+                    }
+                }
+            }
+
             @Override
             // Call reset event handling
             public void onCallReset(int floor) {
-                System.out.println("Multiplexor: Call reset for floor " + floor);
+                int listIndex = floor - 1;
+                ImageView img = callButtonList.get(listIndex).elevCallButtonsImg;
+                img.setImage(loader.imageList.get(13));
             }
-            
-            @Override
-            // Cabin load event handling
-            public void onCabinLoad(int carId, int weight) {
-                System.out.println("Multiplexor: Cabin load changed for car " + carId + ": " + weight);
-            }
-            
-            @Override
-            // Mode change event handling
-            public void onModeChanged(int carId, String mode) {
-                System.out.println("Multiplexor: Mode changed for car " + carId + ": " + mode);
-            }
-            
-            @Override
-            // Image interaction event handling
-            public void onImageInteraction(String imageType, int imageIndex, String interactionType, String additionalData) {
-                System.out.println("Multiplexor: Image interaction - " + imageType + "[" + imageIndex + "] " + interactionType + ": " + additionalData);
-            }
-            @Override
-            // Call elevator event handling
-            public void onHallCall(int floor, String direction) {}
-            @Override
-            // Cabin select event handling
-            public void onCabinSelect(int carId, int floor) {}
-            @Override
-            // Door sensor event handling
-            public void onDoorSensor(int carId, boolean blocked) {}
-            @Override
-            // Car position event handling
-            public void onCarPosition(int carId, int floor, String direction) {}
 
-            
+            @Override
+            // Panel button select event handling
+            public void onPanelButtonSelect(int carId, int floor) {
+                Label btnLabel = buttonLabels.get((floor-1) + (carId-1) * 10);
+                btnLabel.setStyle("-fx-text-fill: #ffffffff;");
+            }
+
+            @Override
+            // Door state change event handling
+            public void onDoorStateChanged(int carId, String state) {
+                int listIndex = carId - 1;
+                ImageView img = elevDoorList.get(listIndex).elevDoorsImg;
+
+                // Change door image based on state
+                if(elevDoorList.get(listIndex) != null) { 
+                    if (state.contains("ING")) {
+                        img.setImage(loader.imageList.get(4));
+                    } else if (state.contains("CLOSED")) {
+                        img.setImage(loader.imageList.get(3));
+                    } else if (state.contains("OPEN")) {
+                        img.setImage(loader.imageList.get(6));
+                    }
+                }
+            }
+
+            @Override
+            // Door obstruction event handling
+            public void onDoorObstructed(int carId, boolean blocked) {
+                int listIndex = carId - 1;
+                ImageView img = elevDoorList.get(listIndex).elevDoorsImg;
+
+                // Change door image based on obstruction
+                if(elevDoorList.get(listIndex) != null) { 
+                    if (blocked) {
+                        img.setImage(loader.imageList.get(7));
+                    } else {
+                        img.setImage(loader.imageList.get(6));
+                    }
+                }
+            }
+
+            @Override
+            // Cabin overload event handling
+            public void onCabinOverload(int carId, boolean overloaded) {
+                int listIndex = carId - 1;
+                if (overloaded) {
+                    overloadTriggerList.get(listIndex).weightTriggerButton.setStyle("-fx-background-color: #684b4bff;");
+                } else {
+                    overloadTriggerList.get(listIndex).weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff;");
+                }
+            }
+
+            @Override
+            // Fire alarm event handling
+            public void onFireAlarm(boolean active) {
+                ImageView img = fireAlarm.fireAlarmImg;
+
+                if (active) {
+                    img.setImage(loader.imageList.get(12));
+                } else {
+                    img.setImage(loader.imageList.get(11));
+                }
+            }
         });
 
 
@@ -164,14 +184,10 @@ public class gui extends Application {
         HBox hbox = new HBox();
 
         // Create floor displays & call buttons
-        for (int i = 1; i <= 10; i++) {
-            HBox h = new HBox();
-            FloorDisplay floorDisplay = new FloorDisplay(i);
-            floorDisplayList.add(floorDisplay);
+        for (int i = 0; i < 10; i++) {
             CallButton callButton = new CallButton(i);
             callButtonList.add(callButton);
-            h.getChildren().addAll(floorDisplay.floorDisplayOverlay, callButton.callButtonOverlay);
-            vbox.getChildren().add(h);
+            vbox.getChildren().addAll(callButton.callButtonOverlay);
         }
         fireAlarm = new FireAlarm();
         vbox.getChildren().add(fireAlarm.fireAlarmOverlay);
@@ -186,12 +202,15 @@ public class gui extends Application {
             ElevatorDoor elevatorDoor = new ElevatorDoor(i);
             elevDoorList.add(elevatorDoor);
             OverloadWeightTrigger overloadTrigger = new OverloadWeightTrigger(i);
-            v.getChildren().addAll(cabinPanel.panelOverlay, elevatorDoor.doorOverlay, overloadTrigger.weightTriggerButton);
+            overloadTriggerList.add(overloadTrigger);
+            FloorDisplay floorDisplay = new FloorDisplay(i);
+            floorDisplayList.add(floorDisplay);
+            v.getChildren().addAll(cabinPanel.panelOverlay, floorDisplay.floorDisplayOverlay, elevatorDoor.doorOverlay, overloadTrigger.weightTriggerButton);
             hbox.getChildren().add(v);
             v.setAlignment(Pos.CENTER);
         }
 
-        Scene scene = new Scene(hbox, 1850, 750, Color.web("#c0bfbbff"));
+        Scene scene = new Scene(hbox, 1700, 800, Color.web("#c0bfbbff"));
         primaryStage.setTitle("Elevator Passenger Devices");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -207,7 +226,7 @@ public class gui extends Application {
         private int carId;
 
         private Panel(int index){ 
-            this.panelIndex = index;
+            this.panelIndex = index+1;
             makePanel(); 
         }
 
@@ -238,8 +257,11 @@ public class gui extends Application {
                 // Capture final reference for lambda
                 final int leftFloorNumber = i;
                 left.setOnMouseClicked(event -> {
-                    left.setStyle("-fx-text-fill: white;");
-                    eList.get(panelIndex).panel.pressFloorButton(leftFloorNumber);
+                    Platform.runLater(() -> {
+                        multiplexor.getListener().onImageInteraction("PanelButtonPressed", leftFloorNumber, "PanelButtonPressed:", " Floor " + leftFloorNumber);
+                        multiplexor.getListener().onPanelButtonSelect(panelIndex, leftFloorNumber);
+                        multiplexor.emit(panelIndex + "", false);
+                    });
                 });
 
                 panelOverlay.getChildren().add(left);
@@ -257,8 +279,11 @@ public class gui extends Application {
 
                 final int rightFloorNumber = i + 1;
                 right.setOnMouseClicked(event -> {
-                    right.setStyle("-fx-text-fill: white;");
-                    eList.get(panelIndex).panel.pressFloorButton(rightFloorNumber);
+                    Platform.runLater(() -> {
+                        multiplexor.getListener().onImageInteraction("PanelButtonPressed", rightFloorNumber, "PanelButtonPressed:", " Floor " + rightFloorNumber);
+                        multiplexor.getListener().onPanelButtonSelect(panelIndex, rightFloorNumber);
+                        multiplexor.emit(panelIndex + "", false);
+                    });
                 });
 
                 panelOverlay.getChildren().add(right);
@@ -274,7 +299,7 @@ public class gui extends Application {
             private int carId;
 
         private ElevatorDoor(int index){ 
-            this.doorIndex = index;
+            this.doorIndex = index+1;
             makeDoor(); 
         }
 
@@ -287,14 +312,18 @@ public class gui extends Application {
 
                 // If door is open, allow placing/removing an obstruction by clicking
                 if(loader.imageList.get(6).equals(elevDoorsImg.getImage())) {
-                    // Door is fully closed, open doors
-                    elevDoorsImg.setImage(loader.imageList.get(7)); // Place obstruction
-                    eList.get(doorIndex).doors.setObstruction(true);
+                    Platform.runLater(() -> {
+                    multiplexor.getListener().onImageInteraction("Door", doorIndex, "RemoveObstruction:", " Door " + doorIndex);
+                    multiplexor.getListener().onDoorObstructed(doorIndex, true);
+                    multiplexor.emit(doorIndex + "", false);
+                    });
                     return;
                 } else if(loader.imageList.get(7).equals(elevDoorsImg.getImage())) {
-                    // Door has obstruction, remove obstruction
-                    elevDoorsImg.setImage(loader.imageList.get(6)); // Remove obstruction
-                    eList.get(doorIndex).doors.setObstruction(false);
+                    Platform.runLater(() -> {
+                    multiplexor.getListener().onImageInteraction("Door", doorIndex, "RemoveObstruction:", " Door " + doorIndex);
+                    multiplexor.getListener().onDoorObstructed(doorIndex, false);
+                    multiplexor.emit(doorIndex + "", false);
+                    });
                     return;
                 }
             });
@@ -308,7 +337,7 @@ public class gui extends Application {
         private int buttonIndex;
 
         private CallButton(int index){ 
-            this.buttonIndex = index;
+            this.buttonIndex = index+1;
             this.callButton = new FloorCallButtons(index, 10, multiplexor);
             makeCallButton(); 
         }
@@ -338,13 +367,19 @@ public class gui extends Application {
 
                 if (distToUp <= radius) {
                     // Upper button clicked
-                    elevCallButtonsImg.setImage(loader.imageList.get(15)); // up pressed
-                    callButton.pressUpCall();
+                    Platform.runLater(() -> {
+                    multiplexor.getListener().onImageInteraction("CallButton", buttonIndex, "DirectionPress:", "UP" + "_FLOOR_" + buttonIndex);
+                    multiplexor.getListener().onCallCar(buttonIndex, "UP");
+                    multiplexor.emit(buttonIndex + "", false);
+                    });
                 } 
                 else if (distToDown <= radius) {
                     // Lower button clicked
-                    elevCallButtonsImg.setImage(loader.imageList.get(14)); // down pressed
-                    callButton.pressDownCall();
+                    Platform.runLater(() -> {
+                        multiplexor.getListener().onImageInteraction("CallButton", buttonIndex, "DirectionPress:", "DOWN" + "_FLOOR_" + buttonIndex);
+                        multiplexor.getListener().onCallCar(buttonIndex, "DOWN");
+                        multiplexor.emit(buttonIndex + "", false);
+                    });
                 } 
                 else {
                     // Clicked outside both button circles — ignore
@@ -401,17 +436,17 @@ public class gui extends Application {
                 boolean isActive = fireAlarmImg.getImage() == loader.imageList.get(12);
 
                 if (isActive) {
-                    // currently active → turn OFF
-                    fireAlarmImg.setImage(loader.imageList.get(11)); // Normal state
-                    multiplexor.imgInteracted("FireAlarm", 0, "AlarmActivated", "EMERGENCY");
-                    multiplexor.setMode(0, "NORMAL");
-                    multiplexor.emit("No more fire", false);
+                    Platform.runLater(() -> {
+                        multiplexor.getListener().onImageInteraction("FireAlarm", 0, "AlarmActivated", "EMERGENCY");
+                        multiplexor.getListener().onFireAlarm(true);
+                        multiplexor.emit("FIRE", false);
+                    });
                 } else {
-                    // currently inactive → turn ON
-                    fireAlarmImg.setImage(loader.imageList.get(12)); // Activated state
-                    multiplexor.imgInteracted("FireAlarm", 0, "AlarmActivated", "EMERGENCY");
-                    multiplexor.setMode(0, "EMERGENCY");
-                    multiplexor.emit("FIRE", false);
+                    Platform.runLater(() -> {
+                        multiplexor.getListener().onImageInteraction("FireAlarm", 0, "AlarmDeactivated", "NO_EMERGENCY");
+                        multiplexor.getListener().onFireAlarm(false);
+                        multiplexor.emit("No more fire", false);
+                    });
                 }
             });
         }
@@ -422,7 +457,7 @@ public class gui extends Application {
         private int buttonIndex;
 
         public OverloadWeightTrigger(int index){ 
-            this.buttonIndex = index; 
+            this.buttonIndex = index+1; 
             makeTrigger();
         }
 
@@ -435,58 +470,25 @@ public class gui extends Application {
             weightTriggerButton.setOnMouseClicked(event -> {
                 
                 // Notify the multiplexor of the overload weight click
-                multiplexor.imgInteracted("OverloadWeight", buttonIndex, "WeightExceeded", "OVERLOAD");
-                multiplexor.setMode(buttonIndex+1, "OVERLOAD");
-                multiplexor.emit(buttonIndex+1 + "", false);
-            });
-        }
-    }
+                Platform.runLater(() -> {
+                    String style = weightTriggerButton.getStyle();
+                    boolean isOverloaded = style.contains("#684b4bff");
 
-    // Change image
-    private void setImg(int ListNumber, int ListIdx, int newImageIdx) {
-        if(ListNumber < 1 || ListNumber > 4) ListNumber = 1; // default to cabin panel list
-        if (ListNumber == 1) {
-            for (int i = 0; i < cabinPanelList.size(); i++) {
-                if(i != ListIdx) continue;
-                try {
-                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
-                    Image newImg = loader.imageList.get(newImageIdx);
-                    cabinPanelList.get(i).elevPanelImg.setImage(newImg);
-                } catch (Exception e) { e.printStackTrace(); }
-            }
-        } else if (ListNumber == 2) {
-            for (int i = 0; i < elevDoorList.size(); i++) {
-                if(i != ListIdx) continue;
-                try {
-                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
-                    Image newImg = loader.imageList.get(newImageIdx);
-                    elevDoorList.get(i).elevDoorsImg.setImage(newImg);
-                } catch (Exception e) { e.printStackTrace(); }
-            }
-        } else if (ListNumber == 3) {
-            for (int i = 0; i < callButtonList.size(); i++) {
-                if(i != ListIdx) continue;
-                try {
-                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
-                    Image newImg = loader.imageList.get(newImageIdx);
-                    callButtonList.get(i).elevCallButtonsImg.setImage(newImg);
-                } catch (Exception e) { e.printStackTrace(); }
-            }
-        } else if (ListNumber == 4) {
-            for (int i = 0; i < floorDisplayList.size(); i++) {
-                if(i != ListIdx) continue;
-                try {
-                    if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
-                    Image newImg = loader.imageList.get(newImageIdx);
-                    floorDisplayList.get(i).floorDispImg.setImage(newImg);
-                } catch (Exception e) { e.printStackTrace(); }
-            }
-        } else if (ListNumber == 5) {
-            try {
-                if (newImageIdx < 0 || newImageIdx >= loader.imageList.size()) return;
-                Image newImg = loader.imageList.get(newImageIdx);
-                fireAlarm.fireAlarmImg.setImage(newImg);
-            } catch (Exception e) { e.printStackTrace(); }
+                    if (isOverloaded) {
+                        // Toggle to NORMAL
+                        weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
+                        multiplexor.getListener().onCabinOverload(buttonIndex, false);
+                        multiplexor.getListener().onImageInteraction("OverloadWeight", buttonIndex, "Reset", "NORMAL");
+                    } else {
+                        // Toggle to OVERLOAD
+                        weightTriggerButton.setStyle("-fx-background-color: #684b4bff; -fx-text-fill: black;");
+                        multiplexor.getListener().onCabinOverload(buttonIndex, true);
+                        multiplexor.getListener().onImageInteraction("OverloadWeight", buttonIndex, "WeightExceeded", "OVERLOAD");
+                    }
+
+                    multiplexor.emit(buttonIndex + "", false);
+                });
+            });
         }
     }
 }

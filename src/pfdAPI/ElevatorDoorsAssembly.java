@@ -48,12 +48,12 @@ public class ElevatorDoorsAssembly {
         if (!isOpen) {
             isMoving = true;
             System.out.println("[Doors] Opening...");
-            mux.notifyDoorChanged(carId, "OPENING");
+            mux.getListener().onDoorStateChanged(carId, "OPENING");
             simulateDelay(2000);
             isOpen = true;
             isMoving = false;
             System.out.println("[Doors] Fully open.");
-            mux.notifyDoorChanged(carId, "OPENED");
+            mux.getListener().onDoorStateChanged(carId, "OPENED");
 
         }
     }
@@ -65,19 +65,19 @@ public class ElevatorDoorsAssembly {
     public synchronized void close() {
         if (isObstructed) {
             System.out.println("[Doors] obstruction detected reopening.");
-            mux.getListener().onDoorSensor(carId, true);
+            mux.getListener().onDoorObstructed(carId, true);
             open();
             return;
         }
         if (isOpen) {
             isMoving = true;
             System.out.println("[Doors] Closing...");
-            mux.notifyDoorChanged(carId, "CLOSING");
+            mux.getListener().onDoorStateChanged(carId, "CLOSING");
             simulateDelay(1000);
             if (!isObstructed) {
                 isOpen = false;
                 System.out.println("[Doors] Fully closed.");
-                mux.notifyDoorChanged(carId, "CLOSED");
+                mux.getListener().onDoorStateChanged(carId, "CLOSED");
             } else {
                 System.out.println("[Doors] Reopening due to obstruction.");
                 open();

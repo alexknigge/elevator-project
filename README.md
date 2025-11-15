@@ -46,9 +46,10 @@ Elevator-Project/
 - - GUI now purely relies on the MUX listner functions
 - Reintegrated MUX listeners into the API
 - Made the MUX multithreading safe (hopefully)
+- Fully implemented all the MUX listener event handling functions in the GUI
 
 ## TODO Still
-- Need to fully implement all the MUX listener event handling functions in the GUI
+- Need all the API calls to control the GUI via MUX emit-publish to bus so it trickles back down to the GUI via the listeners
 - Need to integrate official topics/subtopics into MUX
 - Need to test external command integrations once official topics are integrated
 - Need to test motion sim once integrated
