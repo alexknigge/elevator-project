@@ -13,16 +13,22 @@ import java.util.HashMap;
 import java.util.List;
 
 public class MotionAPI {
+    //The direction the elevator is moving in
     public Direction direction=null;
-    private Integer top_Alignment=null;
-    private Integer bottom_Alignment=null;
-
+    //Sensors mapped to floor numbers
     private HashMap<Integer, Sensor> sensor_HashMap;
+    //Max amount of sensors (starting from 0)
     private int MAX_SENSOR_IDX=19;
+    //The hardware representative
     private Motor motor;
-
+    //Informs the hardware
     private MotionSimulation motionSimulation;
 
+    /**
+     * Creates a new motionController object, creates motor, sensor map, and
+     * motion simulation
+     *
+     */
     public MotionAPI(){
         motor=new Motor();
         sensor_HashMap=new HashMap<>();
@@ -30,6 +36,9 @@ public class MotionAPI {
             sensor_HashMap.put(i, new Sensor());
         }
         motionSimulation= new MotionSimulation(1,motor,sensor_HashMap);
+        Thread simThread = new Thread(motionSimulation);
+        simThread.setDaemon(true);
+        simThread.start();
 
     }
 
@@ -53,8 +62,6 @@ public class MotionAPI {
         }
         return null;
     }
-
-
 
     /**
      * Returns the floor that the bottom of elevator is aligned with

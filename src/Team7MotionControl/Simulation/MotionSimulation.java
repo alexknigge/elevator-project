@@ -26,19 +26,12 @@ public class MotionSimulation implements Runnable, Observer {
 
     // The elevator object (for simulation purposes) also hardware
     private final Elevator elevator;
-
-    // How long the thread sleeps before updating position, velocity, etc.
-//    private final int SLEEP_MILLIS = 100;
-
     // Top Level
     private final int MAX_SENSOR_IDX = 19;
-
     // The elevator's current speed
     private double current_speed = 0.0;
-
     // 1 if accelerating, -1 if decelerating,
     private int accelerating_indicator = 0;
-
     // Which direction the elevator is going
     private Direction direction = Direction.NULL;
 
@@ -46,7 +39,7 @@ public class MotionSimulation implements Runnable, Observer {
     private volatile int top_idx = 1;
     private volatile int bottom_idx = 0;
 
-
+    //How fast the sim goes, relative to the ticks
     private double speedFactor=1;
 
     // Sensor tolerance
@@ -158,6 +151,10 @@ public class MotionSimulation implements Runnable, Observer {
 //        System.out.println(elevator.getY_position() + " + "+ current_speed);
     }
 
+    /**
+     * Updates the floor sensors
+     */
+
     private synchronized void update_sensors() {
         int newBottom = -1;
         int newTop = -1;
@@ -186,32 +183,6 @@ public class MotionSimulation implements Runnable, Observer {
 
     }
 
-    public Integer top_alignment(){
-        if(top_idx==-1){
-            return null;
-        }
-        else{
-            return top_idx;
-        }
-    }
-
-    //when I added this synchronized, it stopped printing nulls
-    public Integer bottom_aligment(){
-        //System.out.println("In motion sim "+bottom_idx);
-        if(bottom_idx==-1){
-            return null;
-        }
-        else{
-            return bottom_idx;
-        }
-    }
-
-
-
-
-
-
-
     /**
      * @param floor_indicator 0 is bottom of first floor, 1 is top of first
      *                        floor, 2 is bottom of second floor, etc.
@@ -236,14 +207,27 @@ public class MotionSimulation implements Runnable, Observer {
         return milliseconds/1000;
     }
 
-    //Todo: Comment these later
+    /**
+     * Getters for hashmap
+     * @return The map of sensors the floor nums
+     */
     public HashMap<Integer, Sensor> getSensors() {
         return sensor_HashMap;
     }
 
+    /**
+     * Getters for hashmap
+     * @return The map of sensors to actual physical position
+     */
+
     public HashMap<Integer, Double> get_sensor_pos_HashMap() {
         return sensor_pos_Map;
     }
+
+    /**
+     *
+     * @return The elevator
+     */
 
     public Elevator getElevator() {
         return elevator;
@@ -253,26 +237,7 @@ public class MotionSimulation implements Runnable, Observer {
         return motor;
     }
 
-    public void stop(){
-        motor.stop();
-        direction=Direction.NULL;
-        accelerating_indicator=0;
-    }
 
-    public void start(){
-//        at_start=false;
-        motor.start();
-        if(direction.equals(Direction.UP)){
-            accelerating_indicator=1;
-        }else if (direction.equals(Direction.DOWN)){
-            accelerating_indicator=-1;
-        }else{
-            System.out.println("Set direction");
-        }
-
-    }
-
-    //TODO: remove this when we implement the software bus
     public void setDirection(Direction direction){
         this.direction=direction;
     }
@@ -291,9 +256,6 @@ public class MotionSimulation implements Runnable, Observer {
                 accelerating_indicator = 0;
                 direction = null;
             } else {
-                //"dont even worry about it, im sure its fine" -Natalie Runyan
-                //"uhh you forgot an apostrophe" -Youssef Amin
-                //at_start = false;
                 if (beloved.get_direction() == Direction.UP) {
                     accelerating_indicator = 1;
                 } else {
