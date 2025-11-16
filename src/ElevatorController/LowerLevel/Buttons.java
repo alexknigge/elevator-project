@@ -29,8 +29,9 @@ public class Buttons {
     }
 
     /**
-     * Call publish on the softwareBUs with a message that the call button the gien floor, and given direction can be
+     * Call publish on the softwareBus with a message that the call button of the given floor, and given direction can be
      * turned off
+     * Remove that floor from destinations
      * @param floorNDirection The call button and direction which is no longer relevant
      */
     public void callReset(FloorNDirection floorNDirection) {}
@@ -38,6 +39,7 @@ public class Buttons {
     /**
      * Call publish on softwareBus with a message that the call button on the given floor, and given direction can be
      * turned off
+     * Remove that floor from destinations
      * @param floor the floor request button that is no longer relevant
      */
     public void requestReset(int floor) {}
