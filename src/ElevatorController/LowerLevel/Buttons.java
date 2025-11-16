@@ -15,12 +15,7 @@ import java.util.List;
 public class Buttons {
     private boolean callEnabled;
     private boolean multipleRequests;
-<<<<<<< HEAD
     private List<FloorNDirection> destinations;
-=======
-    private List<FloorNDirection> callButtons;
-    private List<Integer> requestButtons;
->>>>>>> 432dfbca9de5a18ef1c4e460b1f9b81c5edc7ec5
     private SoftwareBus softwareBus;
 
     public Buttons(SoftwareBus softwareBus) {
@@ -29,7 +24,6 @@ public class Buttons {
 
         this.callEnabled = true;
         this.multipleRequests = false;
-<<<<<<< HEAD
         this.destinations = new ArrayList<>();
         this.softwareBus = softwareBus;
     }
@@ -51,52 +45,33 @@ public class Buttons {
     /**
      * In normal mode, level call buttons are enabled
      */
-=======
-        this.requestButtons = new ArrayList<>();
-        this.callButtons = new ArrayList<>();
-        this.softwareBus = softwareBus;
-    }
-    public void callReset(FloorNDirection floorNDirection) {}
-    public void requestReset(int floor) {}
-
->>>>>>> 432dfbca9de5a18ef1c4e460b1f9b81c5edc7ec5
     public void enableCalls(){
         this.callEnabled = true;
     }
 
-<<<<<<< HEAD
     /**
      * In fire mode, and controlled mode call buttons are disabled
      */
-=======
->>>>>>> 432dfbca9de5a18ef1c4e460b1f9b81c5edc7ec5
     public void disableCalls(){
         this.callEnabled = false;
     }
 
-<<<<<<< HEAD
     /**
      * In Normal mode, all request buttons are enabled
      */
-=======
->>>>>>> 432dfbca9de5a18ef1c4e460b1f9b81c5edc7ec5
     public void enableAllRequests(){
         this.multipleRequests = true;
     }
 
-<<<<<<< HEAD
     /**
      * In Fire mode, the request buttons in the cabin are mutually exclusive
      */
-=======
->>>>>>> 432dfbca9de5a18ef1c4e460b1f9b81c5edc7ec5
     public void enableSingleRequest(){
         this.multipleRequests = false;
     }
 
 
     /*
-<<<<<<< HEAD
      * Note; call events have associated directions, and request events do not
      *
      * If multipleRequests enabled, keep calling get() on software bus, add them to associated lists, use given
@@ -108,13 +83,6 @@ public class Buttons {
      *
      * @param floorNDirection record holding the floor and direction
      * @return next service direction and floor (direction non-null for call buttons, null for requests)
-=======
-     * If multipleRequests enabled, keep calling get() on software bus, add them to associated lists, use given
-     * floorNDirection to determine which is best.
-     *
-     * @param floorNDirection record holding the floor and direction
-     * @return An int representing the floor????
->>>>>>> 432dfbca9de5a18ef1c4e460b1f9b81c5edc7ec5
      */
     public FloorNDirection nextService(FloorNDirection floorNDirection) {return null;}
 }
