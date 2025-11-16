@@ -21,7 +21,7 @@ public class MotionController {
     private int MAX_SENSOR_IDX=19;
     private Motor motor;
 
-    private MotionSimulation motionSimulation;
+    public MotionSimulation motionSimulation;
 
     public MotionController(){
         motor=new Motor();

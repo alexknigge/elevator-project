@@ -159,39 +159,30 @@ public class MotionSimulation implements Runnable, Observer {
     }
 
     private synchronized void update_sensors() {
-        double top=-1;
-        double bottom=-1;
-        top_idx=-1;
-        //bottom_idx=-1;
+        int newBottom = -1;
+        int newTop = -1;
         double yBottom = elevator.getY_position();
         double yTop = elevator.upper_bound();
 
         for (Integer idx : sensor_pos_Map.keySet()) {
             double sensorY = sensor_pos_Map.get(idx);
 
-//            System.out.printf("Elev bottom=%.2f top=%.2f, sensor[%d]=%.2f%n",
-//                    yBottom, yTop, idx, sensorY);
-
             if (sensorY+ TOLERANCE >= yBottom && sensorY- TOLERANCE <= yTop) {
                 sensor_HashMap.get(idx).set_triggered(true);
 
-                if(bottom==-1){
-                    bottom=sensorY;
-                    //System.out.println("Setting bottom to "+idx+ "from "+idx+" elvator bottom at "+yBottom);
-                    bottom_idx=idx;
-                    //top_idx=-1;
+                if(newBottom==-1){
+                    newBottom=idx;
+
                 }else{
-                    top =sensorY;
-                    top_idx=idx;
+                    newTop=idx;
                 }
 
             } else {
                 sensor_HashMap.get(idx).set_triggered(false);
             }
         }
-//        if(motor.is_off()&&bottom>=0){
-//            elevator.set_y_position(bottom);
-//        }
+        top_idx=newTop;
+        bottom_idx=newBottom;
 
     }
 
