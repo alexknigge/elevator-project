@@ -18,7 +18,6 @@ public class Buttons {
     private List<FloorNDirection> destinations;
     private SoftwareBus softwareBus;
 
-
     public Buttons(SoftwareBus softwareBus) {
         //TODO may need to take in int for elevator number for software bus subscription
         //TODO call subscribe on softwareBus w/ relevant topic/subtopic
@@ -83,7 +82,7 @@ public class Buttons {
      * If calls are disabled, ignore all call button presses (those associated with level)
      *
      * @param floorNDirection record holding the floor and direction
-     * @return An int representing the floor????
+     * @return next service direction and floor (direction non-null for call buttons, null for requests)
      */
     public FloorNDirection nextService(FloorNDirection floorNDirection) {return null;}
 }
