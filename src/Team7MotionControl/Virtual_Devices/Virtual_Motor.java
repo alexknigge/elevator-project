@@ -1,13 +1,26 @@
 package Team7MotionControl.Virtual_Devices;
 
+import Bus.SoftwareBus;
+import Message.Message;
 import Team7MotionControl.Util.Direction;
+import javafx.application.Platform;
 
 public class Virtual_Motor {
+    //software bus to send messages
+    private SoftwareBus softwareBus;
+
+    //topic for software bus
+    private int currentTopic=19;
+
+    //topic
+    private int currentSubtopic =1;
+
     //If the motor is on or not
     private boolean on;
     //The direction the motor is running
     private Direction direction;
     public Virtual_Motor(){
+        softwareBus=new SoftwareBus(true);
         this.on = false;
         this.direction = Direction.NULL;
     }
@@ -47,5 +60,34 @@ public class Virtual_Motor {
      */
     public boolean is_off(){
         return !on;
+    }
+
+    /**
+     * Checks bus for new messages
+     */
+
+    private void checkForIncomingMessage() {
+        Thread thread = new Thread(() -> {
+            while (true) {
+                Message message = softwareBus.get(currentTopic, currentSubtopic);
+                if (message != null) {
+                    Platform.runLater(() -> {
+                        handleNewMessage(message);
+                    });
+
+                }
+            }
+        });
+        thread.start();
+    }
+
+    /**
+     *
+     * @param message message sent by the hardware
+     */
+
+    private void handleNewMessage (Message message){
+        //TODO For this topic and subtopic, should only be, on, off and direction
+
     }
 }
