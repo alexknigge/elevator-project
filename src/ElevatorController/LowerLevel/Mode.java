@@ -37,8 +37,8 @@ public class Mode {
     }
 
     /**
-     * Pulls all related messages until null and
-     * sets current mode equal to the last message
+     * Pulls all related messages from softwareBUs until null and
+     * sets current mode equal to the last relevant message
      */
     private void setCurrentMode(){
         //Todo: Set current mode from software bus
