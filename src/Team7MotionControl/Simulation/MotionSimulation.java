@@ -17,7 +17,7 @@ import java.util.HashMap;
 
 public class MotionSimulation implements Runnable, Observer {
     // Convert floor indicator to Sensor
-    private final HashMap<Integer, Sensor> sensor_HashMap =new HashMap<>();
+    private HashMap<Integer, Sensor> sensor_HashMap =new HashMap<>();
     // Convert Sensors to y positions
     private final HashMap<Integer, Double>  sensor_pos_Map = new HashMap<>();
 
@@ -43,8 +43,8 @@ public class MotionSimulation implements Runnable, Observer {
     private Direction direction = Direction.NULL;
 
     // The floor number associated (-1 when unset)
-    private int top_idx = 1;
-    private int bottom_idx = 0;
+    private volatile int top_idx = 1;
+    private volatile int bottom_idx = 0;
 
 
     private double speedFactor=1;
@@ -55,16 +55,17 @@ public class MotionSimulation implements Runnable, Observer {
     /**
      * Makes a motion simulation
      */
-    public MotionSimulation(double speedFactor){
-        //TODO: make motion sim dependent on motor instead of controlling it
-        motor = new Motor();
+    public MotionSimulation(double speedFactor, Motor motor,HashMap<Integer, Sensor> sensor_HashMap){
+        this.motor =motor;
         elevator = new Elevator();
         this.speedFactor=speedFactor;
+        this.sensor_HashMap=sensor_HashMap;
+        motor.subscribe(this);
 
         // Initializing the Hash Maps
         double y_pos = 0;
         for (int i = 0; i <= MAX_SENSOR_IDX; i++) {
-            sensor_HashMap.put(i, new Sensor());
+            //sensor_HashMap.put(i, new Sensor());
 
             if (i % 2 == 0){
                 // Lower level sensor
@@ -75,6 +76,8 @@ public class MotionSimulation implements Runnable, Observer {
             }
             sensor_pos_Map.put(i, y_pos);
         }
+
+        //this.start();
 
 
     }
@@ -150,27 +153,36 @@ public class MotionSimulation implements Runnable, Observer {
                 accelerating_indicator = 0;
             }
         }
-        System.out.println("current speed: "+ current_speed);
+//        System.out.println("current speed: "+ current_speed);
         elevator.set_y_position(elevator.getY_position() + current_speed);
-        System.out.println(elevator.getY_position() + " + "+ current_speed);
+//        System.out.println(elevator.getY_position() + " + "+ current_speed);
     }
 
-    private void update_sensors() {
+    private synchronized void update_sensors() {
         double top=-1;
         double bottom=-1;
+        top_idx=-1;
+        //bottom_idx=-1;
         double yBottom = elevator.getY_position();
         double yTop = elevator.upper_bound();
 
         for (Integer idx : sensor_pos_Map.keySet()) {
             double sensorY = sensor_pos_Map.get(idx);
 
+//            System.out.printf("Elev bottom=%.2f top=%.2f, sensor[%d]=%.2f%n",
+//                    yBottom, yTop, idx, sensorY);
+
             if (sensorY+ TOLERANCE >= yBottom && sensorY- TOLERANCE <= yTop) {
                 sensor_HashMap.get(idx).set_triggered(true);
 
                 if(bottom==-1){
                     bottom=sensorY;
+                    //System.out.println("Setting bottom to "+idx+ "from "+idx+" elvator bottom at "+yBottom);
+                    bottom_idx=idx;
+                    //top_idx=-1;
                 }else{
                     top =sensorY;
+                    top_idx=idx;
                 }
 
             } else {
@@ -182,6 +194,28 @@ public class MotionSimulation implements Runnable, Observer {
 //        }
 
     }
+
+    public Integer top_alignment(){
+        if(top_idx==-1){
+            return null;
+        }
+        else{
+            return top_idx;
+        }
+    }
+
+    //when I added this synchronized, it stopped printing nulls
+    public Integer bottom_aligment(){
+        //System.out.println("In motion sim "+bottom_idx);
+        if(bottom_idx==-1){
+            return null;
+        }
+        else{
+            return bottom_idx;
+        }
+    }
+
+
 
 
 
@@ -336,102 +370,11 @@ public class MotionSimulation implements Runnable, Observer {
         }
     }
 
-    /**
-     * Update all the sensor objects, whether they are triggered or not
-     * At most two sensors on at any time, use the position of the elevator
-     * to set the sensors.
-     */
-    private void update_sensors2(){
-        // Get the positions of the elevator
-
-        //asks joel why this doesn't work if it's in the constructor
-        //just leave it here for now, i think its a weird observer issue or something idk ask joel
-//        if(at_start){
-//            sensor_HashMap.get(0).set_triggered(true);
-//            sensor_HashMap.get(1).set_triggered(true);
-//            at_start=false;
-//
-//        }
-
-
-        double y_pos_bottom = elevator.getY_position();
-        double y_pos_top = elevator.upper_bound();
-
-        // Update sensors based on position and direction
-        switch (direction){
-            case UP:
-
-                // TODO: check this
-                int sensor_above_idx = top_idx + 1;
-                // Top sensor
-
-                if (sensor_above_idx <= MAX_SENSOR_IDX && y_pos_top > sensor_pos_Map.get(sensor_above_idx)){
-                    // Turn sensor above on
-                    sensor_HashMap.get(sensor_above_idx).set_triggered(true);
-                    //System.out.println("Elevator is at: "+y_pos_top+ "sensor is at: "+ sensor_pos_Map.get(sensor_above_idx));
-
-                    // Turn bottom sensor off, if not already off
-                    if(bottom_idx!=-1){
-                        sensor_HashMap.get(bottom_idx).set_triggered(false);
-                        //System.out.println("turning off bottom sensor at Sensor: "+bottom_idx+" Elevator is at : "+y_pos_bottom);
-                    }
-
-                    // Update bottom and top floor indices
-                    bottom_idx = top_idx;
-                    top_idx = sensor_above_idx;
-                    if (motor.is_off() && top_idx != -1 && bottom_idx != -1) {
-                        // snap into place
-                        elevator.set_y_position(sensor_pos_Map.get(bottom_idx));
-                    }
-
-                    // bottom sensor untriggered
-                } else if (bottom_idx!=-1 && sensor_pos_Map.get(bottom_idx) < y_pos_bottom){
-                    // Turn off bottom sensor
-                    //System.out.println("2 if: sensor :"+sensor_pos_Map.get(bottom_idx)+" > bottom: "+y_pos_bottom);
-                    sensor_HashMap.get(bottom_idx).set_triggered(false);
-
-                    //set bottom id to none selected
-                    bottom_idx =-1;
-
-                }
-                break;
-            case DOWN:
-
-                int sensor_bellow_idx= bottom_idx-1;
-                if(sensor_bellow_idx>=0&&y_pos_bottom<sensor_pos_Map.get(sensor_bellow_idx)){
-                    //top sensor untriggered
-
-                    sensor_HashMap.get(sensor_bellow_idx).set_triggered(true);
-
-                    // Turn top sensor off, if not already off
-                    if(top_idx!=-1){
-                        sensor_HashMap.get(top_idx).set_triggered(false);
-                    }
-
-                    //update triggered floor positions
-                    top_idx=bottom_idx;
-                    bottom_idx=sensor_bellow_idx;
-                    if (motor.is_off() && top_idx != -1 && bottom_idx != -1) {
-                        // snap into place
-                        elevator.set_y_position(sensor_pos_Map.get(bottom_idx));
-                    }
-
-                } else if (top_idx!=-1&& sensor_pos_Map.get(top_idx)>y_pos_top) {
-                    // turn off top sensor
-                    sensor_HashMap.get(top_idx).set_triggered(true);
-                    top_idx=-1;
-                }
-            default:
-                // Elevator not moving
-
-        }
-
-//        for (int i: sensor_HashMap.keySet()){
-//            if(i>elevator.getY_position() && i < elevator.upper_bound()){
-//                sensor_HashMap.get(i).set_triggered(true);
-//            }else {
-//                sensor_HashMap.get(i).set_triggered(false);
-//            }
-//        }
+    public synchronized int[] getAlignment() {
+        return new int[]{ bottom_idx, top_idx };
     }
+
+
+
+
 }

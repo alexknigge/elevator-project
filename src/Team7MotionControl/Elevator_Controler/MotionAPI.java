@@ -1,10 +1,15 @@
 package Team7MotionControl.Elevator_Controler;
 
+import Team7MotionControl.GUI.ElevatorGUI;
+import Team7MotionControl.Hardware.Motor;
+import Team7MotionControl.Hardware.Sensor;
+import Team7MotionControl.Simulation.MotionSimulation;
+import Team7MotionControl.Util.Constants;
 import Team7MotionControl.Util.Direction;
-import Team7MotionControl.Virtual_Devices.Virtual_Motor;
-import Team7MotionControl.Virtual_Devices.Virtual_Sensor;
+
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class MotionAPI {
@@ -12,9 +17,21 @@ public class MotionAPI {
     private Integer top_Alignment=null;
     private Integer bottom_Alignment=null;
 
-    private List<Virtual_Sensor> sensors = new ArrayList<>();
-    private Virtual_Motor motor = new Virtual_Motor();
+    private HashMap<Integer, Sensor> sensor_HashMap;
+    private int MAX_SENSOR_IDX=19;
+    private Motor motor;
 
+    private MotionSimulation motionSimulation;
+
+    public MotionAPI(){
+        motor=new Motor();
+        sensor_HashMap=new HashMap<>();
+        for (int i = 0; i <= MAX_SENSOR_IDX; i++) {
+            sensor_HashMap.put(i, new Sensor());
+        }
+        motionSimulation= new MotionSimulation(1,motor,sensor_HashMap);
+
+    }
 
     /**
      * Set directions of elevator
@@ -29,19 +46,25 @@ public class MotionAPI {
      * @return A floor number or null
      */
     public Integer top_alignment(){
-        for (Virtual_Sensor s : sensors) {
-            if (s.is_triggered() && sensors.indexOf(s) % 2 == 1) return sensors.indexOf(s);
+        for(int index: sensor_HashMap.keySet()){
+            if (sensor_HashMap.get(index).is_triggered()&& index%2==1){
+                return index;
+            }
         }
         return null;
     }
+
+
 
     /**
      * Returns the floor that the bottom of elevator is aligned with
      * @return A floor number or null
      */
     public Integer bottom_alignment(){
-        for (Virtual_Sensor s : sensors) {
-            if (s.is_triggered() && sensors.indexOf(s) % 2 == 0) return sensors.indexOf(s);
+        for(int index: sensor_HashMap.keySet()){
+            if (sensor_HashMap.get(index).is_triggered()&& index%2==0){
+                return index;
+            }
         }
         return null;
     }
@@ -61,4 +84,7 @@ public class MotionAPI {
     public void stop(){
         motor.stop();
     }
+
+
+
 }
