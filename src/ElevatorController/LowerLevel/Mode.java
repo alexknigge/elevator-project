@@ -23,7 +23,6 @@ public class Mode {
     public Mode(SoftwareBus softwareBus) {
         //TODO may need to take in int for elevator number for software bus subscription
         //TODO call subscribe on softwareBus w/ relevant topic/subtopic
-
         this.softwareBus = softwareBus;
     }
 
@@ -32,7 +31,18 @@ public class Mode {
      * set), store last valid mode in currentMode, return currentMode
      * @return the currentMode this elevator is in
      */
-    public State getMode(){return State.NULL;}
+    public State getMode(){
+        setCurrentMode();
+        return currentMode;
+    }
+
+    /**
+     * Pulls all related messages until null and
+     * sets current mode equal to the last message
+     */
+    private void setCurrentMode(){
+        //Todo: Set current mode from software bus
+    }
 
     /**
      * Call get() on softwareBus w/ appropriate topic/subtopic,
