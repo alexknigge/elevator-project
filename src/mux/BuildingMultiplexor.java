@@ -37,14 +37,13 @@ public class BuildingMultiplexor {
     int DIR_UP = 1;
     int DIR_DOWN = 2;
 
-    int MODE_OFF = 0;
-    int MODE_ON = 1;
-    int MODE_FIRE_SAFETY = 2;
+    int FIRE_OFF = 0;
+    int FIRE_ON = 1;
 
     // Initialize the MUX
     public void initialize() {
         System.out.println("ready bldg");
-        bus.subscribe(Topic.MODE_SET, 0);
+        bus.subscribe(Topic.FIRE_ALARM, 0);
         bus.subscribe(Topic.CALL_RESET, 0);
         bus.subscribe(Topic.HALL_CALL, 0);
         startBusPoller();
@@ -62,9 +61,9 @@ public class BuildingMultiplexor {
             while (true) {
 
                 Message msg;
-                msg = bus.get(Topic.MODE_SET, 0);
+                msg = bus.get(Topic.FIRE_ALARM, 0);
                 if (msg != null) {
-                    handleModeSet(msg);
+                    handleFireAlarm(msg);
                 }
                 msg = bus.get(Topic.CALL_RESET, 0);
                 if (msg != null) {
@@ -89,21 +88,18 @@ public class BuildingMultiplexor {
     public void handleHallCall(Message msg) {
         int floor = msg.getSubTopic();
         int directionCode = msg.getBody();
-        String direction = "IDLE";
-        if (directionCode == DIR_UP) {
-            direction = "UP";
-        } else if (directionCode == DIR_DOWN) {
-            direction = "DOWN";
-        }
-        listener.onCallCar(floor, direction);
+        String dir = "IDLE";
+        if (directionCode == DIR_UP) { dir = "UP"; } 
+        else if (directionCode == DIR_DOWN) { dir = "DOWN"; }
+        listener.onCallCar(floor, dir);
     }
 
     // Handle Mode Set Message (Building Only Cares about Fire Safety)
-    public void handleModeSet(Message msg) {
+    public void handleFireAlarm(Message msg) {
         int modeCode = msg.getBody();
-        if (modeCode == MODE_FIRE_SAFETY) {
+        if (modeCode == FIRE_ON) {
             listener.onFireAlarm(true);
-        } else if (modeCode == MODE_OFF) {
+        } else if(modeCode == FIRE_OFF){
             listener.onFireAlarm(false);
         }
     }

@@ -58,19 +58,19 @@ public class ElevatorMultiplexor {
             // keep polling
             while (true) {
                 Message msg;
-                msg = bus.get(Topic.DOOR_CONTROL, 0);
+                msg = bus.get(Topic.DOOR_CONTROL, carId);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println("")); // Placeholder
                 }
-                msg = bus.get(Topic.DISPLAY_FLOOR, 0);
+                msg = bus.get(Topic.DISPLAY_FLOOR, carId);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.DISPLAY_DIRECTION, 0);
+                msg = bus.get(Topic.DISPLAY_DIRECTION, carId);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.CAR_DISPATCH, 0);
+                msg = bus.get(Topic.CAR_DISPATCH, carId);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
@@ -78,27 +78,27 @@ public class ElevatorMultiplexor {
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.CABIN_SELECT, 0);
+                msg = bus.get(Topic.CABIN_SELECT, carId);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.CAR_POSITION, 0);
+                msg = bus.get(Topic.CAR_POSITION, carId);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.DOOR_SENSOR, 0);
+                msg = bus.get(Topic.DOOR_SENSOR, carId);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.DOOR_STATUS, 0);
+                msg = bus.get(Topic.DOOR_STATUS, carId);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.CABIN_LOAD, 0);
+                msg = bus.get(Topic.CABIN_LOAD, carId);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.FIRE_KEY, 0);
+                msg = bus.get(Topic.FIRE_KEY, carId);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }

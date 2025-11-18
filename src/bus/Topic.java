@@ -18,7 +18,7 @@ public class Topic {
     public static final int CALL_RESET = 110; // bMUX
     public static final int DISPLAY_FLOOR = 111; // bMUX & eMUX
     public static final int DISPLAY_DIRECTION = 112; // bMUX & eMUX
-    public static final int FIRE_KEY = 113; // eMUX
+    public static final int FIRE_ALARM = 120; // bMUX
 
     //200s: PFD -> Controller events
 
@@ -28,5 +28,6 @@ public class Topic {
     public static final int DOOR_SENSOR = 203; // eMUX
     public static final int DOOR_STATUS = 204; // eMUX
     public static final int CABIN_LOAD = 205; // eMUX
+    public static final int FIRE_KEY = 206; // eMUX
 
 }
