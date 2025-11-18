@@ -1,53 +1,42 @@
 package mux;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import bus.Message;
 import bus.SoftwareBus;
 import bus.Topic;
 import javafx.application.Platform;
-import pfdAPI.Elevator;
 
 /**
- * Class that defines the DeviceMultiplexor, which coordinates communication from the Elevator
+ * Class that defines the BuildingMultiplexor, which coordinates communication from the Elevator
  * Command Center to the relevant devices. Communication is accomplished via the software bus,
  * and both the PFDs and the motion devices are subject to control.
  * 
  * Note: car and elevator are used interchangeably in this context.
  */
-public class DeviceMultiplexor {
+public class BuildingMultiplexor {
 
-    public DeviceMultiplexor(){ initialize(); }
-
-    // Listener for GUI/API integration
-    private DeviceListener listener;
-    public void setListener(DeviceListener listener) { this.listener = listener; }
-    public DeviceListener getListener() { return this.listener; }
-    
-    Set<Integer> cars = ConcurrentHashMap.newKeySet();
-    private final Map<Integer, Elevator> carsById = new ConcurrentHashMap<>();
-    private final Map<Integer, Integer> lastFloor = new ConcurrentHashMap<>();
-    private final Map<Integer, Integer> lastDir = new ConcurrentHashMap<>();
-    private final SoftwareBus bus = new SoftwareBus(false);
-
-
-    // Register elevator so MUX can target it by id
-    public void registerCar(Elevator elev) {
-        if (elev == null) return;
-        cars.add(elev.carId);
-        carsById.put(elev.carId, elev);
+    public BuildingMultiplexor(){ 
+        initialize(); 
     }
 
-    // Initialize the MUX  (placeholder example subscriptions)
+    // Listener for GUI/API integration
+    private BuildingDeviceListener listener;
+    public void setListener(BuildingDeviceListener listener) { this.listener = listener; }
+    public BuildingDeviceListener getListener() { return this.listener; }
+
+    private final Map<Integer, Integer> lastFloor = new ConcurrentHashMap<>(); // Last Floor (for bookkeeping)
+    private final Map<Integer, Integer> lastDir = new ConcurrentHashMap<>(); // Last Direction (for bookkeeping)
+    private final SoftwareBus bus = new SoftwareBus(false);
+
+    // Initialize the MUX
     public void initialize() {
-        System.out.println("ready " + cars);
-        bus.subscribe(Topic.DOOR_CON, 0);
+        System.out.println("ready bldg");
         bus.subscribe(Topic.DISPLAY_FLOOR, 0);
-        bus.subscribe(Topic.DISPLAY_DIR, 0);
-        bus.subscribe(Topic.CAR_DISPATCH, 0);
+        bus.subscribe(Topic.DISPLAY_DIRECTION, 0);
         bus.subscribe(Topic.MODE_SET, 0);
         bus.subscribe(Topic.CALL_RESET, 0);
+        bus.subscribe(Topic.HALL_CALL, 0);
         startBusPoller();
     }
 
@@ -63,27 +52,23 @@ public class DeviceMultiplexor {
             while (true) {
 
                 Message msg;
-                msg = bus.get(Topic.DOOR_CON, 0);
-                if (msg != null) {
-                    Platform.runLater(() -> System.out.println("")); // Placeholder
-                }
                 msg = bus.get(Topic.DISPLAY_FLOOR, 0);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.DISPLAY_DIR, 0);
-                if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
-                }
-                msg = bus.get(Topic.CAR_DISPATCH, 0);
+                msg = bus.get(Topic.DISPLAY_DIRECTION, 0);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
                 msg = bus.get(Topic.MODE_SET, 0);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    Platform.runLater(() -> System.out.println("")); // Placeholder
                 }
                 msg = bus.get(Topic.CALL_RESET, 0);
+                if (msg != null) {
+                    Platform.runLater(() -> System.out.println(""));
+                }
+                msg = bus.get(Topic.HALL_CALL, 0);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
@@ -104,7 +89,7 @@ public class DeviceMultiplexor {
 
     // GUI image interaction tracking
     public void imgInteracted(String imageType, int imageIndex, String interactionType, String additionalData) {
-        System.out.println("Image interaction: " + imageType + "[" + imageIndex + "] - " + interactionType + " : " + additionalData);
+        System.out.println("Building-Image-Interaction: " + imageType + "[" + imageIndex + "] - " + interactionType + " : " + additionalData);
         if (listener != null) {
             Platform.runLater(() -> listener.onImageInteraction(imageType, imageIndex, interactionType, additionalData));
         }
@@ -112,7 +97,7 @@ public class DeviceMultiplexor {
 
     // Pass information through the MUX to the console & publish to bus if needed
     public void emit(String msg, boolean publish) {
-        System.out.println("EMIT: " + msg);
+        System.out.println("Building-EMIT: " + msg);
 
         // Publish to bus
         if(publish){ 
@@ -126,18 +111,13 @@ public class DeviceMultiplexor {
      */
 
     // Device Listener Interface (Event handling)
-    public interface DeviceListener {
+    public interface BuildingDeviceListener {
         void onImageInteraction(String imageType, int imageIndex, String interactionType, String additionalData);
 
         void onDisplayUpdate(int carId, int floor, String text);
         void onCallCar(int floor, String direction);
         void onCallReset(int floor);
 
-        void onPanelButtonSelect(int carId, int floor);
-        void onDoorStateChanged(int carId, String state);
-        void onDoorObstructed(int carId, boolean blocked);
-
-        void onCabinOverload(int carId, boolean overloaded);
         void onFireAlarm(boolean active);
     }
 }

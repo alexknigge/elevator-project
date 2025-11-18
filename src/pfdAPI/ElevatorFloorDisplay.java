@@ -1,6 +1,6 @@
 package pfdAPI;
 
-import mux.DeviceMultiplexor;
+import mux.ElevatorMultiplexor;
 
 /**
  * Class that defines the functionality of the Elevator floor displays. Represents
@@ -19,13 +19,13 @@ public class ElevatorFloorDisplay {
     private String direction;
     // The ID of the associated elevator
     private final int carId;
-    private final DeviceMultiplexor mux;
+    private final ElevatorMultiplexor mux;
 
     /**
      * Constructs the ElevatorFloorDisplay.
      * @param carId the ID of the associated elevator
      */
-    public ElevatorFloorDisplay(int carId, DeviceMultiplexor mux) {
+    public ElevatorFloorDisplay(int carId, ElevatorMultiplexor mux) {
         this.carId = carId;
         this.mux = mux;
         this.currentFloor = 1;
@@ -35,14 +35,19 @@ public class ElevatorFloorDisplay {
     /**
      * Updates the display to show the elevator's current floor and direction.
      * @param currentFloor the floor currently displayed
-     * @param direction the direction the elevator is going
+     * @param direction the direction the elevator is going (UP/DOWN/IDLE)
      */
     public synchronized void updateFloorIndicator(int currentFloor, String direction) {
         this.currentFloor = currentFloor;
         this.direction = direction;
-        System.out.println("[Display]");
-        mux.getListener().onDisplayUpdate(carId, currentFloor, direction);
-        mux.emit(carId + " " + currentFloor + " " + direction, false);
+        mux.emit("111-"+ carId + "-" + currentFloor, true);
+        if(direction.equals("UP")){
+            mux.emit("112-"+ carId +"-0" + "", true);
+        }else if(direction.equals("DOWN")){
+            mux.emit("112-"+ carId +"-2", true);
+        } else{
+            mux.emit("112-"+ carId +"-1", true);
+        }
     }
 
     /**

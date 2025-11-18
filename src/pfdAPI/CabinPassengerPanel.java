@@ -6,7 +6,7 @@ import java.net.URL;
 import javafx.application.Platform;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
-import mux.DeviceMultiplexor;
+import mux.ElevatorMultiplexor;
 
 /**
  * Device inside of elevators that allows for user-interaction. Allows cabin riders to
@@ -39,14 +39,14 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
     // The ID of the elevator the passenger panel belongs to
     private final int carId;
     // Reference to the DeviceMultiplexor instance
-    private final DeviceMultiplexor mux;
+    private final ElevatorMultiplexor mux;
 
     /**
      * Constructor of the CabinPassengerPanel.
      * @param carId The elevator housing the panel
      * @param totalFloors Number of floors in the building (=10)
      */
-    public CabinPassengerPanel(int carId, int totalFloors, DeviceMultiplexor mux) {
+    public CabinPassengerPanel(int carId, int totalFloors, ElevatorMultiplexor mux) {
         this.carId = carId;
         this.totalFloors = totalFloors;
         this.floorButtons = new boolean[totalFloors];

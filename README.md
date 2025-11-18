@@ -49,8 +49,7 @@ Elevator-Project/
 - Fully implemented all the MUX listener event handling functions in the GUI
 
 ## TODO Still
-- Need all the API calls to control the GUI via MUX emit-publish to bus so it trickles back down to the GUI via the listeners
-- Need to integrate official topics/subtopics into MUX
+- Need to finish emit function calling in Cabin panel & Elevator doors API using the spreadsheet codes
 - Need to test external command integrations once official topics are integrated
 - Need to test motion sim once integrated
 - Need sound implementations

@@ -1,6 +1,6 @@
 package pfdAPI;
 
-import mux.DeviceMultiplexor;
+import mux.ElevatorMultiplexor;
 
 /**
  * Class that defines the functionality of the Elevator doors. Represents
@@ -21,13 +21,13 @@ public class ElevatorDoorsAssembly {
     private boolean isMoving;
     // The ID of the associated elevator
     private int carId;
-    private final DeviceMultiplexor mux;
+    private final ElevatorMultiplexor mux;
 
     /**
      * Constructor of the ElevatorDoorsAssembly.
      * @param carId The ID of the associated elevator
      */
-    public ElevatorDoorsAssembly(int carId, DeviceMultiplexor mux) {
+    public ElevatorDoorsAssembly(int carId, ElevatorMultiplexor mux) {
         this.isOpen = false;
         this.isObstructed = false;
         this.isMoving = false;
@@ -65,6 +65,7 @@ public class ElevatorDoorsAssembly {
     public synchronized void close() {
         if (isObstructed) {
             System.out.println("[Doors] obstruction detected reopening.");
+            mux.emit("203-"+ carId +"-0", true);
             mux.getListener().onDoorObstructed(carId, true);
             open();
             return;
@@ -112,7 +113,8 @@ public class ElevatorDoorsAssembly {
      */
     public synchronized void setObstruction(boolean obstructed) {
         this.isObstructed = obstructed;
-        mux.emit(carId + " obstructed: " + obstructed, false);
+        if (obstructed) mux.emit("203-"+ carId +"-0", true);
+        else mux.emit("203-"+ carId +"-1", true);
 
     }
 

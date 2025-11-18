@@ -1,6 +1,6 @@
 package pfdAPI;
 
-import mux.DeviceMultiplexor;
+import mux.BuildingMultiplexor;
 
 /**
  * Class that defines the functionality of the Floor Call Buttons. Represents
@@ -29,14 +29,14 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
     private boolean upPressed;
     // True if Down call is active
     private boolean downPressed;
-    private final DeviceMultiplexor mux;
+    private final BuildingMultiplexor mux;
 
     /**
      * Constructs the floor call button panel.
      * @param floorNumber the floor the panel is located on
      * @param totalFloors total number of floors in the building (=10)
      */
-    public FloorCallButtons(int floorNumber, int totalFloors, DeviceMultiplexor mux) {
+    public FloorCallButtons(int floorNumber, int totalFloors, BuildingMultiplexor mux) {
         this.mux = mux;
         this.floorNumber = floorNumber;
         this.totalFloors = totalFloors;
@@ -52,7 +52,7 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
     public synchronized void pressUpCall() {
         if (hasUp) {
             upPressed = true;
-            mux.emit("PFDAPI-Call-UP", true); // Example for future implementation - ideally will trickle through MUX and invoke the GUI listener
+            mux.emit("200-"+ floorNumber +"-0", true);
 
         }
     }
@@ -63,8 +63,7 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
     public synchronized void pressDownCall() {
         if (hasDown) {
             downPressed = true;
-            mux.imgInteracted("CallButton", floorNumber, "DirectionPress:", "DOWN" + "_FLOOR_" + floorNumber);
-            mux.emit(floorNumber + "", false);
+            mux.emit("200-"+ floorNumber +"-1" + "", true);
         }
     }
 
