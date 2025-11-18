@@ -25,15 +25,17 @@ public class Tests extends Application {
         MotionController motionController=new MotionController();
         motionController.set_direction(Direction.UP);
         motionController.start();
-//
-//
-//                ElevatorGUI gui = new ElevatorGUI(
-//                motionController.motionSimulation.getSensors(),
-//                motionController.motionSimulation.get_sensor_pos_HashMap(),
-//                motionController.motionSimulation.getElevator(),
-//                motionController.motionSimulation.getMotor()
-//        );
-//        gui.getPrimaryStage(primaryStage);
+
+
+                ElevatorGUI gui = new ElevatorGUI(
+                motionController.motionSimulation.getSensors(),
+                motionController.motionSimulation.get_sensor_pos_HashMap(),
+                motionController.motionSimulation.getElevator(),
+                motionController.motionSimulation.getMotor()
+        );
+
+        Stage stage=gui.getPrimaryStage();
+        stage.show();
 
         Controller controller=new Controller(motionController);
         controller.start();

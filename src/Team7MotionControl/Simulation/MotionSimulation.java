@@ -42,8 +42,8 @@ public class MotionSimulation implements Runnable, Observer {
     //How fast the sim goes, relative to the ticks
     private double speedFactor=1;
 
-    // Sensor tolerance
-    private final double TOLERANCE = 0.2;
+    // Sensor tolerance, this allows it to always trigger two sensors
+    private final double TOLERANCE = 0.5;
 
     /**
      * Makes a motion simulation
@@ -150,7 +150,12 @@ public class MotionSimulation implements Runnable, Observer {
             }
         }
         if(motor.is_off()&&current_speed==0){
-            elevator.set_y_position(sensor_pos_Map.get(bottom_idx));
+            if(bottom_idx%2==1){
+                elevator.set_y_position(sensor_pos_Map.get(bottom_idx));
+            }else if(top_idx!=-1){
+                elevator.set_y_position(sensor_pos_Map.get(top_idx));
+            }
+
             System.out.println("Setting to " + bottom_idx);
         }
     }
@@ -169,9 +174,10 @@ public class MotionSimulation implements Runnable, Observer {
             double sensorY = sensor_pos_Map.get(idx);
 
             if (sensorY+ TOLERANCE >= yBottom && sensorY- TOLERANCE <= yTop) {
-                //sensor_HashMap.get(idx).set_triggered(true);
+                sensor_HashMap.get(idx).set_triggered(true);
                 //System.out.println(sensorY+" "+yBottom);
-                sensor_HashMap.get(idx).triggered = true;
+               // sensor_HashMap.get(idx).triggered = true;
+                System.out.println("Triggered: "+idx);
 
                 if(newBottom==-1){
                     newBottom=idx;
@@ -180,11 +186,12 @@ public class MotionSimulation implements Runnable, Observer {
                 }else{
                     newTop=idx;
                 }
-                System.out.println("( "+newBottom+", "+newTop +" pos: "+ sensorY+ " elevator bottom "+yBottom+ " elevator top "+yTop);
+
             } else {
                 sensor_HashMap.get(idx).set_triggered(false);
             }
         }
+        System.out.println("( "+newBottom+", "+newTop + " ) elevator bottom "+yBottom+ " elevator top "+yTop);
         top_idx=newTop;
         bottom_idx=newBottom;
 

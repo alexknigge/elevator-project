@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class Sensor implements Observable {
     //Weather or not the sensor is aligned with the elevator
-    public boolean triggered=false;
+    private boolean triggered=false;
     //List of objects observing this object
     List<Observer> observers = new ArrayList<>();
 

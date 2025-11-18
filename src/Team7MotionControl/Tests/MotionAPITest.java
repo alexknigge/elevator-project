@@ -1,6 +1,5 @@
 package Team7MotionControl.Tests;
 
-import Team7MotionControl.Elevator_Controler.MotionAPI;
 import Team7MotionControl.Elevator_Controler.MotionController;
 import Team7MotionControl.GUI.ElevatorGUI;
 import Team7MotionControl.Util.Direction;
