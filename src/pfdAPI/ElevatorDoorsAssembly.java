@@ -1,8 +1,6 @@
 package pfdAPI;
 
-import bus.Message;
-import bus.SoftwareBus;
-import bus.Topic;
+import pfdGUI.gui;
 
 /**
  * Class that defines the functionality of the Elevator doors. Represents
@@ -21,23 +19,25 @@ public class ElevatorDoorsAssembly {
     private boolean isObstructed;
     // Represents whether the doors are actively opening/closing
     private boolean isMoving;
-    // The ID of the associated elevator
-    private int carId;
+
+    // Constants
     private final int OPEN = 0;
     private final int CLOSED = 1;
     private final int OBSTRUCTED = 0;
     private final int CLEAR = 1;
-    private final SoftwareBus bus = new SoftwareBus(false);
+
+    // GUI Control reference
+    private final gui.GUIControl guiControl;
 
     /**
      * Constructor of the ElevatorDoorsAssembly.
      * @param carId The ID of the associated elevator
      */
-    public ElevatorDoorsAssembly(int carId) {
+    public ElevatorDoorsAssembly(gui.GUIControl guiControl) {
+        this.guiControl = guiControl;
         this.isOpen = false;
         this.isObstructed = false;
         this.isMoving = false;
-        this.carId = carId;
     }
 
     /**
@@ -56,7 +56,6 @@ public class ElevatorDoorsAssembly {
             isOpen = true;
             isMoving = false;
             System.out.println("[Doors] Fully open.");
-            bus.publish(new Message(Topic.DOOR_STATUS, carId, OPEN));
 
         }
     }
@@ -68,12 +67,9 @@ public class ElevatorDoorsAssembly {
     public synchronized void close() {
         if (isObstructed) {
             System.out.println("[Doors] Obstruction detected reopening.");
-            bus.publish(new Message(Topic.DOOR_SENSOR, carId, OBSTRUCTED));
             open();
             return;
         }
-
-        bus.publish(new Message(Topic.DOOR_SENSOR, carId, CLEAR));
 
         if (isOpen) {
             isMoving = true;
@@ -83,7 +79,6 @@ public class ElevatorDoorsAssembly {
             if (!isObstructed) {
                 isOpen = false;
                 System.out.println("[Doors] Fully closed.");
-                bus.publish(new Message(Topic.DOOR_STATUS, carId, CLOSED));
             } else {
                 System.out.println("[Doors] Reopening due to obstruction.");
                 open();
@@ -118,8 +113,6 @@ public class ElevatorDoorsAssembly {
      */
     public synchronized void setObstruction(boolean obstructed) {
         this.isObstructed = obstructed;
-        if (obstructed) bus.publish(new Message(Topic.DOOR_SENSOR, carId, OBSTRUCTED));
-        else bus.publish(new Message(Topic.DOOR_SENSOR, carId, CLEAR));
 
     }
 

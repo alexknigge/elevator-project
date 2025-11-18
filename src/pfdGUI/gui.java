@@ -1,16 +1,11 @@
 package pfdGUI;
 
 import java.util.ArrayList;
-import java.util.List;
-
-import bus.SoftwareBus;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.stage.Stage;
-import mux.BuildingMultiplexor;
-import mux.ElevatorMultiplexor;
-import pfdAPI.*;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -31,173 +26,177 @@ import utils.imageLoader;
 public class gui extends Application {
     private int numElevators = 4; // Total number of elevators
     private int numFloors = 10; // Total number of floors
+    private imageLoader loader; // Utility image loader
 
-    private imageLoader loader;
-    private SoftwareBus bus;
-    private BuildingMultiplexor bMUX = new BuildingMultiplexor();
-    private Elevator[] elevators = new Elevator[numElevators];
-    ElevatorMultiplexor[] eMUX = new ElevatorMultiplexor[numElevators];
+    // GUI Control/Query Interface (Contains internal state & control methods)
+    public GUIControl internalState = new GUIControl();
 
-    private List<Label> buttonLabels = new ArrayList<>();
-    private ArrayList<Panel> cabinPanelList = new ArrayList<>();
-    private ArrayList<ElevatorDoor> elevDoorList = new ArrayList<>();
-    private ArrayList<CallButton> callButtonList = new ArrayList<>();
-    private ArrayList<FloorDisplay> floorDisplayList = new ArrayList<>();
-    private ArrayList<OverloadWeightTrigger> overloadTriggerList = new ArrayList<>();
+    // Internal State Devices
+    private Panel[] panels = new Panel[numElevators];
+    private Door[] doors = new Door[numElevators];
+    private Display[] displays = new Display[numElevators];
+    private WeighScale[] weighScales = new WeighScale[numElevators];
+    private CallButton[] callButtons = new CallButton[numFloors];
     private FireAlarm fireAlarm;
+
+    // Singleton instance for API access
+    private static gui instance;
+    public gui() { instance = this; }
+    public static gui getInstance() { return instance; }
+
+
+    /**************************************************
+     * GUI Control & State Query Interface
+     */
+
+     public class GUIControl {
+        public GUIControl() {}
+        
+        // Internal State Variables
+        private ArrayList<Integer>[] pressedFloors = new ArrayList[numElevators];
+        private boolean[] doorObstructions = new boolean[numElevators];
+        private boolean[] cabinOverloads = new boolean[numElevators];
+        private boolean fireAlarmActive;
+
+        // Getters for internal state variables
+        public ArrayList<Integer> getPressedFloors(int ID) { return pressedFloors[ID]; }
+        public boolean getIsDoorObstructed(int ID) { return doorObstructions[ID]; }
+        public boolean getIsCabinOverloaded(int ID) { return cabinOverloads[ID]; }
+        public boolean getFireAlarmPressed() { return fireAlarmActive; }
+        
+
+        // Press panel button
+        public void pressPanelButton(int ID, int floorNumber) {
+            Platform.runLater(() -> {
+                for (Node n : panels[ID].panelOverlay.getChildren()) {
+                    if (n instanceof Label lbl && lbl.getText().equals(String.valueOf(floorNumber))) {
+                        lbl.setStyle("-fx-text-fill: white;");
+                        pressedFloors[ID].add(floorNumber);
+                    }
+                }
+            });
+        }
+
+        // Reset panel button
+        public void resetPanelButton(int ID, int floorNumber) {
+            Platform.runLater(() -> {
+                for (Node n : panels[ID].panelOverlay.getChildren()) {
+                    if (n instanceof Label lbl && lbl.getText().equals(String.valueOf(floorNumber))) {
+                        lbl.setStyle("-fx-text-fill: black;");
+                        pressedFloors[ID].remove(Integer.valueOf(floorNumber));
+                    }
+                }
+            });
+        }
+
+        // Reset all panel buttons
+        public void resetPanel(int ID) {
+            Platform.runLater(() -> {
+                for (Node n : panels[ID].panelOverlay.getChildren()) {
+                    if (n instanceof Label lbl) {
+                        lbl.setStyle("-fx-text-fill: black;");
+                    }
+                }
+                pressedFloors[ID].clear();
+            });
+        }
+
+        // Set the door obstruction state of a given elevator
+        public void setDoorObstruction(int ID, boolean isObstructed) {
+            Platform.runLater(() -> {
+                doorObstructions[ID] = isObstructed;
+                if (isObstructed) {
+                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(7)); // Obstructed image
+                } else {
+                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(6)); // Normal closed image
+                }
+            });
+        }
+
+        // Change the door state of a given elevator
+        public void changeDoorState(int ID, boolean isOpen) {
+            Platform.runLater(() -> {
+                if (isOpen) {
+                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
+                    try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
+                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(5)); // Open image
+
+                } else if (!isOpen && doorObstructions[ID]) {
+                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(5)); // Obstruction image
+                    try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
+                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(7)); // Open image
+
+                } else {
+                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
+                    try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
+                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(6)); // Closed image
+                }
+            });
+        }
+
+        // Set the cabin overload state of a given elevator
+        public void setCabinOverload(int ID, boolean isOverloaded) {
+            Platform.runLater(() -> {
+                cabinOverloads[ID] = isOverloaded;
+                if (isOverloaded) {
+                    weighScales[ID].weightTriggerButton.setStyle("-fx-background-color: #684b4bff; -fx-text-fill: black;");
+                } else {
+                    weighScales[ID].weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
+                }
+            });
+        }
+
+        // Set the floor display of a given elevator
+        public void setDisplay(int carId, int floorNumber, String direction) {
+            Platform.runLater(() -> {
+                displays[carId].digitalLabel.setText(String.valueOf(floorNumber));
+                if (direction.contains("UP")) {
+                    displays[carId].floorDispImg.setImage(loader.imageList.get(10));
+                } else if (direction.contains("DOWN")) {
+                    displays[carId].floorDispImg.setImage(loader.imageList.get(9));
+                } else {
+                    displays[carId].floorDispImg.setImage(loader.imageList.get(8));
+                }
+            });
+        }
+
+        // Set the floor call button state
+        public void setCallButton(int floorNumber, String direction) {
+            Platform.runLater(() -> {
+                if (direction.equals("UP")) {
+                    callButtons[floorNumber].elevCallButtonsImg.setImage(loader.imageList.get(15));
+                } else if (direction.equals("DOWN")) {
+                    callButtons[floorNumber].elevCallButtonsImg.setImage(loader.imageList.get(14));
+                }
+            });
+        }
+
+        // Reset the floor call button state
+        public void resetCallButton(int floorNumber) {
+            Platform.runLater(() -> {
+                callButtons[floorNumber].elevCallButtonsImg.setImage(loader.imageList.get(13));
+            });
+        }
+
+        // Set the fire alarm state
+        public void setFireAlarm(boolean isActive) {
+            Platform.runLater(() -> {
+                fireAlarmActive = isActive;
+                if (isActive) {
+                    fireAlarm.fireAlarmImg.setImage(loader.imageList.get(12)); // Active image
+                } else {
+                    fireAlarm.fireAlarmImg.setImage(loader.imageList.get(11)); // Inactive image
+                }
+            });
+        } 
+    }
+
+    /**************************************************
+     * JavaFX Application & UI
+     */
 
     @Override
     public void start(Stage primaryStage) {
-        /**
-         * Event handling from the bldg MUX to update the GUI
-         */
-        bMUX.setListener(new BuildingMultiplexor.BuildingDeviceListener() {
-
-            @Override
-            // Image interaction tracker
-            public void onImageInteraction(String imageType, int imageIndex, String interactionType, String additionalData) {
-                System.out.println("Image interaction - " + imageType + "[" + imageIndex + "] " + interactionType + ": " + additionalData);
-            }
-
-            @Override
-            // Display update event handling
-            public void onDisplayUpdate(int carId, int floor, String direction) {
-                ImageView img = floorDisplayList.get(carId).floorDispImg;
-
-                // Change floor number on display and the direction arrow
-                if(floorDisplayList.get(carId) != null) { 
-                    floorDisplayList.get(carId).digitalLabel.setText(Integer.toString(floor)); 
-                    if (direction.contains("UP")) {
-                        img.setImage(loader.imageList.get(10));
-                    } else if (direction.contains("DOWN")) {
-                        img.setImage(loader.imageList.get(9));
-                    } else {
-                        img.setImage(loader.imageList.get(8));
-                    }
-                }
-            }
-            
-            @Override
-            // Call button event handling
-            public void onCallCar(int floor, String direction) {
-                ImageView img = callButtonList.get(floor).elevCallButtonsImg;
-
-                // Change call button image based on direction
-                if(callButtonList.get(floor) != null && img.getImage() == loader.imageList.get(13)) { 
-                    if (direction.contains("UP")) {
-                        img.setImage(loader.imageList.get(15));
-                    } else if (direction.contains("DOWN")) {
-                        img.setImage(loader.imageList.get(14));
-                    }
-                }
-            }
-
-            @Override
-            // Call reset event handling
-            public void onCallReset(int floor) {
-                ImageView img = callButtonList.get(floor).elevCallButtonsImg;
-                img.setImage(loader.imageList.get(13));
-            }
-
-            @Override
-            // Fire alarm event handling
-            public void onFireAlarm(boolean active) {
-                ImageView img = fireAlarm.fireAlarmImg;
-
-                if (active) {
-                    img.setImage(loader.imageList.get(12));
-                } else {
-                    img.setImage(loader.imageList.get(11));
-                }
-            }
-        });
-
-        /**
-         * Event handling from the elevator MUXs to update the GUI
-         */
-        ElevatorMultiplexor.ElevatorDeviceListener listener = new ElevatorMultiplexor.ElevatorDeviceListener() {
-
-            @Override
-            // Image interaction tracker
-            public void onImageInteraction(String imageType, int imageIndex, String interactionType, String additionalData) {
-                System.out.println("Image interaction - " + imageType + "[" + imageIndex + "] " + interactionType + ": " + additionalData);
-            }
-
-            @Override
-            // Display update event handling
-            public void onDisplayUpdate(int carId, int floor, String direction) {
-                int listIndex = carId - 1;
-                ImageView img = floorDisplayList.get(listIndex).floorDispImg;
-
-                // Change floor number on display and the direction arrow
-                if(floorDisplayList.get(listIndex) != null) { 
-                    floorDisplayList.get(listIndex).digitalLabel.setText(Integer.toString(floor)); 
-                    if (direction.contains("UP")) {
-                        img.setImage(loader.imageList.get(10));
-                    } else if (direction.contains("DOWN")) {
-                        img.setImage(loader.imageList.get(9));
-                    } else {
-                        img.setImage(loader.imageList.get(8));
-                    }
-                }
-            }
-
-            @Override
-            // Panel button select event handling
-            public void onPanelButtonSelect(int carId, int floor) {
-                Label btnLabel = buttonLabels.get((floor-1) + (carId) * 10);
-                btnLabel.setStyle("-fx-text-fill: #ffffffff;");
-            }
-
-            @Override
-            // Door state change event handling
-            public void onDoorStateChanged(int carId, String state) {
-                ImageView img = elevDoorList.get(carId).elevDoorsImg;
-
-                // Change door image based on state
-                if(elevDoorList.get(carId) != null) { 
-                    if (state.contains("ING")) {
-                        img.setImage(loader.imageList.get(4));
-                    } else if (state.contains("CLOSED")) {
-                        img.setImage(loader.imageList.get(3));
-                    } else if (state.contains("OPEN")) {
-                        img.setImage(loader.imageList.get(6));
-                    }
-                }
-            }
-
-            @Override
-            // Door obstruction event handling
-            public void onDoorObstructed(int carId, boolean blocked) {
-                ImageView img = elevDoorList.get(carId).elevDoorsImg;
-
-                // Change door image based on obstruction
-                if(elevDoorList.get(carId) != null) { 
-                    if (blocked) {
-                        img.setImage(loader.imageList.get(7));
-                    } else {
-                        img.setImage(loader.imageList.get(6));
-                    }
-                }
-            }
-
-            @Override
-            // Cabin overload event handling
-            public void onCabinOverload(int carId, boolean overloaded) {
-                if (overloaded) {
-                    overloadTriggerList.get(carId).weightTriggerButton.setStyle("-fx-background-color: #684b4bff;");
-                } else {
-                    overloadTriggerList.get(carId).weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff;");
-                }
-            }
-        };
-
-        // Create elevators/MUXs and set their listeners
-        for(int i = 0; i < numElevators; i++) {
-            eMUX[i] = new ElevatorMultiplexor(i);
-            eMUX[i].setListener(listener);
-            elevators[i] = new Elevator(i + 1, numFloors);
-        }
 
         // load images via utility
         loader = new imageLoader();
@@ -209,9 +208,8 @@ public class gui extends Application {
 
         // Create floor displays & call buttons
         for (int i = 0; i < numFloors; i++) {
-            CallButton callButton = new CallButton(i);
-            callButtonList.add(callButton);
-            vbox.getChildren().addAll(callButton.callButtonOverlay);
+            callButtons[i] = new CallButton(i);
+            vbox.getChildren().addAll(callButtons[i].callButtonOverlay);
         }
         fireAlarm = new FireAlarm();
         vbox.getChildren().add(fireAlarm.fireAlarmOverlay);
@@ -221,15 +219,14 @@ public class gui extends Application {
         // Create cabin panels & elevator doors & overload buttons
         for (int i = 0; i < numElevators; i++) {
             VBox v = new VBox();
-            Panel cabinPanel = new Panel(i);
-            cabinPanelList.add(cabinPanel);
-            ElevatorDoor elevatorDoor = new ElevatorDoor(i);
-            elevDoorList.add(elevatorDoor);
-            OverloadWeightTrigger overloadTrigger = new OverloadWeightTrigger(i);
-            overloadTriggerList.add(overloadTrigger);
-            FloorDisplay floorDisplay = new FloorDisplay(i);
-            floorDisplayList.add(floorDisplay);
-            v.getChildren().addAll(cabinPanel.panelOverlay, floorDisplay.floorDisplayOverlay, elevatorDoor.doorOverlay, overloadTrigger.weightTriggerButton);
+            panels[i] = new Panel(i);
+            doors[i] = new Door(i);
+            displays[i] = new Display(i);
+            weighScales[i] = new WeighScale(i);
+
+            v.getChildren().addAll(panels[i].panelOverlay, displays[i].displayOverlay, 
+            doors[i].doorOverlay, weighScales[i].weightTriggerButton);
+
             hbox.getChildren().add(v);
             v.setAlignment(Pos.CENTER);
         }
@@ -281,14 +278,12 @@ public class gui extends Application {
                 final int leftFloorNumber = i;
                 left.setOnMouseClicked(event -> {
                     Platform.runLater(() -> {
-                        eMUX[carId].getListener().onImageInteraction("PanelButtonPressed", leftFloorNumber, "PanelButtonPressed:", " Floor " + leftFloorNumber);
-                        eMUX[carId].getListener().onPanelButtonSelect(carId, leftFloorNumber);
-                        eMUX[carId].emit(carId + "", false);
+                        internalState.pressedFloors[carId].add(leftFloorNumber);
+                        left.setStyle("-fx-text-fill: #ffffffff;");
                     });
                 });
 
                 panelOverlay.getChildren().add(left);
-                buttonLabels.add(left);
 
                 Label right = new Label(String.valueOf(i + 1));
                 right.setStyle("-fx-text-fill: black;");
@@ -303,24 +298,22 @@ public class gui extends Application {
                 final int rightFloorNumber = i + 1;
                 right.setOnMouseClicked(event -> {
                     Platform.runLater(() -> {
-                        eMUX[carId].getListener().onImageInteraction("PanelButtonPressed", rightFloorNumber, "PanelButtonPressed:", " Floor " + rightFloorNumber);
-                        eMUX[carId].getListener().onPanelButtonSelect(carId, rightFloorNumber);
-                        eMUX[carId].emit(carId + "", false);
+                        internalState.pressedFloors[carId].add(rightFloorNumber);
+                        right.setStyle("-fx-text-fill: #ffffffff;");
                     });
                 });
 
                 panelOverlay.getChildren().add(right);
-                buttonLabels.add(right);
             }
         }
     }
 
-    private class ElevatorDoor{
+    private class Door{
         public ImageView elevDoorsImg = new ImageView();
         public StackPane doorOverlay = new StackPane(elevDoorsImg);
         private int carId;
 
-        private ElevatorDoor(int index){ 
+        private Door(int index){ 
             this.carId = index;
             makeDoor(); 
         }
@@ -335,16 +328,14 @@ public class gui extends Application {
                 // If door is open, allow placing/removing an obstruction by clicking
                 if(loader.imageList.get(6).equals(elevDoorsImg.getImage())) {
                     Platform.runLater(() -> {
-                        eMUX[carId].getListener().onImageInteraction("Door", carId, "RemoveObstruction:", " Door " + carId);
-                        eMUX[carId].getListener().onDoorObstructed(carId, true);
-                        eMUX[carId].emit(carId + "", false);
+                        internalState.doorObstructions[carId] = true;
+                        elevDoorsImg.setImage(loader.imageList.get(7));
                     });
                     return;
                 } else if(loader.imageList.get(7).equals(elevDoorsImg.getImage())) {
                     Platform.runLater(() -> {
-                        eMUX[carId].getListener().onImageInteraction("Door", carId, "RemoveObstruction:", " Door " + carId);
-                        eMUX[carId].getListener().onDoorObstructed(carId, false);
-                        eMUX[carId].emit(carId + "", false);
+                        internalState.doorObstructions[carId] = false;
+                        elevDoorsImg.setImage(loader.imageList.get(6));
                     });
                     return;
                 }
@@ -352,15 +343,83 @@ public class gui extends Application {
         }
     }
 
+    private class Display{
+        public ImageView floorDispImg = new ImageView();
+        public StackPane displayOverlay = new StackPane(floorDispImg);
+        public Label digitalLabel;
+        private int displayIndex;
+
+        private Display(int index){ 
+            this.displayIndex = index;
+            makeDisplay(); 
+        }
+
+        private void makeDisplay(){
+            floorDispImg.setPreserveRatio(true);
+            floorDispImg.setFitWidth(120);
+            floorDispImg.setImage(loader.imageList.get(8)); // 8-10 indices are floor displays
+
+            // Digital Display label
+            digitalLabel = new Label("1");
+            digitalLabel.setStyle("-fx-text-fill: white;");
+            digitalLabel.setFont(Font.font("Verdana", FontWeight.BOLD, 18));
+            digitalLabel.setTranslateY(-5);
+            displayOverlay.getChildren().add(digitalLabel);
+
+            // Floor number label
+            Label floorLabel = new Label(String.valueOf(displayIndex + 1));
+            floorLabel.setStyle("-fx-text-fill: black;");
+            floorLabel.setFont(Font.font("Times New Roman", FontWeight.BOLD, 16));
+            floorLabel.setTranslateY(55);
+            displayOverlay.getChildren().add(floorLabel);
+        }
+    }
+
+    private class WeighScale{
+        public Button weightTriggerButton = new Button("Overload");
+        private int buttonIndex;
+
+        public WeighScale(int index){ 
+            this.buttonIndex = index; 
+            makeTrigger();
+        }
+
+        private void makeTrigger(){
+            weightTriggerButton.setPrefWidth(150);
+            weightTriggerButton.setPrefHeight(50);
+            weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
+            weightTriggerButton.setFont(Font.font("Times New Roman", FontWeight.BOLD, 22));
+
+            weightTriggerButton.setOnMouseClicked(event -> {
+                
+                // Notify the multiplexor of the overload weight click
+                Platform.runLater(() -> {
+                    String style = weightTriggerButton.getStyle();
+                    boolean isOverloaded = style.contains("#684b4bff");
+
+                    if (isOverloaded) {
+                        // Toggle to NORMAL
+                        weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
+                        internalState.cabinOverloads[buttonIndex] = false;                     
+                    } else {
+                        // Toggle to OVERLOAD
+                        weightTriggerButton.setStyle("-fx-background-color: #684b4bff; -fx-text-fill: black;");
+                        internalState.cabinOverloads[buttonIndex] = true;
+                    }
+                });
+            });
+        }
+    }
+
     private class CallButton{
         public  ImageView elevCallButtonsImg = new ImageView();
         public StackPane callButtonOverlay = new StackPane(elevCallButtonsImg);
-        private FloorCallButtons callButton;
         private int buttonIndex;
+        private String direction;
 
         private CallButton(int index){ 
             this.buttonIndex = index;
-            this.callButton = new FloorCallButtons(index, 10);
+            this.direction = "IDLE";
             makeCallButton(); 
         }
 
@@ -390,17 +449,15 @@ public class gui extends Application {
                 if (distToUp <= radius) {
                     // Upper button clicked
                     Platform.runLater(() -> {
-                    bMUX.getListener().onImageInteraction("CallButton", buttonIndex, "DirectionPress:", "UP" + "_FLOOR_" + buttonIndex);
-                    bMUX.getListener().onCallCar(buttonIndex, "UP");
-                    bMUX.emit(buttonIndex + "", false);
+                        callButtons[buttonIndex].direction = "UP";
+                        elevCallButtonsImg.setImage(loader.imageList.get(15));
                     });
                 } 
                 else if (distToDown <= radius) {
                     // Lower button clicked
                     Platform.runLater(() -> {
-                        bMUX.getListener().onImageInteraction("CallButton", buttonIndex, "DirectionPress:", "DOWN" + "_FLOOR_" + buttonIndex);
-                        bMUX.getListener().onCallCar(buttonIndex, "DOWN");
-                        bMUX.emit(buttonIndex + "", false);
+                        callButtons[buttonIndex].direction = "DOWN";
+                        elevCallButtonsImg.setImage(loader.imageList.get(14));
                     });
                 } 
                 else {
@@ -408,38 +465,6 @@ public class gui extends Application {
                     System.out.println("Clicked outside call buttons");
                 }
             });
-        }
-    }
-
-    private class FloorDisplay{
-        public ImageView floorDispImg = new ImageView();
-        public StackPane floorDisplayOverlay = new StackPane(floorDispImg);
-        public Label digitalLabel;
-        private int displayIndex;
-
-        private FloorDisplay(int index){ 
-            this.displayIndex = index;
-            makeDisplay(); 
-        }
-
-        private void makeDisplay(){
-            floorDispImg.setPreserveRatio(true);
-            floorDispImg.setFitWidth(120);
-            floorDispImg.setImage(loader.imageList.get(8)); // 8-10 indices are floor displays
-
-            // Digital Display label
-            digitalLabel = new Label("1");
-            digitalLabel.setStyle("-fx-text-fill: white;");
-            digitalLabel.setFont(Font.font("Verdana", FontWeight.BOLD, 18));
-            digitalLabel.setTranslateY(-5);
-            floorDisplayOverlay.getChildren().add(digitalLabel);
-
-            // Floor number label
-            Label floorLabel = new Label(String.valueOf(displayIndex + 1));
-            floorLabel.setStyle("-fx-text-fill: black;");
-            floorLabel.setFont(Font.font("Times New Roman", FontWeight.BOLD, 16));
-            floorLabel.setTranslateY(55);
-            floorDisplayOverlay.getChildren().add(floorLabel);
         }
     }
 
@@ -459,62 +484,21 @@ public class gui extends Application {
 
                 if (isActive) {
                     Platform.runLater(() -> {
-                        bMUX.getListener().onImageInteraction("FireAlarm", 0, "AlarmActivated", "EMERGENCY");
-                        bMUX.getListener().onFireAlarm(true);
-                        bMUX.emit("FIRE", false);
+                        internalState.fireAlarmActive = true;
                     });
                 } else {
                     Platform.runLater(() -> {
-                        bMUX.getListener().onImageInteraction("FireAlarm", 0, "AlarmDeactivated", "NO_EMERGENCY");
-                        bMUX.getListener().onFireAlarm(false);
-                        bMUX.emit("No more fire", false);
+                        internalState.fireAlarmActive = false;
                     });
                 }
             });
         }
     }
 
-    private class OverloadWeightTrigger{
-        public Button weightTriggerButton = new Button("Overload");
-        private int buttonIndex;
-
-        public OverloadWeightTrigger(int index){ 
-            this.buttonIndex = index; 
-            makeTrigger();
-        }
-
-        private void makeTrigger(){
-            weightTriggerButton.setPrefWidth(150);
-            weightTriggerButton.setPrefHeight(50);
-            weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
-            weightTriggerButton.setFont(Font.font("Times New Roman", FontWeight.BOLD, 22));
-
-            weightTriggerButton.setOnMouseClicked(event -> {
-                
-                // Notify the multiplexor of the overload weight click
-                Platform.runLater(() -> {
-                    String style = weightTriggerButton.getStyle();
-                    boolean isOverloaded = style.contains("#684b4bff");
-
-                    if (isOverloaded) {
-                        // Toggle to NORMAL
-                        weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
-                        eMUX[buttonIndex].getListener().onCabinOverload(buttonIndex, false);
-                        eMUX[buttonIndex].getListener().onImageInteraction("OverloadWeight", buttonIndex, "Reset", "NORMAL");                        
-                    } else {
-                        // Toggle to OVERLOAD
-                        weightTriggerButton.setStyle("-fx-background-color: #684b4bff; -fx-text-fill: black;");
-                        eMUX[buttonIndex].getListener().onCabinOverload(buttonIndex, true);
-                        eMUX[buttonIndex].getListener().onImageInteraction("OverloadWeight", buttonIndex, "WeightExceeded", "OVERLOAD");
-                    }
-
-                    eMUX[buttonIndex].emit(buttonIndex + "", false);
-                });
-            });
-        }
-    }
-
-// **********************************************************************
+    /**************************************************
+    * Main Application Entry Point
+    ****************************************
+    */
 
     public static void main(String[] args) {
         launch(args);

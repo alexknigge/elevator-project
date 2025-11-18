@@ -2,15 +2,12 @@ package pfdAPI;
 import java.util.ArrayList;
 import java.util.List;
 
-import bus.Message;
-import bus.SoftwareBus;
-import bus.Topic;
-
 import java.net.URL;
 
 import javafx.application.Platform;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import pfdGUI.gui;
 
 /**
  * Device inside of elevators that allows for user-interaction. Allows cabin riders to
@@ -40,17 +37,12 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
     private String direction;
     // State of the fire key; is active/is not active
     private boolean fireKeyActive;
-    // The ID of the elevator the passenger panel belongs to
-    private final int carId;
-    private final SoftwareBus bus = new SoftwareBus(false);
 
     /**
      * Constructor of the CabinPassengerPanel.
-     * @param carId The elevator housing the panel
      * @param totalFloors Number of floors in the building (=10)
      */
-    public CabinPassengerPanel(int carId, int totalFloors) {
-        this.carId = carId;
+    public CabinPassengerPanel(int totalFloors, gui.GUIControl guiControl) {
         this.totalFloors = totalFloors;
         this.floorButtons = new boolean[totalFloors];
         this.pressedFloorsQueue = new ArrayList<>();
@@ -67,7 +59,6 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
         if (floorNumber >= 1 && floorNumber <= totalFloors && !floorButtons[floorNumber - 1]) {
             floorButtons[floorNumber - 1] = true;
             pressedFloorsQueue.add(floorNumber);
-            bus.publish(new Message(Topic.CABIN_SELECT, carId, floorNumber));
         }
     }
 
@@ -99,7 +90,6 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
     public synchronized void resetFloorButton(int floorNumber) {
         if (floorNumber >= 1 && floorNumber <= totalFloors) {
             floorButtons[floorNumber - 1] = false;
-            bus.publish(new Message(Topic.CABIN_SELECT, carId, floorNumber));
         }
     }
 

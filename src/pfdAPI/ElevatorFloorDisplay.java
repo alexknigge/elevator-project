@@ -1,8 +1,6 @@
 package pfdAPI;
 
-import bus.Message;
-import bus.SoftwareBus;
-import bus.Topic;
+import pfdGUI.gui;
 
 /**
  * Class that defines the functionality of the Elevator floor displays. Represents
@@ -19,20 +17,19 @@ public class ElevatorFloorDisplay {
     private int currentFloor;
     // The current movement direction of the elevator, "UP" "DOWN" "IDLE"
     private String direction;
-    // The ID of the associated elevator
-    private final int carId;
     // Direction constants for bus messages
     private final int UP = 0;
     private final int DOWN = 1;
     private final int IDLE = 2;
-    private final SoftwareBus bus = new SoftwareBus(false);
+    // GUI Control reference
+    private final gui.GUIControl guiControl;
 
     /**
      * Constructs the ElevatorFloorDisplay.
      * @param carId the ID of the associated elevator
      */
-    public ElevatorFloorDisplay(int carId) {
-        this.carId = carId;
+    public ElevatorFloorDisplay(gui.GUIControl guiControl) {
+        this.guiControl = guiControl;
         this.currentFloor = 1;
         this.direction = "IDLE";
     }
@@ -45,14 +42,6 @@ public class ElevatorFloorDisplay {
     public synchronized void updateFloorIndicator(int currentFloor, String direction) {
         this.currentFloor = currentFloor;
         this.direction = direction;
-        bus.publish(new Message(Topic.DISPLAY_FLOOR, carId, currentFloor));
-        if(direction.equals("UP")){
-            bus.publish(new Message(Topic.DISPLAY_DIRECTION, carId, UP));
-        }else if(direction.equals("DOWN")){
-            bus.publish(new Message(Topic.DISPLAY_DIRECTION, carId, DOWN));
-        } else{
-            bus.publish(new Message(Topic.DISPLAY_DIRECTION, carId, IDLE));
-        }
     }
 
     /**

@@ -1,11 +1,10 @@
 package mux;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import bus.Message;
 import bus.SoftwareBus;
 import bus.Topic;
 import javafx.application.Platform;
+import pfdAPI.*;
 
 /**
  * Class that defines the ElevatorMultiplexor, which coordinates communication from the Elevator
@@ -16,19 +15,16 @@ import javafx.application.Platform;
  */
 public class ElevatorMultiplexor {
 
-    public ElevatorMultiplexor(int carId){
-        this.carId = carId;
+    // Constructor
+    public ElevatorMultiplexor(int ID){
+        this.ID = ID;
+        this.elev = new Elevator(ID, 10);
         initialize(); 
     }
 
-    // Listener for GUI/API integration
-    private ElevatorDeviceListener listener;
-    public void setListener(ElevatorDeviceListener listener) { this.listener = listener; }
-    public ElevatorDeviceListener getListener() { return this.listener; }
-
-    private final int carId;
-    private final Map<Integer, Integer> lastFloor = new ConcurrentHashMap<>(); // Last Floor (for bookkeeping)
-    private final Map<Integer, Integer> lastDir = new ConcurrentHashMap<>(); // Last Direction (for bookkeeping)
+    // Globals
+    private final int ID;
+    private final Elevator elev;
     private final SoftwareBus bus = new SoftwareBus(false);
 
     // Initialize the MUX  (placeholder example subscriptions)
@@ -58,19 +54,19 @@ public class ElevatorMultiplexor {
             // keep polling
             while (true) {
                 Message msg;
-                msg = bus.get(Topic.DOOR_CONTROL, carId);
+                msg = bus.get(Topic.DOOR_CONTROL, ID);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println("")); // Placeholder
                 }
-                msg = bus.get(Topic.DISPLAY_FLOOR, carId);
+                msg = bus.get(Topic.DISPLAY_FLOOR, ID);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.DISPLAY_DIRECTION, carId);
+                msg = bus.get(Topic.DISPLAY_DIRECTION, ID);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.CAR_DISPATCH, carId);
+                msg = bus.get(Topic.CAR_DISPATCH, ID);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
@@ -78,27 +74,27 @@ public class ElevatorMultiplexor {
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.CABIN_SELECT, carId);
+                msg = bus.get(Topic.CABIN_SELECT, ID);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.CAR_POSITION, carId);
+                msg = bus.get(Topic.CAR_POSITION, ID);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.DOOR_SENSOR, carId);
+                msg = bus.get(Topic.DOOR_SENSOR, ID);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.DOOR_STATUS, carId);
+                msg = bus.get(Topic.DOOR_STATUS, ID);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.CABIN_LOAD, carId);
+                msg = bus.get(Topic.CABIN_LOAD, ID);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
-                msg = bus.get(Topic.FIRE_KEY, carId);
+                msg = bus.get(Topic.FIRE_KEY, ID);
                 if (msg != null) {
                     Platform.runLater(() -> System.out.println(""));
                 }
@@ -114,16 +110,8 @@ public class ElevatorMultiplexor {
     }
 
     /**
-     * Outgoing Emitter Functions
+     * Outgoing Emitter Function
      */
-
-    // GUI image interaction tracking
-    public void imgInteracted(String imageType, int imageIndex, String interactionType, String additionalData) {
-        System.out.println("Elevator-Image-Interaction: " + imageType + "[" + imageIndex + "] - " + interactionType + " : " + additionalData);
-        if (listener != null) {
-            Platform.runLater(() -> listener.onImageInteraction(imageType, imageIndex, interactionType, additionalData));
-        }
-    }
 
     // Pass information through the MUX to the console & publish to bus if needed
     public void emit(String msg, boolean publish) {
@@ -134,22 +122,5 @@ public class ElevatorMultiplexor {
             Message message = Message.parseStringToMsg(msg); // Expects TOPIC-SUBTOPIC-BODY format
             bus.publish(message); 
         }
-    }
-
-    /**
-     * Listener Functions for GUI reflection
-     */
-
-    // Device Listener Interface (Event handling)
-    public interface ElevatorDeviceListener {
-        void onImageInteraction(String imageType, int imageIndex, String interactionType, String additionalData);
-
-        void onDisplayUpdate(int carId, int floor, String text);
-
-        void onPanelButtonSelect(int carId, int floor);
-        void onDoorStateChanged(int carId, String state);
-        void onDoorObstructed(int carId, boolean blocked);
-
-        void onCabinOverload(int carId, boolean overloaded);
     }
 }

@@ -41,15 +41,10 @@ Elevator-Project/
 `runPfd.java` starts the GUI and then simulates calls like pressing floor buttons and opening/closing doors. The GUI swaps images from `res/` to show the current state.
 
 ## Notes
-- Reworked the MUX to be cleaner
-- Deleted old gui listener to use only the MUX listener
-- - GUI now purely relies on the MUX listner functions
-- Reintegrated MUX listeners into the API
-- Made the MUX multithreading safe (hopefully)
-- Fully implemented all the MUX listener event handling functions in the GUI
+- Reworked the MUX to be cleaner still WIP
 
 ## TODO Still
-- Need to finish emit function calling in Cabin panel & Elevator doors API using the spreadsheet codes
+- Need to finish new MUX -> API -> GUI implementations
 - Need to test external command integrations once official topics are integrated
 - Need to test motion sim once integrated
 - Need sound implementations

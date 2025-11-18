@@ -1,8 +1,5 @@
 package pfdAPI;
-
-import bus.Message;
-import bus.SoftwareBus;
-import bus.Topic;
+import pfdGUI.gui;
 
 /**
  * Class that defines the functionality of the Floor Call Buttons. Represents
@@ -34,14 +31,15 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
     private boolean upPressed;
     // True if Down call is active
     private boolean downPressed;
-    private final SoftwareBus bus = new SoftwareBus(false);
+    private final gui.GUIControl guiControl;
 
     /**
      * Constructs the floor call button panel.
      * @param floorNumber the floor the panel is located on
      * @param totalFloors total number of floors in the building (=10)
      */
-    public FloorCallButtons(int floorNumber, int totalFloors) {
+    public FloorCallButtons(int floorNumber, int totalFloors, gui.GUIControl guiControl) {
+        this.guiControl = guiControl;
         this.floorNumber = floorNumber;
         this.totalFloors = totalFloors;
         this.hasUp = floorNumber < totalFloors;
@@ -56,8 +54,7 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
     public synchronized void pressUpCall() {
         if (hasUp) {
             upPressed = true;
-            bus.publish(new Message(Topic.HALL_CALL, floorNumber, UP));
-
+            guiControl.setCallButton(floorNumber, "UP");
         }
     }
 
@@ -67,7 +64,7 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
     public synchronized void pressDownCall() {
         if (hasDown) {
             downPressed = true;
-            bus.publish(new Message(Topic.HALL_CALL, floorNumber, DOWN));
+            guiControl.setCallButton(floorNumber, "DOWN");
         }
     }
 

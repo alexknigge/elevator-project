@@ -1,11 +1,9 @@
 package mux;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import bus.Message;
 import bus.SoftwareBus;
 import bus.Topic;
-import javafx.application.Platform;
+import pfdAPI.Building;
 
 /**
  * Class that defines the BuildingMultiplexor, which coordinates communication from the Elevator
@@ -16,18 +14,14 @@ import javafx.application.Platform;
  */
 public class BuildingMultiplexor {
 
+    // Constructor
     public BuildingMultiplexor(){ 
         initialize(); 
     }
 
     // Listener for GUI/API integration
-    private BuildingDeviceListener listener;
-    public void setListener(BuildingDeviceListener listener) { this.listener = listener; }
-    public BuildingDeviceListener getListener() { return this.listener; }
-
-    private final Map<Integer, Integer> lastFloor = new ConcurrentHashMap<>(); // Last Floor (for bookkeeping)
-    private final Map<Integer, Integer> lastDir = new ConcurrentHashMap<>(); // Last Direction (for bookkeeping)
     private final SoftwareBus bus = new SoftwareBus(false);
+    private final Building bldg = new Building(10);;
 
     // Door Commands
     int DOOR_OPEN = 1;
@@ -48,7 +42,6 @@ public class BuildingMultiplexor {
         bus.subscribe(Topic.HALL_CALL, 0);
         startBusPoller();
     }
-
 
     /**
      * Incoming Event Handling Functions
@@ -88,39 +81,31 @@ public class BuildingMultiplexor {
     public void handleHallCall(Message msg) {
         int floor = msg.getSubTopic();
         int directionCode = msg.getBody();
-        String dir = "IDLE";
-        if (directionCode == DIR_UP) { dir = "UP"; } 
-        else if (directionCode == DIR_DOWN) { dir = "DOWN"; }
-        listener.onCallCar(floor, dir);
+        if (directionCode == DIR_UP) { bldg.callButtons[floor].pressUpCall(); } 
+        else if (directionCode == DIR_DOWN) { bldg.callButtons[floor].pressDownCall(); }
     }
 
     // Handle Mode Set Message (Building Only Cares about Fire Safety)
     public void handleFireAlarm(Message msg) {
         int modeCode = msg.getBody();
         if (modeCode == FIRE_ON) {
-            listener.onFireAlarm(true);
+            // TODO: set fire state in building
         } else if(modeCode == FIRE_OFF){
-            listener.onFireAlarm(false);
+            // TODO: reset fire state in building
         }
     }
 
     // Handle Call Reset Message
     public void handleCallReset(Message msg) {
         int floor = msg.getSubTopic();
-        listener.onCallReset(floor);
+        int directionCode = msg.getBody();
+        if (directionCode == DIR_UP) { bldg.callButtons[floor].resetCallButton("UP"); } 
+        else if (directionCode == DIR_DOWN) { bldg.callButtons[floor].resetCallButton("DOWN"); }
     }
 
     /**
-     * Outgoing Emitter Functions
+     * Outgoing Emitter Function
      */
-
-    // GUI image interaction tracking
-    public void imgInteracted(String imageType, int imageIndex, String interactionType, String additionalData) {
-        System.out.println("Building-Image-Interaction: " + imageType + "[" + imageIndex + "] - " + interactionType + " : " + additionalData);
-        if (listener != null) {
-            Platform.runLater(() -> listener.onImageInteraction(imageType, imageIndex, interactionType, additionalData));
-        }
-    }
 
     // Pass information through the MUX to the console & publish to bus if needed
     public void emit(String msg, boolean publish) {
@@ -131,20 +116,5 @@ public class BuildingMultiplexor {
             Message message = Message.parseStringToMsg(msg); // Expects TOPIC-SUBTOPIC-BODY format
             bus.publish(message); 
         }
-    }
-
-    /**
-     * Listener Functions for GUI reflection
-     */
-
-    // Device Listener Interface (Event handling)
-    public interface BuildingDeviceListener {
-        void onImageInteraction(String imageType, int imageIndex, String interactionType, String additionalData);
-
-        void onDisplayUpdate(int carId, int floor, String text);
-        void onCallCar(int floor, String direction);
-        void onCallReset(int floor);
-
-        void onFireAlarm(boolean active);
     }
 }
