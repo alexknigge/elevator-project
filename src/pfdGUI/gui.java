@@ -342,16 +342,16 @@ public class gui extends Application {
                 // If door is open, allow placing/removing an obstruction by clicking
                 if(loader.imageList.get(6).equals(elevDoorsImg.getImage())) {
                     Platform.runLater(() -> {
-                    elevators[carId].mux.getListener().onImageInteraction("Door", doorIndex, "RemoveObstruction:", " Door " + doorIndex);
-                    elevators[carId].mux.getListener().onDoorObstructed(doorIndex, true);
-                    elevators[carId].mux.emit(doorIndex + "", false);
+                        elevators[carId].mux.getListener().onImageInteraction("Door", doorIndex, "RemoveObstruction:", " Door " + doorIndex);
+                        elevators[carId].mux.getListener().onDoorObstructed(doorIndex, true);
+                        elevators[carId].mux.emit(doorIndex + "", false);
                     });
                     return;
                 } else if(loader.imageList.get(7).equals(elevDoorsImg.getImage())) {
                     Platform.runLater(() -> {
-                    elevators[carId].mux.getListener().onImageInteraction("Door", doorIndex, "RemoveObstruction:", " Door " + doorIndex);
-                    elevators[carId].mux.getListener().onDoorObstructed(doorIndex, false);
-                    elevators[carId].mux.emit(doorIndex + "", false);
+                        elevators[carId].mux.getListener().onImageInteraction("Door", doorIndex, "RemoveObstruction:", " Door " + doorIndex);
+                        elevators[carId].mux.getListener().onDoorObstructed(doorIndex, false);
+                        elevators[carId].mux.emit(doorIndex + "", false);
                     });
                     return;
                 }

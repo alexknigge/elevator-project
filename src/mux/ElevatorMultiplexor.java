@@ -55,7 +55,6 @@ public class ElevatorMultiplexor {
         Thread t = new Thread(() -> {
             // keep polling
             while (true) {
-
                 Message msg;
                 msg = bus.get(Topic.DOOR_CONTROL, 0);
                 if (msg != null) {
