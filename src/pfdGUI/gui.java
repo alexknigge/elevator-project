@@ -61,12 +61,11 @@ public class gui extends Application {
             @Override
             // Display update event handling
             public void onDisplayUpdate(int carId, int floor, String direction) {
-                int listIndex = carId - 1;
-                ImageView img = floorDisplayList.get(listIndex).floorDispImg;
+                ImageView img = floorDisplayList.get(carId).floorDispImg;
 
                 // Change floor number on display and the direction arrow
-                if(floorDisplayList.get(listIndex) != null) { 
-                    floorDisplayList.get(listIndex).digitalLabel.setText(Integer.toString(floor)); 
+                if(floorDisplayList.get(carId) != null) { 
+                    floorDisplayList.get(carId).digitalLabel.setText(Integer.toString(floor)); 
                     if (direction.contains("UP")) {
                         img.setImage(loader.imageList.get(10));
                     } else if (direction.contains("DOWN")) {
@@ -80,11 +79,10 @@ public class gui extends Application {
             @Override
             // Call button event handling
             public void onCallCar(int floor, String direction) {
-                int listIndex = floor - 1;
-                ImageView img = callButtonList.get(listIndex).elevCallButtonsImg;
+                ImageView img = callButtonList.get(floor).elevCallButtonsImg;
 
                 // Change call button image based on direction
-                if(callButtonList.get(listIndex) != null && img.getImage() == loader.imageList.get(13)) { 
+                if(callButtonList.get(floor) != null && img.getImage() == loader.imageList.get(13)) { 
                     if (direction.contains("UP")) {
                         img.setImage(loader.imageList.get(15));
                     } else if (direction.contains("DOWN")) {
@@ -96,8 +94,7 @@ public class gui extends Application {
             @Override
             // Call reset event handling
             public void onCallReset(int floor) {
-                int listIndex = floor - 1;
-                ImageView img = callButtonList.get(listIndex).elevCallButtonsImg;
+                ImageView img = callButtonList.get(floor).elevCallButtonsImg;
                 img.setImage(loader.imageList.get(13));
             }
 
@@ -147,18 +144,17 @@ public class gui extends Application {
             @Override
             // Panel button select event handling
             public void onPanelButtonSelect(int carId, int floor) {
-                Label btnLabel = buttonLabels.get((floor-1) + (carId-1) * 10);
+                Label btnLabel = buttonLabels.get((floor-1) + (carId) * 10);
                 btnLabel.setStyle("-fx-text-fill: #ffffffff;");
             }
 
             @Override
             // Door state change event handling
             public void onDoorStateChanged(int carId, String state) {
-                int listIndex = carId - 1;
-                ImageView img = elevDoorList.get(listIndex).elevDoorsImg;
+                ImageView img = elevDoorList.get(carId).elevDoorsImg;
 
                 // Change door image based on state
-                if(elevDoorList.get(listIndex) != null) { 
+                if(elevDoorList.get(carId) != null) { 
                     if (state.contains("ING")) {
                         img.setImage(loader.imageList.get(4));
                     } else if (state.contains("CLOSED")) {
@@ -172,11 +168,10 @@ public class gui extends Application {
             @Override
             // Door obstruction event handling
             public void onDoorObstructed(int carId, boolean blocked) {
-                int listIndex = carId - 1;
-                ImageView img = elevDoorList.get(listIndex).elevDoorsImg;
+                ImageView img = elevDoorList.get(carId).elevDoorsImg;
 
                 // Change door image based on obstruction
-                if(elevDoorList.get(listIndex) != null) { 
+                if(elevDoorList.get(carId) != null) { 
                     if (blocked) {
                         img.setImage(loader.imageList.get(7));
                     } else {
@@ -188,11 +183,10 @@ public class gui extends Application {
             @Override
             // Cabin overload event handling
             public void onCabinOverload(int carId, boolean overloaded) {
-                int listIndex = carId - 1;
                 if (overloaded) {
-                    overloadTriggerList.get(listIndex).weightTriggerButton.setStyle("-fx-background-color: #684b4bff;");
+                    overloadTriggerList.get(carId).weightTriggerButton.setStyle("-fx-background-color: #684b4bff;");
                 } else {
-                    overloadTriggerList.get(listIndex).weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff;");
+                    overloadTriggerList.get(carId).weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff;");
                 }
             }
         };
@@ -256,6 +250,7 @@ public class gui extends Application {
         private int carId;
 
         private Panel(int index){ 
+            this.carId = index;
             makePanel(); 
         }
 
@@ -324,11 +319,10 @@ public class gui extends Application {
     private class ElevatorDoor{
         public ImageView elevDoorsImg = new ImageView();
         public StackPane doorOverlay = new StackPane(elevDoorsImg);
-        private int doorIndex;
-            private int carId;
+        private int carId;
 
         private ElevatorDoor(int index){ 
-            this.doorIndex = index+1;
+            this.carId = index;
             makeDoor(); 
         }
 
@@ -342,16 +336,16 @@ public class gui extends Application {
                 // If door is open, allow placing/removing an obstruction by clicking
                 if(loader.imageList.get(6).equals(elevDoorsImg.getImage())) {
                     Platform.runLater(() -> {
-                        elevators[carId].mux.getListener().onImageInteraction("Door", doorIndex, "RemoveObstruction:", " Door " + doorIndex);
-                        elevators[carId].mux.getListener().onDoorObstructed(doorIndex, true);
-                        elevators[carId].mux.emit(doorIndex + "", false);
+                        elevators[carId].mux.getListener().onImageInteraction("Door", carId, "RemoveObstruction:", " Door " + carId);
+                        elevators[carId].mux.getListener().onDoorObstructed(carId, true);
+                        elevators[carId].mux.emit(carId + "", false);
                     });
                     return;
                 } else if(loader.imageList.get(7).equals(elevDoorsImg.getImage())) {
                     Platform.runLater(() -> {
-                        elevators[carId].mux.getListener().onImageInteraction("Door", doorIndex, "RemoveObstruction:", " Door " + doorIndex);
-                        elevators[carId].mux.getListener().onDoorObstructed(doorIndex, false);
-                        elevators[carId].mux.emit(doorIndex + "", false);
+                        elevators[carId].mux.getListener().onImageInteraction("Door", carId, "RemoveObstruction:", " Door " + carId);
+                        elevators[carId].mux.getListener().onDoorObstructed(carId, false);
+                        elevators[carId].mux.emit(carId + "", false);
                     });
                     return;
                 }
@@ -366,7 +360,7 @@ public class gui extends Application {
         private int buttonIndex;
 
         private CallButton(int index){ 
-            this.buttonIndex = index+1;
+            this.buttonIndex = index;
             this.callButton = new FloorCallButtons(index, 10, bMUX);
             makeCallButton(); 
         }
@@ -486,7 +480,7 @@ public class gui extends Application {
         private int buttonIndex;
 
         public OverloadWeightTrigger(int index){ 
-            this.buttonIndex = index+1; 
+            this.buttonIndex = index; 
             makeTrigger();
         }
 
