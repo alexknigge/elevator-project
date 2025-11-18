@@ -1,6 +1,8 @@
 package pfdAPI;
 
-import mux.ElevatorMultiplexor;
+import bus.Message;
+import bus.SoftwareBus;
+import bus.Topic;
 
 /**
  * Class that defines the functionality of the Elevator floor displays. Represents
@@ -19,15 +21,18 @@ public class ElevatorFloorDisplay {
     private String direction;
     // The ID of the associated elevator
     private final int carId;
-    private final ElevatorMultiplexor mux;
+    // Direction constants for bus messages
+    private final int UP = 0;
+    private final int DOWN = 1;
+    private final int IDLE = 2;
+    private final SoftwareBus bus = new SoftwareBus(false);
 
     /**
      * Constructs the ElevatorFloorDisplay.
      * @param carId the ID of the associated elevator
      */
-    public ElevatorFloorDisplay(int carId, ElevatorMultiplexor mux) {
+    public ElevatorFloorDisplay(int carId) {
         this.carId = carId;
-        this.mux = mux;
         this.currentFloor = 1;
         this.direction = "IDLE";
     }
@@ -40,13 +45,13 @@ public class ElevatorFloorDisplay {
     public synchronized void updateFloorIndicator(int currentFloor, String direction) {
         this.currentFloor = currentFloor;
         this.direction = direction;
-        mux.emit("111-"+ carId + "-" + currentFloor, true);
+        bus.publish(new Message(Topic.DISPLAY_FLOOR, carId, currentFloor));
         if(direction.equals("UP")){
-            mux.emit("112-"+ carId +"-0" + "", true);
+            bus.publish(new Message(Topic.DISPLAY_DIRECTION, carId, UP));
         }else if(direction.equals("DOWN")){
-            mux.emit("112-"+ carId +"-2", true);
+            bus.publish(new Message(Topic.DISPLAY_DIRECTION, carId, DOWN));
         } else{
-            mux.emit("112-"+ carId +"-1", true);
+            bus.publish(new Message(Topic.DISPLAY_DIRECTION, carId, IDLE));
         }
     }
 

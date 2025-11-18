@@ -29,11 +29,21 @@ public class BuildingMultiplexor {
     private final Map<Integer, Integer> lastDir = new ConcurrentHashMap<>(); // Last Direction (for bookkeeping)
     private final SoftwareBus bus = new SoftwareBus(false);
 
+    // Door Commands
+    int DOOR_OPEN = 1;
+    int DOOR_CLOSE = 2;
+
+    int DIR_IDLE = 0;
+    int DIR_UP = 1;
+    int DIR_DOWN = 2;
+
+    int MODE_OFF = 0;
+    int MODE_ON = 1;
+    int MODE_FIRE_SAFETY = 2;
+
     // Initialize the MUX
     public void initialize() {
         System.out.println("ready bldg");
-        bus.subscribe(Topic.DISPLAY_FLOOR, 0);
-        bus.subscribe(Topic.DISPLAY_DIRECTION, 0);
         bus.subscribe(Topic.MODE_SET, 0);
         bus.subscribe(Topic.CALL_RESET, 0);
         bus.subscribe(Topic.HALL_CALL, 0);
@@ -52,25 +62,17 @@ public class BuildingMultiplexor {
             while (true) {
 
                 Message msg;
-                msg = bus.get(Topic.DISPLAY_FLOOR, 0);
-                if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
-                }
-                msg = bus.get(Topic.DISPLAY_DIRECTION, 0);
-                if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
-                }
                 msg = bus.get(Topic.MODE_SET, 0);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println("")); // Placeholder
+                    handleModeSet(msg);
                 }
                 msg = bus.get(Topic.CALL_RESET, 0);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleCallReset(msg);
                 }
                 msg = bus.get(Topic.HALL_CALL, 0);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleHallCall(msg);
                 }
 
                 try {
@@ -81,6 +83,35 @@ public class BuildingMultiplexor {
             }
         });
         t.start();
+    }
+
+    // Handle Hall Call Message
+    public void handleHallCall(Message msg) {
+        int floor = msg.getSubTopic();
+        int directionCode = msg.getBody();
+        String direction = "IDLE";
+        if (directionCode == DIR_UP) {
+            direction = "UP";
+        } else if (directionCode == DIR_DOWN) {
+            direction = "DOWN";
+        }
+        listener.onCallCar(floor, direction);
+    }
+
+    // Handle Mode Set Message (Building Only Cares about Fire Safety)
+    public void handleModeSet(Message msg) {
+        int modeCode = msg.getBody();
+        if (modeCode == MODE_FIRE_SAFETY) {
+            listener.onFireAlarm(true);
+        } else if (modeCode == MODE_OFF) {
+            listener.onFireAlarm(false);
+        }
+    }
+
+    // Handle Call Reset Message
+    public void handleCallReset(Message msg) {
+        int floor = msg.getSubTopic();
+        listener.onCallReset(floor);
     }
 
     /**

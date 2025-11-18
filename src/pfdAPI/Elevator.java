@@ -1,5 +1,4 @@
 package pfdAPI;
-import mux.ElevatorMultiplexor;
 
 /**
  * Class that defines a given Elevator (4 in total).
@@ -16,7 +15,6 @@ public class Elevator {
     public final CabinPassengerPanel panel;
     // The elevator's floor display
     public final ElevatorFloorDisplay display;
-    public final ElevatorMultiplexor mux;
 
     /**
      * Constructs an Elevator.
@@ -24,11 +22,10 @@ public class Elevator {
      * @param totalFloors the number of floors in the building (=10)
      * @param mux the ElevatorMultiplexor instance
      */
-    public Elevator(int carId, int totalFloors, ElevatorMultiplexor mux) {
+    public Elevator(int carId, int totalFloors) {
         this.carId = carId;
-        this.mux = mux;
-        this.doors  = new ElevatorDoorsAssembly(carId, mux);
-        this.panel  = new CabinPassengerPanel(carId, totalFloors, mux);
-        this.display = new ElevatorFloorDisplay(carId, mux);
+        this.doors  = new ElevatorDoorsAssembly(carId);
+        this.panel  = new CabinPassengerPanel(carId, totalFloors);
+        this.display = new ElevatorFloorDisplay(carId);
     }
 }

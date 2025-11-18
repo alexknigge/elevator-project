@@ -108,6 +108,8 @@ public interface DeviceListener {
         t.start();
     }
 
+    //***************************************************** */
+
     // send car to targetFloor
     public void onCarDispatch(int carId, int targetFloor) {
         System.out.println("dispatch " + carId + " " + targetFloor);
@@ -136,6 +138,8 @@ public interface DeviceListener {
 
     private final Map<Integer, Integer> lastFloor = new HashMap<>();
     private final Map<Integer, Integer> lastDir = new HashMap<>();
+
+    //------------------------------------------------------------------------ */
 
     public void handleDisplayFloor(Message msg) {
         int carId = msg.getSubTopic();
@@ -296,6 +300,9 @@ public interface DeviceListener {
             listener.onModeChanged(carId, mode);
         }
     }
+
+
+    //***************************************************** */
 
 
     // image interaction tracking

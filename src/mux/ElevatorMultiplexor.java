@@ -16,7 +16,8 @@ import javafx.application.Platform;
  */
 public class ElevatorMultiplexor {
 
-    public ElevatorMultiplexor(){
+    public ElevatorMultiplexor(int carId){
+        this.carId = carId;
         initialize(); 
     }
 
@@ -25,6 +26,7 @@ public class ElevatorMultiplexor {
     public void setListener(ElevatorDeviceListener listener) { this.listener = listener; }
     public ElevatorDeviceListener getListener() { return this.listener; }
 
+    private final int carId;
     private final Map<Integer, Integer> lastFloor = new ConcurrentHashMap<>(); // Last Floor (for bookkeeping)
     private final Map<Integer, Integer> lastDir = new ConcurrentHashMap<>(); // Last Direction (for bookkeeping)
     private final SoftwareBus bus = new SoftwareBus(false);

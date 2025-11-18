@@ -1,6 +1,8 @@
 package pfdAPI;
 
-import mux.ElevatorMultiplexor;
+import bus.Message;
+import bus.SoftwareBus;
+import bus.Topic;
 
 /**
  * Class that defines the functionality of the Elevator doors. Represents
@@ -21,39 +23,40 @@ public class ElevatorDoorsAssembly {
     private boolean isMoving;
     // The ID of the associated elevator
     private int carId;
-    private final ElevatorMultiplexor mux;
+    private final int OPEN = 0;
+    private final int CLOSED = 1;
+    private final int OBSTRUCTED = 0;
+    private final int CLEAR = 1;
+    private final SoftwareBus bus = new SoftwareBus(false);
 
     /**
      * Constructor of the ElevatorDoorsAssembly.
      * @param carId The ID of the associated elevator
      */
-    public ElevatorDoorsAssembly(int carId, ElevatorMultiplexor mux) {
+    public ElevatorDoorsAssembly(int carId) {
         this.isOpen = false;
         this.isObstructed = false;
         this.isMoving = false;
         this.carId = carId;
-        this.mux = mux;
     }
 
     /**
      * Commands the door assembly to open.
      * If an obstruction is detected, opening is halted automatically.
-     * TODO: An obstruction should make opening a MANDATORY action, rather than halting it
      */
     public synchronized void open(){
         if(isObstructed) {
-            System.out.println("[Doors} Cannot open - obstruction detected.");
-            return;
+            System.out.println("[Doors] Obstruction detected.");
         }
         if (!isOpen) {
             isMoving = true;
             System.out.println("[Doors] Opening...");
-            mux.getListener().onDoorStateChanged(carId, "OPENING");
+            
             simulateDelay(2000);
             isOpen = true;
             isMoving = false;
             System.out.println("[Doors] Fully open.");
-            mux.getListener().onDoorStateChanged(carId, "OPENED");
+            bus.publish(new Message(Topic.DOOR_STATUS, carId, OPEN));
 
         }
     }
@@ -64,21 +67,23 @@ public class ElevatorDoorsAssembly {
      */
     public synchronized void close() {
         if (isObstructed) {
-            System.out.println("[Doors] obstruction detected reopening.");
-            mux.emit("203-"+ carId +"-0", true);
-            mux.getListener().onDoorObstructed(carId, true);
+            System.out.println("[Doors] Obstruction detected reopening.");
+            bus.publish(new Message(Topic.DOOR_SENSOR, carId, OBSTRUCTED));
             open();
             return;
         }
+
+        bus.publish(new Message(Topic.DOOR_SENSOR, carId, CLEAR));
+
         if (isOpen) {
             isMoving = true;
             System.out.println("[Doors] Closing...");
-            mux.getListener().onDoorStateChanged(carId, "CLOSING");
+            //mux.getListener().onDoorStateChanged(carId, "CLOSING");
             simulateDelay(1000);
             if (!isObstructed) {
                 isOpen = false;
                 System.out.println("[Doors] Fully closed.");
-                mux.getListener().onDoorStateChanged(carId, "CLOSED");
+                bus.publish(new Message(Topic.DOOR_STATUS, carId, CLOSED));
             } else {
                 System.out.println("[Doors] Reopening due to obstruction.");
                 open();
@@ -113,8 +118,8 @@ public class ElevatorDoorsAssembly {
      */
     public synchronized void setObstruction(boolean obstructed) {
         this.isObstructed = obstructed;
-        if (obstructed) mux.emit("203-"+ carId +"-0", true);
-        else mux.emit("203-"+ carId +"-1", true);
+        if (obstructed) bus.publish(new Message(Topic.DOOR_SENSOR, carId, OBSTRUCTED));
+        else bus.publish(new Message(Topic.DOOR_SENSOR, carId, CLEAR));
 
     }
 

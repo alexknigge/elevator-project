@@ -17,7 +17,7 @@ public class Building {
 
         this.callButtons = new FloorCallButtons[totalFloors];
         for (int i = 1; i <= totalFloors; i++) {
-            this.callButtons[i - 1] = new FloorCallButtons(i, totalFloors, mux);
+            this.callButtons[i - 1] = new FloorCallButtons(i, totalFloors);
         }
     }
 }

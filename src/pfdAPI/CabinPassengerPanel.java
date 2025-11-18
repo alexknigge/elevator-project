@@ -1,12 +1,16 @@
 package pfdAPI;
 import java.util.ArrayList;
 import java.util.List;
+
+import bus.Message;
+import bus.SoftwareBus;
+import bus.Topic;
+
 import java.net.URL;
 
 import javafx.application.Platform;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
-import mux.ElevatorMultiplexor;
 
 /**
  * Device inside of elevators that allows for user-interaction. Allows cabin riders to
@@ -38,15 +42,14 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
     private boolean fireKeyActive;
     // The ID of the elevator the passenger panel belongs to
     private final int carId;
-    // Reference to the DeviceMultiplexor instance
-    private final ElevatorMultiplexor mux;
+    private final SoftwareBus bus = new SoftwareBus(false);
 
     /**
      * Constructor of the CabinPassengerPanel.
      * @param carId The elevator housing the panel
      * @param totalFloors Number of floors in the building (=10)
      */
-    public CabinPassengerPanel(int carId, int totalFloors, ElevatorMultiplexor mux) {
+    public CabinPassengerPanel(int carId, int totalFloors) {
         this.carId = carId;
         this.totalFloors = totalFloors;
         this.floorButtons = new boolean[totalFloors];
@@ -54,7 +57,6 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
         this.currentFloor = 1;
         this.direction = "IDLE";
         this.fireKeyActive = false;
-        this.mux = mux;
     }
 
     /**
@@ -65,8 +67,7 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
         if (floorNumber >= 1 && floorNumber <= totalFloors && !floorButtons[floorNumber - 1]) {
             floorButtons[floorNumber - 1] = true;
             pressedFloorsQueue.add(floorNumber);
-            mux.imgInteracted("CabinPanel", carId, "FloorButtonPress", String.valueOf(floorNumber));
-            mux.emit(carId + "", false);
+            bus.publish(new Message(Topic.CABIN_SELECT, carId, floorNumber));
         }
     }
 
@@ -98,7 +99,7 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
     public synchronized void resetFloorButton(int floorNumber) {
         if (floorNumber >= 1 && floorNumber <= totalFloors) {
             floorButtons[floorNumber - 1] = false;
-            mux.emit(carId + "", false);
+            bus.publish(new Message(Topic.CABIN_SELECT, carId, floorNumber));
         }
     }
 

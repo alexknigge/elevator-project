@@ -36,6 +36,7 @@ public class gui extends Application {
     private SoftwareBus bus;
     private BuildingMultiplexor bMUX = new BuildingMultiplexor();
     private Elevator[] elevators = new Elevator[numElevators];
+    ElevatorMultiplexor[] eMUX = new ElevatorMultiplexor[numElevators];
 
     private List<Label> buttonLabels = new ArrayList<>();
     private ArrayList<Panel> cabinPanelList = new ArrayList<>();
@@ -191,13 +192,11 @@ public class gui extends Application {
             }
         };
 
-        ElevatorMultiplexor[] eMUX = new ElevatorMultiplexor[numElevators];
-
         // Create elevators/MUXs and set their listeners
         for(int i = 0; i < numElevators; i++) {
-            eMUX[i] = new ElevatorMultiplexor();
+            eMUX[i] = new ElevatorMultiplexor(i);
             eMUX[i].setListener(listener);
-            elevators[i] = new Elevator(i + 1, numFloors, eMUX[i]);
+            elevators[i] = new Elevator(i + 1, numFloors);
         }
 
         // load images via utility
@@ -282,9 +281,9 @@ public class gui extends Application {
                 final int leftFloorNumber = i;
                 left.setOnMouseClicked(event -> {
                     Platform.runLater(() -> {
-                        elevators[carId].mux.getListener().onImageInteraction("PanelButtonPressed", leftFloorNumber, "PanelButtonPressed:", " Floor " + leftFloorNumber);
-                        elevators[carId].mux.getListener().onPanelButtonSelect(carId, leftFloorNumber);
-                        elevators[carId].mux.emit(carId + "", false);
+                        eMUX[carId].getListener().onImageInteraction("PanelButtonPressed", leftFloorNumber, "PanelButtonPressed:", " Floor " + leftFloorNumber);
+                        eMUX[carId].getListener().onPanelButtonSelect(carId, leftFloorNumber);
+                        eMUX[carId].emit(carId + "", false);
                     });
                 });
 
@@ -304,9 +303,9 @@ public class gui extends Application {
                 final int rightFloorNumber = i + 1;
                 right.setOnMouseClicked(event -> {
                     Platform.runLater(() -> {
-                        elevators[carId].mux.getListener().onImageInteraction("PanelButtonPressed", rightFloorNumber, "PanelButtonPressed:", " Floor " + rightFloorNumber);
-                        elevators[carId].mux.getListener().onPanelButtonSelect(carId, rightFloorNumber);
-                        elevators[carId].mux.emit(carId + "", false);
+                        eMUX[carId].getListener().onImageInteraction("PanelButtonPressed", rightFloorNumber, "PanelButtonPressed:", " Floor " + rightFloorNumber);
+                        eMUX[carId].getListener().onPanelButtonSelect(carId, rightFloorNumber);
+                        eMUX[carId].emit(carId + "", false);
                     });
                 });
 
@@ -336,16 +335,16 @@ public class gui extends Application {
                 // If door is open, allow placing/removing an obstruction by clicking
                 if(loader.imageList.get(6).equals(elevDoorsImg.getImage())) {
                     Platform.runLater(() -> {
-                        elevators[carId].mux.getListener().onImageInteraction("Door", carId, "RemoveObstruction:", " Door " + carId);
-                        elevators[carId].mux.getListener().onDoorObstructed(carId, true);
-                        elevators[carId].mux.emit(carId + "", false);
+                        eMUX[carId].getListener().onImageInteraction("Door", carId, "RemoveObstruction:", " Door " + carId);
+                        eMUX[carId].getListener().onDoorObstructed(carId, true);
+                        eMUX[carId].emit(carId + "", false);
                     });
                     return;
                 } else if(loader.imageList.get(7).equals(elevDoorsImg.getImage())) {
                     Platform.runLater(() -> {
-                        elevators[carId].mux.getListener().onImageInteraction("Door", carId, "RemoveObstruction:", " Door " + carId);
-                        elevators[carId].mux.getListener().onDoorObstructed(carId, false);
-                        elevators[carId].mux.emit(carId + "", false);
+                        eMUX[carId].getListener().onImageInteraction("Door", carId, "RemoveObstruction:", " Door " + carId);
+                        eMUX[carId].getListener().onDoorObstructed(carId, false);
+                        eMUX[carId].emit(carId + "", false);
                     });
                     return;
                 }
@@ -361,7 +360,7 @@ public class gui extends Application {
 
         private CallButton(int index){ 
             this.buttonIndex = index;
-            this.callButton = new FloorCallButtons(index, 10, bMUX);
+            this.callButton = new FloorCallButtons(index, 10);
             makeCallButton(); 
         }
 
@@ -500,18 +499,26 @@ public class gui extends Application {
                     if (isOverloaded) {
                         // Toggle to NORMAL
                         weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
-                        elevators[buttonIndex].mux.getListener().onCabinOverload(buttonIndex, false);
-                        elevators[buttonIndex].mux.getListener().onImageInteraction("OverloadWeight", buttonIndex, "Reset", "NORMAL");                        
+                        eMUX[buttonIndex].getListener().onCabinOverload(buttonIndex, false);
+                        eMUX[buttonIndex].getListener().onImageInteraction("OverloadWeight", buttonIndex, "Reset", "NORMAL");                        
                     } else {
                         // Toggle to OVERLOAD
                         weightTriggerButton.setStyle("-fx-background-color: #684b4bff; -fx-text-fill: black;");
-                        elevators[buttonIndex].mux.getListener().onCabinOverload(buttonIndex, true);
-                        elevators[buttonIndex].mux.getListener().onImageInteraction("OverloadWeight", buttonIndex, "WeightExceeded", "OVERLOAD");
+                        eMUX[buttonIndex].getListener().onCabinOverload(buttonIndex, true);
+                        eMUX[buttonIndex].getListener().onImageInteraction("OverloadWeight", buttonIndex, "WeightExceeded", "OVERLOAD");
                     }
 
-                    elevators[buttonIndex].mux.emit(buttonIndex + "", false);
+                    eMUX[buttonIndex].emit(buttonIndex + "", false);
                 });
             });
         }
     }
+
+// **********************************************************************
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+
 }
