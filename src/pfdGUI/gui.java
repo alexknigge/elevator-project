@@ -24,7 +24,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
 import utils.imageLoader;
 
-/**
+/** MUX calls api, api modifies the gui. MUX needs to also poll the internal state.
  * Simple JavaFX GUI that listens to model classes via a nested listener
  * interface and swaps images in response to events.
  */
