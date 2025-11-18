@@ -23,12 +23,15 @@ public class ElevatorFloorDisplay {
     private final int IDLE = 2;
     // GUI Control reference
     private final gui.GUIControl guiControl;
+    // The ID of the associated elevator
+    private final int carId;
 
     /**
      * Constructs the ElevatorFloorDisplay.
      * @param carId the ID of the associated elevator
      */
-    public ElevatorFloorDisplay(gui.GUIControl guiControl) {
+    public ElevatorFloorDisplay(int carId, gui.GUIControl guiControl) {
+        this.carId = carId;
         this.guiControl = guiControl;
         this.currentFloor = 1;
         this.direction = "IDLE";
@@ -42,6 +45,7 @@ public class ElevatorFloorDisplay {
     public synchronized void updateFloorIndicator(int currentFloor, String direction) {
         this.currentFloor = currentFloor;
         this.direction = direction;
+        guiControl.setDisplay(carId, currentFloor, direction);
     }
 
     /**
@@ -58,19 +62,5 @@ public class ElevatorFloorDisplay {
     public synchronized void playOverLoadWarning() {
         // simulating the buzzing noise
         System.out.println("*Buzz! Warning: Overload detected at floor" + currentFloor);
-    }
-
-    /**
-     * TODO: Remove.
-     * this next functions I'm just going to add just in case
-     * we need them in the future they just return direction
-     * and the current floor.
-     */
-    public synchronized int getCurrentFloor() {
-        return currentFloor;
-    }
-
-    public synchronized String getDirection() {
-        return direction;
     }
 }

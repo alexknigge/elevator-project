@@ -28,12 +28,14 @@ public class ElevatorDoorsAssembly {
 
     // GUI Control reference
     private final gui.GUIControl guiControl;
+    // Car ID reference
+    private final int carId;
 
     /**
      * Constructor of the ElevatorDoorsAssembly.
-     * @param carId The ID of the associated elevator
      */
-    public ElevatorDoorsAssembly(gui.GUIControl guiControl) {
+    public ElevatorDoorsAssembly(int carId, gui.GUIControl guiControl) {
+        this.carId = carId;
         this.guiControl = guiControl;
         this.isOpen = false;
         this.isObstructed = false;
@@ -51,9 +53,9 @@ public class ElevatorDoorsAssembly {
         if (!isOpen) {
             isMoving = true;
             System.out.println("[Doors] Opening...");
-            
-            simulateDelay(2000);
+            simulateDelay(500);
             isOpen = true;
+            guiControl.changeDoorState(carId, isOpen);
             isMoving = false;
             System.out.println("[Doors] Fully open.");
 
@@ -75,9 +77,10 @@ public class ElevatorDoorsAssembly {
             isMoving = true;
             System.out.println("[Doors] Closing...");
             //mux.getListener().onDoorStateChanged(carId, "CLOSING");
-            simulateDelay(1000);
+            simulateDelay(500);
             if (!isObstructed) {
                 isOpen = false;
+                guiControl.changeDoorState(carId, isOpen);
                 System.out.println("[Doors] Fully closed.");
             } else {
                 System.out.println("[Doors] Reopening due to obstruction.");
@@ -113,7 +116,7 @@ public class ElevatorDoorsAssembly {
      */
     public synchronized void setObstruction(boolean obstructed) {
         this.isObstructed = obstructed;
-
+        guiControl.setDoorObstruction(carId, obstructed);
     }
 
     /**

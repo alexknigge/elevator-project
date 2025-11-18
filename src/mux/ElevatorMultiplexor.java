@@ -3,7 +3,6 @@ package mux;
 import bus.Message;
 import bus.SoftwareBus;
 import bus.Topic;
-import javafx.application.Platform;
 import pfdAPI.*;
 
 /**
@@ -23,6 +22,8 @@ public class ElevatorMultiplexor {
     }
 
     // Globals
+    private int currentFloor = 1;
+    private String currentDirection = "IDLE";
     private final int ID;
     private final Elevator elev;
     private final SoftwareBus bus = new SoftwareBus(false);
@@ -56,47 +57,47 @@ public class ElevatorMultiplexor {
                 Message msg;
                 msg = bus.get(Topic.DOOR_CONTROL, ID);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println("")); // Placeholder
+                    handleDoorControl(msg);
                 }
                 msg = bus.get(Topic.DISPLAY_FLOOR, ID);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleDisplayFloor(msg);
                 }
                 msg = bus.get(Topic.DISPLAY_DIRECTION, ID);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleDisplayDirection(msg);
                 }
                 msg = bus.get(Topic.CAR_DISPATCH, ID);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleCarDispatch(msg);
                 }
                 msg = bus.get(Topic.MODE_SET, 0);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleModeSet(msg);
                 }
                 msg = bus.get(Topic.CABIN_SELECT, ID);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleCabinSelect(msg);
                 }
                 msg = bus.get(Topic.CAR_POSITION, ID);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleCarPosition(msg);
                 }
                 msg = bus.get(Topic.DOOR_SENSOR, ID);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleDoorSensor(msg);
                 }
                 msg = bus.get(Topic.DOOR_STATUS, ID);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleDoorStatus(msg);
                 }
                 msg = bus.get(Topic.CABIN_LOAD, ID);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleCabinLoad(msg);
                 }
                 msg = bus.get(Topic.FIRE_KEY, ID);
                 if (msg != null) {
-                    Platform.runLater(() -> System.out.println(""));
+                    handleFireKey(msg);
                 }
 
                 try {
@@ -107,6 +108,70 @@ public class ElevatorMultiplexor {
             }
         });
         t.start();
+    }
+
+    private void handleDoorControl(Message msg) {
+        currentFloor = msg.getBody();
+        if (currentFloor == 1)
+            elev.door.open();
+        else
+            elev.door.close();
+    }
+
+    private void handleDisplayFloor(Message msg) {
+        int floor = msg.getBody();
+        elev.display.updateFloorIndicator(floor, currentDirection);
+        elev.panel.setDisplay(floor, currentDirection);
+    }
+
+    private void handleDisplayDirection(Message msg) {
+        int dir = msg.getBody();
+        if (dir == 0){
+            elev.display.updateFloorIndicator(currentFloor, "UP");
+            elev.panel.setDisplay(currentFloor, "UP");
+        } else if (dir == 1) {
+            elev.display.updateFloorIndicator(currentFloor, "DOWN");
+            elev.panel.setDisplay(currentFloor, "DOWN");
+        } else {
+            elev.display.updateFloorIndicator(currentFloor, "IDLE");
+            elev.panel.setDisplay(currentFloor, "IDLE");
+        }
+    }
+
+    private void handleCarDispatch(Message msg) {
+        // TODO: implement car dispatch logic
+    }
+
+    private void handleModeSet(Message msg) {
+        // TODO: implement mode set logic
+    }
+
+    private void handleCabinSelect(Message msg) {
+        int floor = msg.getBody();
+        elev.panel.pressFloorButton(floor);
+    }
+
+    private void handleCarPosition(Message msg) {
+        // TODO: implement car position logic
+    }
+
+    private void handleDoorSensor(Message msg) {
+        int status = msg.getBody(); 
+        elev.door.setObstruction(status == 0);
+    }
+
+    private void handleDoorStatus(Message msg) {    
+        int status = msg.getBody();
+        elev.door.setObstruction(status == 0);
+    }
+
+    private void handleCabinLoad(Message msg) {
+        int status = msg.getBody();
+        elev.door.setObstruction(status == 1);
+    }
+
+    private void handleFireKey(Message msg) {
+        elev.panel.toggleFireKey();
     }
 
     /**

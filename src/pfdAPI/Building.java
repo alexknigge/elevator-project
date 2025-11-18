@@ -15,7 +15,7 @@ public class Building {
         gui g = gui.getInstance();
         this.callButtons = new FloorCallButtons[totalFloors];
         for (int i = 0; i < totalFloors; i++) {
-            this.callButtons[i] = new FloorCallButtons(i, totalFloors, g.internalState);
+            this.callButtons[i] = new FloorCallButtons(i+1, totalFloors, g.internalState);
         }
     }
 }

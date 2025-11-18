@@ -37,12 +37,18 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
     private String direction;
     // State of the fire key; is active/is not active
     private boolean fireKeyActive;
+    // The ID of the associated elevator
+    private final int carId;
+    // GUI Control reference
+    private final gui.GUIControl guiControl;
 
     /**
      * Constructor of the CabinPassengerPanel.
      * @param totalFloors Number of floors in the building (=10)
      */
-    public CabinPassengerPanel(int totalFloors, gui.GUIControl guiControl) {
+    public CabinPassengerPanel(int carId, int totalFloors, gui.GUIControl guiControl) {
+        this.carId = carId;
+        this.guiControl = guiControl;
         this.totalFloors = totalFloors;
         this.floorButtons = new boolean[totalFloors];
         this.pressedFloorsQueue = new ArrayList<>();
@@ -59,6 +65,7 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
         if (floorNumber >= 1 && floorNumber <= totalFloors && !floorButtons[floorNumber - 1]) {
             floorButtons[floorNumber - 1] = true;
             pressedFloorsQueue.add(floorNumber);
+            guiControl.pressPanelButton(carId, floorNumber);
         }
     }
 
@@ -79,6 +86,7 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
     @Override
     public synchronized void clearPressedFloors() {
         pressedFloorsQueue.clear();
+        guiControl.resetPanel(carId);
     }
 
     /**
@@ -103,6 +111,7 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
     public synchronized void setDisplay(int currentFloor, String direction) {
         this.currentFloor = currentFloor;
         this.direction = direction;
+        guiControl.setDisplay(carId, currentFloor, direction);
         System.out.println("Display: Floor " + currentFloor + " | Direction: " + direction);
     }
 
@@ -133,6 +142,8 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
                 e.printStackTrace();
             }
         });
+
+        guiControl.resetPanelButton(carId, currentFloor);
     }
 
     /**
@@ -143,6 +154,16 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
     public synchronized void playCabinOverloadWarning() {
         // same as chime
         System.out.println("*Buzz!* Overload detected — please reduce cabin weight.");
+    }
+
+    /**
+     * Sets the overload warning state.
+     * Used when the overload state is set externally (e.g., from the MUX).
+     */
+    public synchronized void setOverloadWarning(boolean overload) {
+        // same as chime
+        if(overload){ playCabinOverloadWarning(); }
+        guiControl.setCabinOverload(carId, overload);
     }
 
     /**
@@ -160,5 +181,6 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
      */
     public synchronized void toggleFireKey() {
         this.fireKeyActive = !this.fireKeyActive;
+        guiControl.setFireAlarm(fireKeyActive);
     }
 }

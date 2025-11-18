@@ -5,6 +5,8 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.stage.Stage;
+import mux.BuildingMultiplexor;
+import mux.ElevatorMultiplexor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
@@ -50,7 +52,11 @@ public class gui extends Application {
      */
 
      public class GUIControl {
-        public GUIControl() {}
+        public GUIControl() {
+            for (int i = 0; i < numElevators; i++) {
+                pressedFloors[i] = new ArrayList<>();
+            }
+        }
         
         // Internal State Variables
         private ArrayList<Integer>[] pressedFloors = new ArrayList[numElevators];
@@ -114,17 +120,17 @@ public class gui extends Application {
         }
 
         // Change the door state of a given elevator
-        public void changeDoorState(int ID, boolean isOpen) {
+        public void changeDoorState(int ID, boolean open) {
             Platform.runLater(() -> {
-                if (isOpen) {
+                if (open) {
                     doors[ID].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
                     try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
                     doors[ID].elevDoorsImg.setImage(loader.imageList.get(5)); // Open image
 
-                } else if (!isOpen && doorObstructions[ID]) {
+                } else if (!open && doorObstructions[ID]) {
                     doors[ID].elevDoorsImg.setImage(loader.imageList.get(5)); // Obstruction image
                     try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
-                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(7)); // Open image
+                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(7)); // Open Obstructed image
 
                 } else {
                     doors[ID].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
@@ -150,12 +156,16 @@ public class gui extends Application {
         public void setDisplay(int carId, int floorNumber, String direction) {
             Platform.runLater(() -> {
                 displays[carId].digitalLabel.setText(String.valueOf(floorNumber));
+                panels[carId].digitalLabel.setText(String.valueOf(floorNumber));
                 if (direction.contains("UP")) {
                     displays[carId].floorDispImg.setImage(loader.imageList.get(10));
+                    panels[carId].elevPanelImg.setImage(loader.imageList.get(2));
                 } else if (direction.contains("DOWN")) {
                     displays[carId].floorDispImg.setImage(loader.imageList.get(9));
+                    panels[carId].elevPanelImg.setImage(loader.imageList.get(1));
                 } else {
                     displays[carId].floorDispImg.setImage(loader.imageList.get(8));
+                    panels[carId].elevPanelImg.setImage(loader.imageList.get(0));
                 }
             });
         }
@@ -163,10 +173,12 @@ public class gui extends Application {
         // Set the floor call button state
         public void setCallButton(int floorNumber, String direction) {
             Platform.runLater(() -> {
-                if (direction.equals("UP")) {
+                if (direction.contains("UP")) {
                     callButtons[floorNumber].elevCallButtonsImg.setImage(loader.imageList.get(15));
-                } else if (direction.equals("DOWN")) {
+                    System.out.println("UP button set on floor " + floorNumber);
+                } else if (direction.contains("DOWN")) {
                     callButtons[floorNumber].elevCallButtonsImg.setImage(loader.imageList.get(14));
+                    System.out.println("DOWN button set on floor " + floorNumber);
                 }
             });
         }
@@ -197,6 +209,12 @@ public class gui extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
+        // Initialize multiplexors
+        new BuildingMultiplexor();
+        for (int i = 0; i < numElevators; i++) {
+            new ElevatorMultiplexor(i);
+        }
 
         // load images via utility
         loader = new imageLoader();
@@ -485,10 +503,12 @@ public class gui extends Application {
                 if (isActive) {
                     Platform.runLater(() -> {
                         internalState.fireAlarmActive = true;
+                        fireAlarmImg.setImage(loader.imageList.get(11));
                     });
                 } else {
                     Platform.runLater(() -> {
                         internalState.fireAlarmActive = false;
+                        fireAlarmImg.setImage(loader.imageList.get(12));
                     });
                 }
             });

@@ -27,8 +27,8 @@ public class Elevator {
     public Elevator(int carId, int totalFloors) {
         gui g = gui.getInstance();
         this.carId = carId;
-        this.door  = new ElevatorDoorsAssembly(g.internalState);
-        this.panel  = new CabinPassengerPanel(totalFloors, g.internalState);
-        this.display = new ElevatorFloorDisplay(g.internalState);
+        this.door  = new ElevatorDoorsAssembly(carId, g.internalState);
+        this.panel  = new CabinPassengerPanel(carId, totalFloors, g.internalState);
+        this.display = new ElevatorFloorDisplay(carId, g.internalState);
     }
 }

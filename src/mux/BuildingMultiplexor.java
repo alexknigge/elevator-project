@@ -27,9 +27,8 @@ public class BuildingMultiplexor {
     int DOOR_OPEN = 1;
     int DOOR_CLOSE = 2;
 
-    int DIR_IDLE = 0;
-    int DIR_UP = 1;
-    int DIR_DOWN = 2;
+    int DIR_UP = 0;
+    int DIR_DOWN = 1;
 
     int FIRE_OFF = 0;
     int FIRE_ON = 1;
@@ -79,25 +78,26 @@ public class BuildingMultiplexor {
 
     // Handle Hall Call Message
     public void handleHallCall(Message msg) {
-        int floor = msg.getSubTopic();
+        int floor = msg.getSubTopic()-1;
         int directionCode = msg.getBody();
+        System.out.println("Building MUX received hall call for floor " + floor + " direction " + directionCode);
         if (directionCode == DIR_UP) { bldg.callButtons[floor].pressUpCall(); } 
         else if (directionCode == DIR_DOWN) { bldg.callButtons[floor].pressDownCall(); }
     }
 
-    // Handle Mode Set Message (Building Only Cares about Fire Safety)
+    // Handle Fire Alarm Message
     public void handleFireAlarm(Message msg) {
         int modeCode = msg.getBody();
         if (modeCode == FIRE_ON) {
-            // TODO: set fire state in building
+            bldg.callButtons[0].setFireAlarm(true);
         } else if(modeCode == FIRE_OFF){
-            // TODO: reset fire state in building
+            bldg.callButtons[0].setFireAlarm(false);
         }
     }
 
     // Handle Call Reset Message
     public void handleCallReset(Message msg) {
-        int floor = msg.getSubTopic();
+        int floor = msg.getSubTopic()-1;
         int directionCode = msg.getBody();
         if (directionCode == DIR_UP) { bldg.callButtons[floor].resetCallButton("UP"); } 
         else if (directionCode == DIR_DOWN) { bldg.callButtons[floor].resetCallButton("DOWN"); }
