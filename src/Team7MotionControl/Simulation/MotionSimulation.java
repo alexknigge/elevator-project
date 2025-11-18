@@ -43,7 +43,7 @@ public class MotionSimulation implements Runnable, Observer {
     private double speedFactor=1;
 
     // Sensor tolerance
-    private final double TOLERANCE = 0.5;
+    private final double TOLERANCE = 0.2;
 
     /**
      * Makes a motion simulation
@@ -105,7 +105,10 @@ public class MotionSimulation implements Runnable, Observer {
      */
     private void tick() {
         update_elevator();
+        System.out.println("Y before sensor update: " + elevator.getY_position());
         update_sensors();
+        System.out.println("Y after sensor update: " + elevator.getY_position());
+
     }
 
     /**
@@ -139,16 +142,17 @@ public class MotionSimulation implements Runnable, Observer {
         if (current_speed != 0.0) {
             double delta_Y = current_speed;
             // Tell observers
-            //elevator.set_y_position(elevator.getY_position() + delta_Y);
+            elevator.set_y_position(elevator.getY_position() + delta_Y);
         } else {
             //If we've come to a full stop and previously were decelerating, reset indicator
             if (accelerating_indicator < 0) {
                 accelerating_indicator = 0;
             }
         }
-//        System.out.println("current speed: "+ current_speed);
-        elevator.set_y_position(elevator.getY_position() + current_speed);
-//        System.out.println(elevator.getY_position() + " + "+ current_speed);
+        if(motor.is_off()&&current_speed==0){
+            elevator.set_y_position(sensor_pos_Map.get(bottom_idx));
+            System.out.println("Setting to " + bottom_idx);
+        }
     }
 
     /**
@@ -165,21 +169,25 @@ public class MotionSimulation implements Runnable, Observer {
             double sensorY = sensor_pos_Map.get(idx);
 
             if (sensorY+ TOLERANCE >= yBottom && sensorY- TOLERANCE <= yTop) {
-                sensor_HashMap.get(idx).set_triggered(true);
+                //sensor_HashMap.get(idx).set_triggered(true);
+                //System.out.println(sensorY+" "+yBottom);
+                sensor_HashMap.get(idx).triggered = true;
 
                 if(newBottom==-1){
                     newBottom=idx;
 
+
                 }else{
                     newTop=idx;
                 }
-
+                System.out.println("( "+newBottom+", "+newTop +" pos: "+ sensorY+ " elevator bottom "+yBottom+ " elevator top "+yTop);
             } else {
                 sensor_HashMap.get(idx).set_triggered(false);
             }
         }
         top_idx=newTop;
         bottom_idx=newBottom;
+
 
     }
 
@@ -251,75 +259,22 @@ public class MotionSimulation implements Runnable, Observer {
     public void update(Observable viewee) {
         Motor beloved = ((Motor) viewee);
         if (viewee instanceof Motor) {
-            System.out.println("Motion sim being updated");
+            //System.out.println("Motion sim being updated");
             if (beloved.is_off()) {
+                System.out.println("Motor is off");
                 accelerating_indicator = 0;
                 direction = null;
             } else {
                 if (beloved.get_direction() == Direction.UP) {
+                    System.out.println("Going up");
                     accelerating_indicator = 1;
                 } else {
+                    System.out.println("Going down");
                     accelerating_indicator = -1;
                 }
             }
         } else {
             System.err.println("HOLY CRAP THATS NOT A MOTOR!!1!");
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    private void tick(double cycle_time) {
-        if (accelerating_indicator != 0) {
-
-            current_speed += Constants.ACCELERATION * cycle_time * accelerating_indicator;
-        } else {
-            //no acceleration go towards zero, so this is sorta a janky reuse of accleration indicator
-
-            if (current_speed != 0.0) {
-                double steppre = Constants.ACCELERATION * cycle_time * Math.signum(current_speed); //get the sig nif number of the current speed
-                if (Math.abs(steppre) >= Math.abs(current_speed)) {
-                    current_speed = 0.0;
-                } else {
-                    current_speed -= steppre;
-                }
-            }
-        }
-
-        //goes to max speed negative or positive account for going over so we
-        // don't have to worry about rounding
-        if (Math.abs(current_speed) > Constants.MAX_SPEED) {
-            current_speed = Math.copySign(Constants.MAX_SPEED, current_speed);
-        }
-
-        //positive->up, negative-> down
-        if (current_speed != 0.0) {
-            double delta_Y = current_speed * cycle_time;
-            //tell obsetcvers
-            elevator.set_y_position(elevator.getY_position() + delta_Y);
-        } else {
-            //If we've come to a full stop and previously were decelerating, reset indicator
-            if (accelerating_indicator < 0) {
-
-                accelerating_indicator = 0;
-            }
         }
     }
 
