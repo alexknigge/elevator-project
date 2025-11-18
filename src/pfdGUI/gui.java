@@ -5,8 +5,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.stage.Stage;
-import mux.BuildingMultiplexor;
-import mux.ElevatorMultiplexor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
@@ -65,19 +63,28 @@ public class gui extends Application {
         private boolean fireAlarmActive;
 
         // Getters for internal state variables
-        public ArrayList<Integer> getPressedFloors(int ID) { return pressedFloors[ID]; }
-        public boolean getIsDoorObstructed(int ID) { return doorObstructions[ID]; }
-        public boolean getIsCabinOverloaded(int ID) { return cabinOverloads[ID]; }
+        public ArrayList<Integer> getPressedFloors(int ID) { 
+            int panelIndex = ID - 1; 
+            return (panelIndex >= 0 && panelIndex < numElevators) ? pressedFloors[panelIndex] : new ArrayList<>(); 
+        }
+        public boolean getIsDoorObstructed(int ID) { 
+            int panelIndex = ID - 1; 
+            return (panelIndex >= 0 && panelIndex < numElevators) ? doorObstructions[panelIndex] : false; 
+        }
+        public boolean getIsCabinOverloaded(int ID) { 
+            int panelIndex = ID - 1; 
+            return (panelIndex >= 0 && panelIndex < numElevators) ? cabinOverloads[panelIndex] : false; 
+        }
         public boolean getFireAlarmPressed() { return fireAlarmActive; }
         
 
         // Press panel button
         public void pressPanelButton(int ID, int floorNumber) {
             Platform.runLater(() -> {
-                for (Node n : panels[ID].panelOverlay.getChildren()) {
+                for (Node n : panels[ID-1].panelOverlay.getChildren()) {
                     if (n instanceof Label lbl && lbl.getText().equals(String.valueOf(floorNumber))) {
                         lbl.setStyle("-fx-text-fill: white;");
-                        pressedFloors[ID].add(floorNumber);
+                        pressedFloors[ID-1].add(floorNumber);
                     }
                 }
             });
@@ -86,10 +93,10 @@ public class gui extends Application {
         // Reset panel button
         public void resetPanelButton(int ID, int floorNumber) {
             Platform.runLater(() -> {
-                for (Node n : panels[ID].panelOverlay.getChildren()) {
+                for (Node n : panels[ID-1].panelOverlay.getChildren()) {
                     if (n instanceof Label lbl && lbl.getText().equals(String.valueOf(floorNumber))) {
                         lbl.setStyle("-fx-text-fill: black;");
-                        pressedFloors[ID].remove(Integer.valueOf(floorNumber));
+                        pressedFloors[ID-1].remove(Integer.valueOf(floorNumber));
                     }
                 }
             });
@@ -98,23 +105,23 @@ public class gui extends Application {
         // Reset all panel buttons
         public void resetPanel(int ID) {
             Platform.runLater(() -> {
-                for (Node n : panels[ID].panelOverlay.getChildren()) {
+                for (Node n : panels[ID-1].panelOverlay.getChildren()) {
                     if (n instanceof Label lbl) {
                         lbl.setStyle("-fx-text-fill: black;");
                     }
                 }
-                pressedFloors[ID].clear();
+                pressedFloors[ID-1].clear();
             });
         }
 
         // Set the door obstruction state of a given elevator
         public void setDoorObstruction(int ID, boolean isObstructed) {
             Platform.runLater(() -> {
-                doorObstructions[ID] = isObstructed;
+                doorObstructions[ID-1] = isObstructed;
                 if (isObstructed) {
-                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(7)); // Obstructed image
+                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(7)); // Obstructed image
                 } else {
-                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(6)); // Normal closed image
+                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(6)); // Normal closed image
                 }
             });
         }
@@ -123,19 +130,19 @@ public class gui extends Application {
         public void changeDoorState(int ID, boolean open) {
             Platform.runLater(() -> {
                 if (open) {
-                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
+                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
                     try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
-                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(5)); // Open image
+                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(5)); // Open image
 
-                } else if (!open && doorObstructions[ID]) {
-                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(5)); // Obstruction image
+                } else if (!open && doorObstructions[ID-1]) {
+                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(5)); // Obstruction image
                     try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
-                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(7)); // Open Obstructed image
+                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(7)); // Open Obstructed image
 
                 } else {
-                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
+                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
                     try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
-                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(6)); // Closed image
+                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(6)); // Closed image
                 }
             });
         }
@@ -143,11 +150,11 @@ public class gui extends Application {
         // Set the cabin overload state of a given elevator
         public void setCabinOverload(int ID, boolean isOverloaded) {
             Platform.runLater(() -> {
-                cabinOverloads[ID] = isOverloaded;
+                cabinOverloads[ID-1] = isOverloaded;
                 if (isOverloaded) {
-                    weighScales[ID].weightTriggerButton.setStyle("-fx-background-color: #684b4bff; -fx-text-fill: black;");
+                    weighScales[ID-1].weightTriggerButton.setStyle("-fx-background-color: #684b4bff; -fx-text-fill: black;");
                 } else {
-                    weighScales[ID].weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
+                    weighScales[ID-1].weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
                 }
             });
         }
@@ -155,39 +162,45 @@ public class gui extends Application {
         // Set the floor display of a given elevator
         public void setDisplay(int carId, int floorNumber, String direction) {
             Platform.runLater(() -> {
-                displays[carId].digitalLabel.setText(String.valueOf(floorNumber));
-                panels[carId].digitalLabel.setText(String.valueOf(floorNumber));
+                displays[carId-1].digitalLabel.setText(String.valueOf(floorNumber));
+                panels[carId-1].digitalLabel.setText(String.valueOf(floorNumber));
                 if (direction.contains("UP")) {
-                    displays[carId].floorDispImg.setImage(loader.imageList.get(10));
-                    panels[carId].elevPanelImg.setImage(loader.imageList.get(2));
+                    displays[carId-1].floorDispImg.setImage(loader.imageList.get(10));
+                    panels[carId-1].elevPanelImg.setImage(loader.imageList.get(2));
                 } else if (direction.contains("DOWN")) {
-                    displays[carId].floorDispImg.setImage(loader.imageList.get(9));
-                    panels[carId].elevPanelImg.setImage(loader.imageList.get(1));
+                    displays[carId-1].floorDispImg.setImage(loader.imageList.get(9));
+                    panels[carId-1].elevPanelImg.setImage(loader.imageList.get(1));
                 } else {
-                    displays[carId].floorDispImg.setImage(loader.imageList.get(8));
-                    panels[carId].elevPanelImg.setImage(loader.imageList.get(0));
+                    displays[carId-1].floorDispImg.setImage(loader.imageList.get(8));
+                    panels[carId-1].elevPanelImg.setImage(loader.imageList.get(0));
                 }
             });
         }
 
         // Set the floor call button state
         public void setCallButton(int floorNumber, String direction) {
-            Platform.runLater(() -> {
-                if (direction.contains("UP")) {
-                    callButtons[floorNumber].elevCallButtonsImg.setImage(loader.imageList.get(15));
-                    System.out.println("UP button set on floor " + floorNumber);
-                } else if (direction.contains("DOWN")) {
-                    callButtons[floorNumber].elevCallButtonsImg.setImage(loader.imageList.get(14));
-                    System.out.println("DOWN button set on floor " + floorNumber);
-                }
-            });
+            int buttonIndex = floorNumber - 1;  // Convert floor number (1-10) to array index (0-9)
+            if (buttonIndex >= 0 && buttonIndex < numFloors) {
+                Platform.runLater(() -> {
+                    if (direction.contains("UP")) {
+                        callButtons[buttonIndex].elevCallButtonsImg.setImage(loader.imageList.get(15));
+                        System.out.println("UP button set on floor " + floorNumber);
+                    } else if (direction.contains("DOWN")) {
+                        callButtons[buttonIndex].elevCallButtonsImg.setImage(loader.imageList.get(14));
+                        System.out.println("DOWN button set on floor " + floorNumber);
+                    }
+                });
+            }
         }
 
         // Reset the floor call button state
         public void resetCallButton(int floorNumber) {
-            Platform.runLater(() -> {
-                callButtons[floorNumber].elevCallButtonsImg.setImage(loader.imageList.get(13));
-            });
+            int buttonIndex = floorNumber - 1;  // Convert floor number (1-10) to array index (0-9)
+            if (buttonIndex >= 0 && buttonIndex < numFloors) {
+                Platform.runLater(() -> {
+                    callButtons[buttonIndex].elevCallButtonsImg.setImage(loader.imageList.get(13));
+                });
+            }
         }
 
         // Set the fire alarm state
@@ -209,12 +222,6 @@ public class gui extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-
-        // Initialize multiplexors
-        new BuildingMultiplexor();
-        for (int i = 0; i < numElevators; i++) {
-            new ElevatorMultiplexor(i);
-        }
 
         // load images via utility
         loader = new imageLoader();
@@ -253,6 +260,13 @@ public class gui extends Application {
         primaryStage.setTitle("Elevator Passenger Devices");
         primaryStage.setScene(scene);
         primaryStage.show();
+        
+        // Initialize multiplexors AFTER GUI is fully set up
+        new mux.BuildingMultiplexor();
+        for (int i = 0; i < numElevators; i++) {
+            new mux.ElevatorMultiplexor(i + 1);  // Use IDs 1, 2, 3, 4 instead of 0, 1, 2, 3
+        }
+        System.out.println("All multiplexors initialized after GUI setup");
     }
 
     private class Panel{

@@ -191,7 +191,6 @@ public class SoftwareBus {
             Iterator<Message> queue_iter = queue.iterator();
             while (queue_iter.hasNext()) {
                 Message m = queue_iter.next();
-                System.out.println(m.toString());
                 if (m.getTopic() == topic && (subtopic == 0 || m.getSubTopic() == subtopic)) {
                     queue_iter.remove();
                     return m;

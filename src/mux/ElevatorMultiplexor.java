@@ -30,17 +30,18 @@ public class ElevatorMultiplexor {
 
     // Initialize the MUX  (placeholder example subscriptions)
     public void initialize() {
-        bus.subscribe(Topic.DOOR_CONTROL, 0);
-        bus.subscribe(Topic.DISPLAY_FLOOR, 0);
-        bus.subscribe(Topic.DISPLAY_DIRECTION, 0);
-        bus.subscribe(Topic.CAR_DISPATCH, 0);
-        bus.subscribe(Topic.MODE_SET, 0);
-        bus.subscribe(Topic.CABIN_SELECT, 0);
-        bus.subscribe(Topic.CAR_POSITION, 0);
-        bus.subscribe(Topic.DOOR_SENSOR, 0);
-        bus.subscribe(Topic.DOOR_STATUS, 0);
-        bus.subscribe(Topic.CABIN_LOAD, 0);
-        bus.subscribe(Topic.FIRE_KEY, 0);
+        bus.subscribe(Topic.DOOR_CONTROL, ID);
+        bus.subscribe(Topic.DISPLAY_FLOOR, ID);
+        bus.subscribe(Topic.DISPLAY_DIRECTION, ID);
+        bus.subscribe(Topic.CAR_DISPATCH, ID);
+        bus.subscribe(Topic.MODE_SET, 0);  // Global mode changes
+        bus.subscribe(Topic.CABIN_SELECT, ID);
+        bus.subscribe(Topic.CAR_POSITION, ID);
+        bus.subscribe(Topic.DOOR_SENSOR, ID);
+        bus.subscribe(Topic.DOOR_STATUS, ID);
+        bus.subscribe(Topic.CABIN_LOAD, ID);
+        bus.subscribe(Topic.FIRE_KEY, ID);
+        System.out.println("ElevatorMUX " + ID + " initialized and subscribed");
         startBusPoller();
     }
 
@@ -161,13 +162,16 @@ public class ElevatorMultiplexor {
     }
 
     private void handleDoorStatus(Message msg) {    
-        int status = msg.getBody();
-        elev.door.setObstruction(status == 0);
+        int status = msg.getBody(); 
+        if (status == 1)
+            elev.door.open();
+        else
+            elev.door.close();
     }
 
     private void handleCabinLoad(Message msg) {
         int status = msg.getBody();
-        elev.door.setObstruction(status == 1);
+        elev.panel.setOverloadWarning(status == 1);
     }
 
     private void handleFireKey(Message msg) {
