@@ -15,17 +15,26 @@ import java.util.List;
 public class Buttons {
     private boolean callEnabled;
     private boolean multipleRequests;
+    private int elevatorID;
     private List<FloorNDirection> destinations;
     private SoftwareBus softwareBus;
 
-    public Buttons(SoftwareBus softwareBus) {
-        //TODO may need to take in int for elevator number for software bus subscription
+    /**
+     * Instantiate a Buttons Object
+     * @param elevatorID the elevator number associated with this Buttons Object
+     *                   (for software bus messages)
+     * @param softwareBus the means of communication
+     */
+    public Buttons(int elevatorID, SoftwareBus softwareBus) {
         //TODO call subscribe on softwareBus w/ relevant topic/subtopic
 
+        // Assuming normal mode settings initially
         this.callEnabled = true;
-        this.multipleRequests = false;
+        this.multipleRequests = true;
+
         this.destinations = new ArrayList<>();
         this.softwareBus = softwareBus;
+        this.elevatorID = elevatorID;
     }
 
     /**
