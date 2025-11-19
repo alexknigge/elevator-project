@@ -16,14 +16,26 @@ import ElevatorController.Util.State;
  *         3 - CONTROLLED
  */
 public class Mode {
-    SoftwareBus softwareBus;
+    private int elevatorID;
+    private SoftwareBus softwareBus;
     private State currentMode;
     private FloorNDirection currDestination;
 
-    public Mode(SoftwareBus softwareBus) {
-        //TODO may need to take in int for elevator number for software bus subscription
+    /**
+     * Instantiate a Mode object
+     * @param elevatorID which elevator this Mode object is associated with
+     *                   (for software bus messages)
+     * @param softwareBus the means of communication
+     */
+    public Mode(int elevatorID, SoftwareBus softwareBus) {
         //TODO call subscribe on softwareBus w/ relevant topic/subtopic
         this.softwareBus = softwareBus;
+        this.elevatorID = elevatorID;
+
+        this.currDestination = null;
+
+        // Initially in Normal mode
+        this.currentMode = State.NORMAL;
     }
 
     /**
