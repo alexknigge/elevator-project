@@ -17,14 +17,15 @@ public class DoorAssembly implements Runnable {
     private boolean fullyClosed;
     private boolean fullyOpen;
     private boolean overCapacity;
+    private int elevatorID;
     private SoftwareBus softwareBus;
 
     /**
      * Instantiate a DoorAssembly object, and run its thread
-     * @param elevatorNumber For software bus messages
+     * @param elevatorID For software bus messages
      * @param softwareBus The means of communication
      */
-    public DoorAssembly(int elevatorNumber, SoftwareBus  softwareBus) {
+    public DoorAssembly(int elevatorID, SoftwareBus  softwareBus) {
         //TODO may need to take in int for elevator number for software bus subscription
         //TODO call subscribe on softwareBus w/ relevant topic/subtopic
 
@@ -35,6 +36,7 @@ public class DoorAssembly implements Runnable {
         this.fullyOpen = true;
         this.overCapacity = false;
         this.softwareBus = softwareBus;
+        this.elevatorID = this.elevatorID;
 
         //Start DoorAssembly Thread
         Thread thread = new Thread(this);
