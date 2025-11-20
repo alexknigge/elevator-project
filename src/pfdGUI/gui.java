@@ -1,6 +1,8 @@
 package pfdGUI;
 
 import java.util.ArrayList;
+
+import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
@@ -17,6 +19,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
+import javafx.util.Duration;
 import utils.imageLoader;
 
 /** MUX calls api, api modifies the gui. MUX needs to also poll the internal state.
@@ -76,7 +79,6 @@ public class gui extends Application {
             return (panelIndex >= 0 && panelIndex < numElevators) ? cabinOverloads[panelIndex] : false; 
         }
         public boolean getFireAlarmPressed() { return fireAlarmActive; }
-        
 
         // Press panel button
         public void pressPanelButton(int ID, int floorNumber) {
@@ -129,20 +131,27 @@ public class gui extends Application {
         // Change the door state of a given elevator
         public void changeDoorState(int ID, boolean open) {
             Platform.runLater(() -> {
+                PauseTransition pause = new PauseTransition(Duration.seconds(2));
                 if (open) {
                     doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
-                    try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
-                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(5)); // Open image
+                    pause.setOnFinished(event -> {
+                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(6)); // Open image
+                    });
+                    pause.play();
 
                 } else if (!open && doorObstructions[ID-1]) {
                     doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(5)); // Obstruction image
-                    try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
-                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(7)); // Open Obstructed image
+                    pause.setOnFinished(event -> {
+                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(7)); // Open image
+                    });
+                    pause.play();
 
                 } else {
                     doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
-                    try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
-                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(6)); // Closed image
+                    pause.setOnFinished(event -> {
+                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(3)); // Open image
+                    });
+                    pause.play();
                 }
             });
         }
@@ -231,7 +240,7 @@ public class gui extends Application {
         VBox vbox = new VBox(10);
         HBox hbox = new HBox();
 
-        // Create floor displays & call buttons
+        // Create call buttons
         for (int i = 0; i < numFloors; i++) {
             callButtons[i] = new CallButton(i);
             vbox.getChildren().addAll(callButtons[i].callButtonOverlay);

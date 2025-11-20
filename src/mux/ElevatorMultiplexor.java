@@ -32,6 +32,7 @@ public class ElevatorMultiplexor {
     public void initialize() {
         bus.subscribe(Topic.DOOR_CONTROL, ID);
         bus.subscribe(Topic.DISPLAY_FLOOR, ID);
+        bus.subscribe(Topic.SELECTION_RESET, ID); //TODO: Jackie added
         bus.subscribe(Topic.DISPLAY_DIRECTION, ID);
         bus.subscribe(Topic.CAR_DISPATCH, ID);
         bus.subscribe(Topic.MODE_SET, 0);  // Global mode changes
@@ -63,6 +64,10 @@ public class ElevatorMultiplexor {
                 msg = bus.get(Topic.DISPLAY_FLOOR, ID);
                 if (msg != null) {
                     handleDisplayFloor(msg);
+                }
+                msg = bus.get(Topic.SELECTION_RESET, ID);
+                if (msg != null) {
+                    handleSelectionReset(msg);
                 }
                 msg = bus.get(Topic.DISPLAY_DIRECTION, ID);
                 if (msg != null) {
@@ -96,6 +101,8 @@ public class ElevatorMultiplexor {
                 if (msg != null) {
                     handleCabinLoad(msg);
                 }
+                //TODO: This is something the MUX sends out, not receives. Only the building needs to
+                //TODO: worry about getting the FIRE_ALARM message.
                 msg = bus.get(Topic.FIRE_KEY, ID);
                 if (msg != null) {
                     handleFireKey(msg);
@@ -154,6 +161,10 @@ public class ElevatorMultiplexor {
 
     private void handleCarPosition(Message msg) {
         // TODO: implement car position logic
+    }
+
+    private void handleSelectionReset(Message msg){
+        // TODO: implement selection button on passenger panel reset logic
     }
 
     private void handleDoorSensor(Message msg) {
