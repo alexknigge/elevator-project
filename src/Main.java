@@ -2,7 +2,11 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("Hello world!");
 
-        //First example we should test is just having main talk with the
-        // software bus.
+        //In main, we will create all the required devices to simulate the
+        // elevator controller system, specifically, we will instantiate, 4
+        // elevator controllers, 4 device multiplexers, 1 command center and
+        // 9 software buses.
+
+        
     }
 }
