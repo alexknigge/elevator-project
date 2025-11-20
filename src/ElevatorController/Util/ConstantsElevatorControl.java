@@ -131,9 +131,5 @@ public class ConstantsElevatorControl {
 
     public static final int FIREKEY = 505;
 
-
-
-
-
-
+    // TODO: CABIN Messages
 }
