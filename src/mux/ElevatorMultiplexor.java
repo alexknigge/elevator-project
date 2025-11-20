@@ -119,8 +119,8 @@ public class ElevatorMultiplexor {
     }
 
     private void handleDoorControl(Message msg) {
-        currentFloor = msg.getBody();
-        if (currentFloor == 1)
+        int openOrClose = msg.getBody();
+        if (openOrClose == 1)
             elev.door.open();
         else
             elev.door.close();
@@ -128,6 +128,8 @@ public class ElevatorMultiplexor {
 
     private void handleDisplayFloor(Message msg) {
         int floor = msg.getBody();
+        //TODO: currentFloor should eventually be updated by the motor assembly instead.
+        currentFloor = floor;
         elev.display.updateFloorIndicator(floor, currentDirection);
         elev.panel.setDisplay(floor, currentDirection);
     }
@@ -135,12 +137,18 @@ public class ElevatorMultiplexor {
     private void handleDisplayDirection(Message msg) {
         int dir = msg.getBody();
         if (dir == 0){
+            //TODO: currentDirection should eventually be updated by the motor assembly instead.
+            currentDirection = "UP";
             elev.display.updateFloorIndicator(currentFloor, "UP");
             elev.panel.setDisplay(currentFloor, "UP");
         } else if (dir == 1) {
+            //TODO: currentDirection should eventually be updated by the motor assembly instead.
+            currentDirection = "DOWN";
             elev.display.updateFloorIndicator(currentFloor, "DOWN");
             elev.panel.setDisplay(currentFloor, "DOWN");
         } else {
+            //TODO: currentDirection should eventually be updated by the motor assembly instead.
+            currentDirection = "IDLE";
             elev.display.updateFloorIndicator(currentFloor, "IDLE");
             elev.panel.setDisplay(currentFloor, "IDLE");
         }
