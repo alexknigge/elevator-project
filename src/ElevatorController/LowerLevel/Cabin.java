@@ -20,7 +20,7 @@ public class Cabin implements Runnable {
     private Timer timeStop;
     private SoftwareBus softwareBus;
 
-    public Cabin(SoftwareBus softwareBus){
+    public Cabin(int elevatorID, SoftwareBus softwareBus){
         //TODO may need to take in int for elevator number for software bus subscription
         //TODO call subscribe on softwareBus w/ relevant topic/subtopic
 
