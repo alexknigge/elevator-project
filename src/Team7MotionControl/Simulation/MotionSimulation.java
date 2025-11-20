@@ -105,9 +105,7 @@ public class MotionSimulation implements Runnable, Observer {
      */
     private void tick() {
         update_elevator();
-        System.out.println("Y before sensor update: " + elevator.getY_position());
         update_sensors();
-        System.out.println("Y after sensor update: " + elevator.getY_position());
 
     }
 
@@ -131,13 +129,11 @@ public class MotionSimulation implements Runnable, Observer {
                 }
             }
         }
-
         //goes to max speed negative or positive account for going over so we
         // dont have to worry about rounding
         if (Math.abs(current_speed) > Constants.MAX_SPEED_TICK) {
             current_speed = Math.copySign(Constants.MAX_SPEED_TICK, current_speed);
         }
-
         // Change in y position, based on speed and
         if (current_speed != 0.0) {
             double delta_Y = current_speed;
@@ -150,14 +146,23 @@ public class MotionSimulation implements Runnable, Observer {
             }
         }
         if(motor.is_off()&&current_speed==0){
-            if(bottom_idx%2==1){
+            if(bottom_idx%2==0){
                 elevator.set_y_position(sensor_pos_Map.get(bottom_idx));
+                System.out.println("snapping to "+sensor_pos_Map.get(bottom_idx));
             }else if(top_idx!=-1){
                 elevator.set_y_position(sensor_pos_Map.get(top_idx));
+                System.out.println("snapping to "+sensor_pos_Map.get(bottom_idx));
             }
-
-            System.out.println("Setting to " + bottom_idx);
         }
+//        if(motor.is_off()&&current_speed==0){
+//            if(bottom_idx%2==1){
+//                elevator.set_y_position(sensor_pos_Map.get(bottom_idx));
+//                System.out.println("snapping to "+sensor_pos_Map.get(bottom_idx));
+//            }else if(top_idx!=-1){
+//                elevator.set_y_position(sensor_pos_Map.get(top_idx));
+//                System.out.println("snapping to "+sensor_pos_Map.get(bottom_idx));
+//            }
+//        }
     }
 
     /**
