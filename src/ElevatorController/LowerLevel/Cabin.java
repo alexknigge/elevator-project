@@ -4,7 +4,6 @@ import Bus.SoftwareBus;
 import ElevatorController.Util.ConstantsElevatorControl;
 import ElevatorController.Util.Direction;
 import ElevatorController.Util.FloorNDirection;
-import ElevatorController.Util.Timer;
 
 /**
  * The cabin provides a means for the elevator controller to send the elevator to a destination.
@@ -17,7 +16,7 @@ public class Cabin implements Runnable {
     private int currFloor;
     private int topAlign;
     private int botAlign;
-    private Timer timeStop;
+    private boolean motor;
     private SoftwareBus softwareBus;
 
     public Cabin(int elevatorID, SoftwareBus softwareBus){
@@ -47,9 +46,9 @@ public class Cabin implements Runnable {
     public void gotoFloor(int floor){
         currDest = floor;
     }
-    public FloorNDirection currentStatus(){return null;}
-    public boolean arrived(){return false;}
-    public int getTargetFloor(){return -1;}
+    public FloorNDirection currentStatus(){return new FloorNDirection(currFloor,currDirection);}
+    public boolean arrived(){return currFloor == currDest;}
+    public int getTargetFloor(){return currDest;}
 
 
     // Internal methods
@@ -57,39 +56,42 @@ public class Cabin implements Runnable {
     private synchronized void stepTowardsDest() {
         topAlign = topAlignment();
         botAlign = bottomAlignment();
-        if (timeStop().timeout()) stopMotor();
-        switch (currDirection) {
-            case UP -> {
-                if (sensorToFloor(botAlign) == currDest) {
-                    timeStop = timeStop();
-                }
-            }
-            case DOWN -> {
-                if (sensorToFloor(topAlign) == currDest) {
-                    timeStop = timeStop();
-                }
-            }
+        currFloor = sensorToFloor(botAlign);
+        if (motor && currFloor == currDest) {
+            stopMotor();
+        } else if (!motor){
+            if (currFloor > currDest) currDirection = Direction.DOWN;
+            else currDirection = Direction.UP;
+            startMotor(currDirection);
         }
     }
     private int closestFloor() {
-        return 0;
+        return -69420;
     }
 
     private int sensorToFloor(int sensorPos) {
         return sensorPos/2 + 1;
     }
 
-    private Timer timeStop() {
-        return new Timer(ConstantsElevatorControl.TIME_TO_STOP);
-    }
 
     //Wrapper methods for software bus messages
-    private void startMotor() {}
+    private void startMotor(Direction direction) {
+        motor = true;
+        //TODO: send message
+    }
 
-    private void stopMotor() {}
-    private void setDirection(Direction d){}
+    private void stopMotor() {
+        motor = false;
+        //TODO: your sister
+    }
 
-    private int topAlignment() {return 0;}
-    private int bottomAlignment() {return 0;}
+    private int topAlignment() {
+        //TODO: get message from software bus
+        return 0;
+    }
+    private int bottomAlignment() {
+        //TODO: get message from software bus
+        return 0;
+    }
 
 }
