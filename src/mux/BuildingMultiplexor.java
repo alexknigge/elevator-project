@@ -61,6 +61,7 @@ public class BuildingMultiplexor {
                 if (msg != null) {
                     handleCallReset(msg);
                 }
+                //TODO: This is something the MUX sends out, not receives
                 msg = bus.get(Topic.HALL_CALL, 0);
                 if (msg != null) {
                     handleHallCall(msg);
@@ -77,6 +78,8 @@ public class BuildingMultiplexor {
     }
 
     // Handle Hall Call Message
+    // TODO: This is information we send out from regularly polling.
+    // TODO: In this, we need to remove pressUpCall from the API.
     public void handleHallCall(Message msg) {
         int floor = msg.getSubTopic()-1;
         int directionCode = msg.getBody();
