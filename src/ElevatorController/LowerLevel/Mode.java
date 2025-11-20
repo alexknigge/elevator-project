@@ -60,6 +60,6 @@ public class Mode {
      * Call get() on softwareBus w/ appropriate topic/subtopic,
      * @return
      */
-    public FloorNDirection getDirection(){return null;}
+    public FloorNDirection nextService(){return null;}
 
 }
