@@ -20,12 +20,6 @@ public class ElevatorDoorsAssembly {
     // Represents whether the doors are actively opening/closing
     private boolean isMoving;
 
-    // Constants
-    private final int OPEN = 0;
-    private final int CLOSED = 1;
-    private final int OBSTRUCTED = 0;
-    private final int CLEAR = 1;
-
     // GUI Control reference
     private final gui.GUIControl guiControl;
     // Car ID reference
@@ -46,37 +40,53 @@ public class ElevatorDoorsAssembly {
      * Commands the door assembly to open.
      * If an obstruction is detected, opening is halted automatically.
      */
-    public synchronized void open(){
+    public synchronized void open() {
+        // Do NOT start a new open if moving or obstructed
+        if (isMoving) {
+            System.out.println("[Doors] Cannot open - door is currently moving.");
+            return;
+        }
+        if (isObstructed) {
+            System.out.println("[Doors] Cannot open - obstruction detected.");
+            return;
+        }
+
         if (!isOpen) {
             isMoving = true;
             System.out.println("[Doors] Opening...");
             simulateDelay(500);
             isOpen = true;
-            guiControl.changeDoorState(carId, isOpen);
+            guiControl.changeDoorState(carId, true); // true = open
             isMoving = false;
             System.out.println("[Doors] Fully open.");
-
         }
     }
+
 
     /**
      * Commands the door assembly to close.
      * If obstruction occurs during closing, doors reopen automatically.
      */
     public synchronized void close() {
-        isObstructed();
+        if (isObstructed) {
+            System.out.println("[Doors] Obstruction detected reopening.");
+            isOpen = true;   
+            open();
+            return;
+        }
+
         if (isOpen) {
             isMoving = true;
             System.out.println("[Doors] Closing...");
+            //mux.getListener().onDoorStateChanged(carId, "CLOSING");
             simulateDelay(500);
-            isOpen = false;
-            guiControl.changeDoorState(carId, isOpen);
-
-            if(isObstructed){
-                isOpen = true;
-                System.out.println("[Doors] Obstruction detected. Reopened.");
-            } else {
+            if (!isObstructed) {
+                isOpen = false;
+                guiControl.changeDoorState(carId, isOpen);
                 System.out.println("[Doors] Fully closed.");
+            } else {
+                System.out.println("[Doors] Reopening due to obstruction.");
+                open();
             }
             isMoving = false;
         }
@@ -99,7 +109,6 @@ public class ElevatorDoorsAssembly {
      * @return boolean isObstructed
      */
     public synchronized boolean isObstructed() {
-        isObstructed = guiControl.getIsDoorObstructed(carId);
         return isObstructed;
     }
 
@@ -124,10 +133,11 @@ public class ElevatorDoorsAssembly {
     /**
      * Returns whether the doors are completely closed (not open, not half-open).
      * Elevator can now move.
+     * TODO: This returns true when the doors are half-open. This should not be possible. Need separate variables.
      * @return boolean isOpen
      */
     public synchronized boolean isFullyClosed() {
-        return !isOpen;
+        return !isOpen && !isMoving;
     }
 
 

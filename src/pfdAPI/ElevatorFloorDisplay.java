@@ -17,10 +17,6 @@ public class ElevatorFloorDisplay {
     private int currentFloor;
     // The current movement direction of the elevator, "UP" "DOWN" "IDLE"
     private String direction;
-    // Direction constants for bus messages
-    private final int UP = 0;
-    private final int DOWN = 1;
-    private final int IDLE = 2;
     // GUI Control reference
     private final gui.GUIControl guiControl;
     // The ID of the associated elevator

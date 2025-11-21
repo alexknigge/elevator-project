@@ -1,3 +1,0 @@
-# Tests
-
-Just tests of our code, will not be included in the final product.

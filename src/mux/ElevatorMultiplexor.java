@@ -30,12 +30,16 @@ public class ElevatorMultiplexor {
     private final Elevator elev;
     private final SoftwareBus bus = new SoftwareBus(false);
     private final MotionAPI motionAPI = new MotionAPI();
+    private boolean lastFireKeyState = false;
+    private boolean lastObstructedState = false;
+    private boolean lastOverloadState = false;
+    private int lastPressedFloor = -1;
 
+    
     // Initialize the MUX  (placeholder example subscriptions)
     public void initialize() {
         bus.subscribe(Topic.DOOR_CONTROL, ID);
         bus.subscribe(Topic.DISPLAY_FLOOR, ID);
-        bus.subscribe(Topic.SELECTION_RESET, ID);
         bus.subscribe(Topic.DISPLAY_DIRECTION, ID);
         bus.subscribe(Topic.CAR_DISPATCH, ID);
         bus.subscribe(Topic.MODE_SET, 0);  // Global mode changes
@@ -45,8 +49,13 @@ public class ElevatorMultiplexor {
         bus.subscribe(Topic.DOOR_STATUS, ID);
         bus.subscribe(Topic.CABIN_LOAD, ID);
         bus.subscribe(Topic.FIRE_KEY, ID);
+        bus.subscribe(Topic.CABIN_RESET, ID);
+
+
         System.out.println("ElevatorMUX " + ID + " initialized and subscribed");
         startBusPoller();
+        startStatePoller();  
+
     }
 
 
@@ -67,10 +76,6 @@ public class ElevatorMultiplexor {
                 msg = bus.get(Topic.DISPLAY_FLOOR, ID);
                 if (msg != null) {
                     handleDisplayFloor(msg);
-                }
-                msg = bus.get(Topic.SELECTION_RESET, ID);
-                if (msg != null) {
-                    handleSelectionReset(msg);
                 }
                 msg = bus.get(Topic.DISPLAY_DIRECTION, ID);
                 if (msg != null) {
@@ -104,11 +109,15 @@ public class ElevatorMultiplexor {
                 if (msg != null) {
                     handleCabinLoad(msg);
                 }
-                //TODO: This is something the MUX sends out, not receives. Only the building needs to
-                //TODO: worry about getting the FIRE_ALARM message.
                 msg = bus.get(Topic.FIRE_KEY, ID);
                 if (msg != null) {
                     handleFireKey(msg);
+                }
+
+                msg = bus.get(Topic.CABIN_RESET, ID);
+                if (msg != null) {
+                    int floorNumber = msg.getBody();
+                    elev.panel.resetFloorButton(floorNumber);
                 }
 
                 try {
@@ -121,37 +130,109 @@ public class ElevatorMultiplexor {
         t.start();
     }
 
-    private void handleDoorControl(Message msg) {
-        int openOrClose = msg.getBody();
-        if (openOrClose == 1)
-            elev.door.open();
-        else
-            elev.door.close();
+    // Polls the elevator state periodically and publishes updates to the bus
+    public void startStatePoller() {
+        Thread statePoller = new Thread(() -> {
+            while (true) {
+                pollFireKeyState();
+                pollPressedFloors();
+                pollDoorObstruction();
+                pollCabinOverload();
+                
+                try {
+                    Thread.sleep(1000); 
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        statePoller.start();
     }
 
+    // Poll and publish fire key state changes
+    private void pollFireKeyState() {
+        boolean fireKeyActive = elev.panel.isFireKeyActive();
+        if (fireKeyActive != lastFireKeyState) {
+            // Emit FIRE_KEY message (Topic 206) only on state change
+            int v;
+            if (fireKeyActive) v = 1;
+            else v = 0;
+            Message fireMsg = new Message(Topic.FIRE_KEY, ID, v);
+            bus.publish(fireMsg);
+            lastFireKeyState = fireKeyActive;
+        }
+    }
+
+    // Poll and publish pressed floor buttons
+    private void pollPressedFloors() {
+        int targetFloor = elev.panel.getPressedFloor();
+        if (targetFloor != 0 && targetFloor != lastPressedFloor) {
+            Message selectMsg = new Message(Topic.CABIN_SELECT, ID, targetFloor);
+            bus.publish(selectMsg);
+            lastPressedFloor = targetFloor;
+        }
+    }
+
+    // Poll and publish door obstruction state changes
+    private void pollDoorObstruction() {
+        boolean isObstructed = elev.door.isObstructed();
+        if (isObstructed != lastObstructedState) {
+            // Emit DOOR_SENSOR message (Topic 203) only on state change
+            int v;
+            if (isObstructed) v = 1;
+            else v = 0;
+            Message sensorMsg = new Message(Topic.DOOR_SENSOR, ID, v);
+            bus.publish(sensorMsg);
+            lastObstructedState = isObstructed;
+        }
+    }
+
+    // Poll and publish cabin overload state changes
+    private void pollCabinOverload() {
+        boolean isOverloaded = false;
+        if (isOverloaded != lastOverloadState) {
+            // Emit CABIN_LOAD message (Topic 205) only on state change
+            int v;
+            if (isOverloaded) v = 1;
+            else v = 0;
+            Message loadMsg = new Message(Topic.CABIN_LOAD, ID, v);
+            bus.publish(loadMsg);
+            lastOverloadState = isOverloaded;
+        }
+    }
+
+    // Getter for Elevator
+    public Elevator getElevator() {
+        return elev;
+    }
+
+    // Handle door control messages
+    private void handleDoorControl(Message msg) {
+        int command = msg.getBody();
+        if (command == 1) {
+            elev.door.open();
+        } else if (command == 2) {
+            elev.door.close();
+        }
+    }
+
+    // Handle display floor messages
     private void handleDisplayFloor(Message msg) {
         int floor = msg.getBody();
-        //TODO: currentFloor should eventually be updated by the motor assembly instead.
-        currentFloor = floor;
         elev.display.updateFloorIndicator(floor, currentDirection);
         elev.panel.setDisplay(floor, currentDirection);
     }
 
+    // Handle display direction messages
     private void handleDisplayDirection(Message msg) {
         int dir = msg.getBody();
         if (dir == 0){
-            //TODO: currentDirection should eventually be updated by the motor assembly instead.
-            currentDirection = "UP";
             elev.display.updateFloorIndicator(currentFloor, "UP");
             elev.panel.setDisplay(currentFloor, "UP");
         } else if (dir == 1) {
-            //TODO: currentDirection should eventually be updated by the motor assembly instead.
-            currentDirection = "DOWN";
             elev.display.updateFloorIndicator(currentFloor, "DOWN");
             elev.panel.setDisplay(currentFloor, "DOWN");
         } else {
-            //TODO: currentDirection should eventually be updated by the motor assembly instead.
-            currentDirection = "IDLE";
             elev.display.updateFloorIndicator(currentFloor, "IDLE");
             elev.panel.setDisplay(currentFloor, "IDLE");
         }
@@ -181,28 +262,31 @@ public class ElevatorMultiplexor {
         motionAPI.start();
     }
 
+    // Handle mode set messages
     private void handleModeSet(Message msg) {
         // TODO: implement mode set logic
     }
 
+    // Handle cabin select messages
     private void handleCabinSelect(Message msg) {
         int floor = msg.getBody();
         elev.panel.pressFloorButton(floor);
     }
 
+    // Handle car position messages
     private void handleCarPosition(Message msg) {
         // TODO: implement car position logic
     }
 
-    private void handleSelectionReset(Message msg){
-        // TODO: implement selection button on passenger panel reset logic
-    }
-
+    // Handle door sensor messages
     private void handleDoorSensor(Message msg) {
         int status = msg.getBody(); 
-        elev.door.setObstruction(status == 0);
+        System.out.println("[MUX] Door sensor status for car " + ID + " = " + status);
+        boolean obstructed = (status == 1);
+        elev.door.setObstruction(obstructed);    
     }
 
+    // Handle door status messages
     private void handleDoorStatus(Message msg) {    
         int status = msg.getBody(); 
         if (status == 1)
@@ -211,11 +295,13 @@ public class ElevatorMultiplexor {
             elev.door.close();
     }
 
+    // Handle cabin load messages
     private void handleCabinLoad(Message msg) {
         int status = msg.getBody();
         elev.panel.setOverloadWarning(status == 1);
     }
 
+    // Handle fire key messages
     private void handleFireKey(Message msg) {
         elev.panel.toggleFireKey();
     }

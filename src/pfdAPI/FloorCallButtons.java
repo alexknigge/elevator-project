@@ -20,9 +20,6 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
     private final int floorNumber;
     // Total number of building floors (=10)
     private final int totalFloors;
-    // Direction constants
-    private final int UP = 0;
-    private final int DOWN = 1;
     // Top floor has no Up
     private final boolean hasUp;
     // Bottom floor has no Down

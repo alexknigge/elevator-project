@@ -1,5 +1,4 @@
 package pfdAPI;
-import java.util.List;
 
 /**
  * Required API for the CabinPassengerPanel.
@@ -7,7 +6,7 @@ import java.util.List;
 public interface CabinPassengerPanelAPI {
 
     // Return all floor selections made since last poll, panel queues presses so none are missed.
-    List<Integer> getPressedFloors();
+    int getPressedFloor();
 
     // Clear the pending floor selections after they’ve been processed.
     void clearPressedFloors();
