@@ -1,7 +1,7 @@
-package ElevatorController.LowerLevel;
+package elevatorController.LowerLevel;
 
 import bus.SoftwareBus;
-import ElevatorController.Util.FloorNDirection;
+import elevatorController.Util.FloorNDirection;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,8 +1,8 @@
-package ElevatorController.LowerLevel;
+package elevatorController.LowerLevel;
 
 import bus.SoftwareBus;
-import ElevatorController.Util.FloorNDirection;
-import ElevatorController.Util.State;
+import elevatorController.Util.FloorNDirection;
+import elevatorController.Util.State;
 
 /**
  * The mode serves as a means for the Elevator Controller to be put into and track its current mode.

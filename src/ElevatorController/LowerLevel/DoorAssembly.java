@@ -1,4 +1,4 @@
-package ElevatorController.LowerLevel;
+package elevatorController.LowerLevel;
 
 import bus.SoftwareBus;
 

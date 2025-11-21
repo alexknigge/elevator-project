@@ -1,7 +1,7 @@
-package ElevatorController.HigherLevel;
+package elevatorController.HigherLevel;
 
 import bus.SoftwareBus;
-import ElevatorController.LowerLevel.*;
+import elevatorController.LowerLevel.*;
 
 /**
  * Main is a lightweight object, which instantiates Elevator Controller, Mode,

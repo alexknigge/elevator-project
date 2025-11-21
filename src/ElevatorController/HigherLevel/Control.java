@@ -1,7 +1,7 @@
-package ElevatorController.HigherLevel;
+package elevatorController.HigherLevel;
 
-import ElevatorController.LowerLevel.*;
-import ElevatorController.Util.State;
+import elevatorController.LowerLevel.*;
+import elevatorController.Util.State;
 
 /**
  * Control mode is one where movement is controlled by the Control Room. Using

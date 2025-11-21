@@ -1,6 +1,6 @@
-package ElevatorController.Processes;
+package elevatorController.Processes;
 
-import ElevatorController.Util.State;
+import elevatorController.Util.State;
 
 /**
  * Normal mode is the default mode that the system starts in.

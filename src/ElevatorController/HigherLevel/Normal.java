@@ -1,7 +1,7 @@
-package ElevatorController.HigherLevel;
+package elevatorController.HigherLevel;
 
-import ElevatorController.LowerLevel.*;
-import ElevatorController.Util.State;
+import elevatorController.LowerLevel.*;
+import elevatorController.Util.State;
 
 /**
  * Normal mode is the default mode that the system starts in. The initial state

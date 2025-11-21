@@ -1,6 +1,6 @@
-package ElevatorController.Processes;
+package elevatorController.Processes;
 
-import ElevatorController.Util.State;
+import elevatorController.Util.State;
 
 /**
  * Control mode is one where movement is controlled by the Control Room.

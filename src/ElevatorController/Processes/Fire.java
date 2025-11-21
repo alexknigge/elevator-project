@@ -1,6 +1,6 @@
-package ElevatorController.Processes;
+package elevatorController.Processes;
 
-import ElevatorController.Util.State;
+import elevatorController.Util.State;
 
 /**
  * In fire mode, the elevator only listens to request buttons in the cabin if the fire key has been inserted.

@@ -1,6 +1,5 @@
-package ElevatorController.HigherLevel;
+package elevatorController.HigherLevel;
 
-import ElevatorController.LowerLevel.*;
 
 /**
  * The elevator controller is a light-weight object responsible for switching

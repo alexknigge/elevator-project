@@ -1,8 +1,8 @@
-package ElevatorController.LowerLevel;
+package elevatorController.LowerLevel;
 
 import bus.SoftwareBus;
-import ElevatorController.Util.Direction;
-import ElevatorController.Util.FloorNDirection;
+import elevatorController.Util.Direction;
+import elevatorController.Util.FloorNDirection;
 
 /**
  * The cabin provides a means for the elevator controller to send the elevator to a destination.
