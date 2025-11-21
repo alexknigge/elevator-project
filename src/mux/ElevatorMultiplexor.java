@@ -1,5 +1,7 @@
 package mux;
 
+import java.util.List;
+
 import bus.Message;
 import bus.SoftwareBus;
 import bus.Topic;
@@ -27,7 +29,12 @@ public class ElevatorMultiplexor {
     private final int ID;
     private final Elevator elev;
     private final SoftwareBus bus = new SoftwareBus(false);
+    private boolean lastFireKeyState = false;
+    private boolean lastObstructedState = false;
+    private boolean lastOverloadState = false;
+    private int lastPressedFloor = -1;
 
+    
     // Initialize the MUX  (placeholder example subscriptions)
     public void initialize() {
         bus.subscribe(Topic.DOOR_CONTROL, ID);
@@ -46,6 +53,8 @@ public class ElevatorMultiplexor {
 
         System.out.println("ElevatorMUX " + ID + " initialized and subscribed");
         startBusPoller();
+        startStatePoller();  
+
     }
 
 
@@ -119,6 +128,86 @@ public class ElevatorMultiplexor {
         });
         t.start();
     }
+
+
+
+    public void startStatePoller() {
+        Thread statePoller = new Thread(() -> {
+            while (true) {
+                pollFireKeyState();
+                pollPressedFloors();
+                pollDoorObstruction();
+                pollCabinOverload();
+                
+                try {
+                    Thread.sleep(1000); 
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        statePoller.start();
+    }
+
+
+
+    private void pollFireKeyState() {
+        boolean fireKeyActive = elev.panel.isFireKeyActive();
+        if (fireKeyActive != lastFireKeyState) {
+            // Emit FIRE_KEY message (Topic 206) only on state change
+            int v;
+            if (fireKeyActive) v = 1;
+            else v = 0;
+            Message fireMsg = new Message(Topic.FIRE_KEY, ID, v);
+            bus.publish(fireMsg);
+            lastFireKeyState = fireKeyActive;
+        }
+    }
+
+
+    private void pollPressedFloors() {
+        int targetFloor = elev.panel.getPressedFloor();
+        if (targetFloor != 0 && targetFloor != lastPressedFloor) {
+            Message selectMsg = new Message(Topic.CABIN_SELECT, ID, targetFloor);
+            bus.publish(selectMsg);
+            lastPressedFloor = targetFloor;
+        }
+    }
+
+
+
+
+    private void pollDoorObstruction() {
+        boolean isObstructed = elev.door.isObstructed();
+        if (isObstructed != lastObstructedState) {
+            // Emit DOOR_SENSOR message (Topic 203) only on state change
+            int v;
+            if (isObstructed) v = 1;
+            else v = 0;
+            Message sensorMsg = new Message(Topic.DOOR_SENSOR, ID, v);
+            bus.publish(sensorMsg);
+            lastObstructedState = isObstructed;
+        }
+    }
+
+    private void pollCabinOverload() {
+        boolean isOverloaded = false;
+        if (isOverloaded != lastOverloadState) {
+            // Emit CABIN_LOAD message (Topic 205) only on state change
+            int v;
+            if (isOverloaded) v = 1;
+            else v = 0;
+            Message loadMsg = new Message(Topic.CABIN_LOAD, ID, v);
+            bus.publish(loadMsg);
+            lastOverloadState = isOverloaded;
+        }
+    }
+
+
+    public Elevator getElevator() {
+        return elev;
+    }
+
 
     private void handleDoorControl(Message msg) {
         int command = msg.getBody();

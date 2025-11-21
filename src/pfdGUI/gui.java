@@ -30,6 +30,7 @@ public class gui extends Application {
 
     // GUI Control/Query Interface (Contains internal state & control methods)
     public GUIControl internalState = new GUIControl();
+    private mux.ElevatorMultiplexor[] elevatorMuxes = new mux.ElevatorMultiplexor[numElevators];
 
     // Internal State Devices
     private Panel[] panels = new Panel[numElevators];
@@ -118,11 +119,16 @@ public class gui extends Application {
         public void setDoorObstruction(int ID, boolean isObstructed) {
             Platform.runLater(() -> {
                 doorObstructions[ID-1] = isObstructed;
-                if (isObstructed) {
-                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(7)); // Obstructed image
-                } else {
-                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(6)); // Normal closed image
+                ImageView doorImg = doors[ID-1].elevDoorsImg;
+                
+                // Update image based on current door state + new obstruction state
+                if (loader.imageList.get(6).equals(doorImg.getImage()) || 
+                    loader.imageList.get(7).equals(doorImg.getImage())) {
+                    // Door is open - update open state
+                    doorImg.setImage(isObstructed ? loader.imageList.get(7) : loader.imageList.get(6));
                 }
+                // If door is closed or transitioning, obstruction state is stored but image doesn't change
+                // until next open/close operation
             });
         }
 
@@ -130,30 +136,47 @@ public class gui extends Application {
         public void changeDoorState(int ID, boolean open) {
             Platform.runLater(() -> {
                 if (open) {
-                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
-
-                    // Run delay off the UI thread so animation works
+                    // Opening doors, show midway transition then fully open
+                    if (doorObstructions[ID-1]) {
+                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(5)); 
+                    } else {
+                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(4)); 
+                    }
+                    
                     new Thread(() -> {
                         try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
-                        Platform.runLater(() -> doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(5))); // Open image
+                        Platform.runLater(() -> {
+                            if (doorObstructions[ID-1]) {
+                                doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(7)); 
+                            } else {
+                                doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(6)); 
+                            }
+                        });
                     }).start();
-
-                } else if (!open && doorObstructions[ID-1]) {
-                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(5)); // Obstruction image
-
-                    // Run delay off the UI thread so animation works
-                    new Thread(() -> {
-                        try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
-                        Platform.runLater(() -> doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(7))); 
-                    }).start();
-
                 } else {
-                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(4)); // Transition image
-
-                    // Run delay off the UI thread so animation works
+                    // Closing doors, show midway transition
+                    if (doorObstructions[ID-1]) {
+                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(5)); 
+                    } else {
+                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(4)); 
+                    }
+                    
                     new Thread(() -> {
                         try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
-                        Platform.runLater(() -> doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(6))); // Closed image
+                        Platform.runLater(() -> {
+                            if (doorObstructions[ID-1]) {
+                                // reopen doors, Obstruction detected
+                                System.out.println("Obstruction detected - reopening doors for elevator " + ID);
+                                if (doorObstructions[ID-1]) {
+                                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(7)); 
+                                } else {
+                                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(6)); 
+                                }
+                            } else {
+                                // No obstruction, close fully
+                                doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(3)); 
+                            }
+                        });
                     }).start();
                 }
             });
@@ -277,7 +300,7 @@ public class gui extends Application {
         // Initialize multiplexors AFTER GUI is fully set up
         new mux.BuildingMultiplexor();
         for (int i = 0; i < numElevators; i++) {
-            new mux.ElevatorMultiplexor(i + 1);  // Use IDs 1, 2, 3, 4 instead of 0, 1, 2, 3
+            elevatorMuxes[i] = new mux.ElevatorMultiplexor(i + 1);  // Store the reference
         }
         System.out.println("All multiplexors initialized after GUI setup");
     }
@@ -323,7 +346,9 @@ public class gui extends Application {
                 final int leftFloorNumber = i;
                 left.setOnMouseClicked(event -> {
                     Platform.runLater(() -> {
-                        internalState.pressedFloors[carId].add(leftFloorNumber);
+                        if (elevatorMuxes != null && carId < elevatorMuxes.length && elevatorMuxes[carId] != null) {
+                            elevatorMuxes[carId].getElevator().panel.pressFloorButton(leftFloorNumber);
+                        }
                         left.setStyle("-fx-text-fill: #ffffffff;");
                     });
                 });
@@ -343,7 +368,9 @@ public class gui extends Application {
                 final int rightFloorNumber = i + 1;
                 right.setOnMouseClicked(event -> {
                     Platform.runLater(() -> {
-                        internalState.pressedFloors[carId].add(rightFloorNumber);
+                        if (elevatorMuxes != null && carId < elevatorMuxes.length && elevatorMuxes[carId] != null) {
+                            elevatorMuxes[carId].getElevator().panel.pressFloorButton(rightFloorNumber);
+                        }
                         right.setStyle("-fx-text-fill: #ffffffff;");
                     });
                 });
@@ -366,21 +393,22 @@ public class gui extends Application {
         private void makeDoor(){
             elevDoorsImg.setPreserveRatio(true);
             elevDoorsImg.setFitWidth(400);
-            elevDoorsImg.setImage(loader.imageList.get(6)); // 3-7 indices are cabin doors
+            elevDoorsImg.setImage(loader.imageList.get(6)); 
+            
+            internalState.doorObstructions[carId] = false;
 
             elevDoorsImg.setOnMouseClicked(event -> {
-
-                // If door is open, allow placing/removing an obstruction by clicking
                 if(loader.imageList.get(6).equals(elevDoorsImg.getImage())) {
                     Platform.runLater(() -> {
                         internalState.doorObstructions[carId] = true;
-                        elevDoorsImg.setImage(loader.imageList.get(7));
+                        elevDoorsImg.setImage(loader.imageList.get(7)); 
                     });
                     return;
-                } else if(loader.imageList.get(7).equals(elevDoorsImg.getImage())) {
+                } 
+                else if(loader.imageList.get(7).equals(elevDoorsImg.getImage())) {
                     Platform.runLater(() -> {
                         internalState.doorObstructions[carId] = false;
-                        elevDoorsImg.setImage(loader.imageList.get(6));
+                        elevDoorsImg.setImage(loader.imageList.get(6)); 
                     });
                     return;
                 }
@@ -527,17 +555,25 @@ public class gui extends Application {
             fireAlarmImg.setOnMouseClicked(event -> {
                 boolean isActive = fireAlarmImg.getImage() == loader.imageList.get(12);
 
-                if (isActive) {
-                    Platform.runLater(() -> {
-                        internalState.fireAlarmActive = true;
-                        fireAlarmImg.setImage(loader.imageList.get(11));
-                    });
-                } else {
-                    Platform.runLater(() -> {
+                Platform.runLater(() -> {
+                    if (isActive) {
+                        for (int i = 0; i < numElevators; i++) {
+                            if (elevatorMuxes[i] != null && elevatorMuxes[i].getElevator().panel.isFireKeyActive()) {
+                                elevatorMuxes[i].getElevator().panel.toggleFireKey();
+                            }
+                        }
                         internalState.fireAlarmActive = false;
+                        fireAlarmImg.setImage(loader.imageList.get(11));
+                    } else {
+                        for (int i = 0; i < numElevators; i++) {
+                            if (elevatorMuxes[i] != null && !elevatorMuxes[i].getElevator().panel.isFireKeyActive()) {
+                                elevatorMuxes[i].getElevator().panel.toggleFireKey();
+                            }
+                        }
+                        internalState.fireAlarmActive = true;
                         fireAlarmImg.setImage(loader.imageList.get(12));
-                    });
-                }
+                    }
+                });
             });
         }
     }

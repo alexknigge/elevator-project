@@ -75,8 +75,11 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
      * @return copy of ArrayList<Integer> pressedFloorsQueue
      */
     @Override
-    public synchronized List<Integer> getPressedFloors() {
-        return new ArrayList<>(pressedFloorsQueue);
+    public synchronized int getPressedFloor() {
+        if (pressedFloorsQueue.isEmpty()) {
+            return 0;
+        }
+        return pressedFloorsQueue.remove(0); // Remove and return the head
     }
 
     /**
@@ -99,6 +102,8 @@ public class CabinPassengerPanel implements CabinPassengerPanelAPI {
         if (floorNumber >= 1 && floorNumber <= totalFloors) {
             floorButtons[floorNumber - 1] = false;
             guiControl.resetPanelButton(carId, floorNumber);
+            System.out.println("DEBUG: Reset floor button " + floorNumber + " for elevator " + carId);
+
 
         }
     }

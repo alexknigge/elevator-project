@@ -16,11 +16,17 @@ public class Topic {
     public static final int CAR_DISPATCH = 102; // eMUX
     public static final int MODE_SET = 103; // bMUX & eMUX
     public static final int CABIN_RESET = 109; // bMUX & eMUX
-
     public static final int CALL_RESET = 110; // bMUX
     public static final int DISPLAY_FLOOR = 111; // bMUX & eMUX
     public static final int DISPLAY_DIRECTION = 112; // bMUX & eMUX
     public static final int FIRE_ALARM = 120; // bMUX
+
+    public static final int CALLS_ENABLED = 113;        // Building MUX
+    public static final int SELECTIONS_ENABLED = 114;   // Elevator MUX (all)
+    public static final int SELECTIONS_TYPE = 115;      // Elevator MUX (all)  
+    public static final int PLAY_SOUND = 116;           // Building MUX
+
+
 
     //200s: PFD -> Controller events
 
