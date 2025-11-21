@@ -6,12 +6,14 @@ public class Building {
 
     // The building's elevator call buttons on each floor
     public final FloorCallButtons[] callButtons;
+    public final int totalFloors;
 
     /**
      * Constructs a Building.
      * @param totalFloors the number of floors in the building (=10)
      */
     public Building(int totalFloors) {
+        this.totalFloors = totalFloors;
         gui g = gui.getInstance();
         this.callButtons = new FloorCallButtons[totalFloors];
         for (int i = 0; i < totalFloors; i++) {

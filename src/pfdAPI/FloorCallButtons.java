@@ -66,10 +66,15 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
     }
 
     /**
-     * Set the fire alarm status on the call buttons
+     * Set the fire alarm status
      * @param status true if fire alarm is active, false otherwise
      */
     public synchronized void setFireAlarm(boolean status) { guiControl.setFireAlarm(status); }
+
+    /**
+     * Get the fire alarm status
+     */
+    public synchronized boolean getFireAlarmStatus() { return guiControl.getFireAlarm(); }
 
     /**
      * Returns whether the Up request button has been pressed. Inactive on the top floor.

@@ -76,7 +76,7 @@ public class gui extends Application {
             int panelIndex = ID - 1; 
             return (panelIndex >= 0 && panelIndex < numElevators) ? cabinOverloads[panelIndex] : false; 
         }
-        public boolean getFireAlarmPressed() { return fireAlarmActive; }
+        public boolean getFireAlarm() { return fireAlarmActive; }
         
 
         // Press panel button
@@ -84,6 +84,7 @@ public class gui extends Application {
             Platform.runLater(() -> {
                 for (Node n : panels[ID-1].panelOverlay.getChildren()) {
                     if (n instanceof Label lbl && lbl.getText().equals(String.valueOf(floorNumber))) {
+                        if (n == panels[ID-1].digitalLabel) continue;
                         lbl.setStyle("-fx-text-fill: white;");
                         pressedFloors[ID-1].add(floorNumber);
                     }
@@ -95,6 +96,7 @@ public class gui extends Application {
         public void resetPanelButton(int ID, int floorNumber) {
             Platform.runLater(() -> {
                 for (Node n : panels[ID-1].panelOverlay.getChildren()) {
+                    if (n == panels[ID-1].digitalLabel) continue;
                     if (n instanceof Label lbl && lbl.getText().equals(String.valueOf(floorNumber))) {
                         lbl.setStyle("-fx-text-fill: black;");
                         pressedFloors[ID-1].remove(Integer.valueOf(floorNumber));
@@ -107,6 +109,7 @@ public class gui extends Application {
         public void resetPanel(int ID) {
             Platform.runLater(() -> {
                 for (Node n : panels[ID-1].panelOverlay.getChildren()) {
+                    if (n == panels[ID-1].digitalLabel) continue;
                     if (n instanceof Label lbl) {
                         lbl.setStyle("-fx-text-fill: black;");
                     }
@@ -133,7 +136,7 @@ public class gui extends Application {
         }
 
         // Change the door state of a given elevator
-        public void changeDoorState(int ID, boolean open) {
+        public synchronized void changeDoorState(int ID, boolean open) {
             Platform.runLater(() -> {
                 if (open) {
                     // Opening doors, show midway transition then fully open

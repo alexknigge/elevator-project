@@ -33,7 +33,9 @@ public class ElevatorMultiplexor {
     private boolean lastFireKeyState = false;
     private boolean lastObstructedState = false;
     private boolean lastOverloadState = false;
-    private int lastPressedFloor = -1;
+    private boolean pendingDispatch = false;
+    private int lastPressedFloor = 0;
+    private int targetFloor = 0;
 
     
     // Initialize the MUX  (placeholder example subscriptions)
@@ -50,8 +52,6 @@ public class ElevatorMultiplexor {
         bus.subscribe(Topic.CABIN_LOAD, ID);
         bus.subscribe(Topic.FIRE_KEY, ID);
         bus.subscribe(Topic.CABIN_RESET, ID);
-
-
         System.out.println("ElevatorMUX " + ID + " initialized and subscribed");
         startBusPoller();
         startStatePoller();  
@@ -60,7 +60,7 @@ public class ElevatorMultiplexor {
 
 
     /**
-     * Incoming Event Handling Functions
+     * Incoming Message Polling
      */
 
     // Polls the software bus for messages and handles them accordingly
@@ -92,10 +92,6 @@ public class ElevatorMultiplexor {
                 msg = bus.get(Topic.CABIN_SELECT, ID);
                 if (msg != null) {
                     handleCabinSelect(msg);
-                }
-                msg = bus.get(Topic.CAR_POSITION, ID);
-                if (msg != null) {
-                    handleCarPosition(msg);
                 }
                 msg = bus.get(Topic.DOOR_SENSOR, ID);
                 if (msg != null) {
@@ -130,14 +126,19 @@ public class ElevatorMultiplexor {
         t.start();
     }
 
+    /**
+     * Internal State Polling Functions
+     */
+
     // Polls the elevator state periodically and publishes updates to the bus
-    public void startStatePoller() {
+    private void startStatePoller() {
         Thread statePoller = new Thread(() -> {
             while (true) {
                 pollFireKeyState();
                 pollPressedFloors();
                 pollDoorObstruction();
                 pollCabinOverload();
+                pollCarPosition();
                 
                 try {
                     Thread.sleep(1000); 
@@ -176,14 +177,15 @@ public class ElevatorMultiplexor {
     // Poll and publish door obstruction state changes
     private void pollDoorObstruction() {
         boolean isObstructed = elev.door.isObstructed();
+
+        // Update obstruction state
         if (isObstructed != lastObstructedState) {
-            // Emit DOOR_SENSOR message (Topic 203) only on state change
-            int v;
-            if (isObstructed) v = 1;
-            else v = 0;
-            Message sensorMsg = new Message(Topic.DOOR_SENSOR, ID, v);
-            bus.publish(sensorMsg);
             lastObstructedState = isObstructed;
+        }
+        if (pendingDispatch && !isObstructed && elev.door.isFullyClosed()) {
+            System.out.println("[MUX] Doors closed & obstruction cleared — executing pending dispatch.");
+            pendingDispatch = false;
+            handleCarDispatch(new Message(Topic.CAR_DISPATCH, ID, targetFloor));
         }
     }
 
@@ -201,10 +203,51 @@ public class ElevatorMultiplexor {
         }
     }
 
+    // Poll car position
+    private void pollCarPosition() {
+        Integer sensor = motionAPI.bottom_alignment();
+        if (sensor == null) return;
+
+        int newFloor = (sensor / 2) + 1;
+        if (newFloor < 1 || newFloor > elev.totalFloors) return;
+
+        // Only update direction when moving between floors
+        if (newFloor != currentFloor) {
+            if (newFloor > currentFloor) currentDirection = "UP";
+            else currentDirection = "DOWN";
+        }
+
+        currentFloor = newFloor;
+
+        // Only update GUI when actually MOVING
+        if (!currentDirection.equals("IDLE")) {
+            elev.display.updateFloorIndicator(currentFloor, currentDirection);
+            elev.panel.setDisplay(currentFloor, currentDirection);
+            bus.publish(new Message(Topic.CAR_POSITION, ID, currentFloor));
+        }
+
+        // Arrival logic
+        if (targetFloor > 0 && currentFloor == targetFloor) {
+            motionAPI.stop();
+            currentDirection = "IDLE";
+
+            elev.display.updateFloorIndicator(currentFloor, "IDLE");
+            elev.panel.setDisplay(currentFloor, "IDLE");
+
+            elev.door.open();
+            elev.panel.resetFloorButton(currentFloor);
+            targetFloor = 0;
+        }
+    }
+
     // Getter for Elevator
     public Elevator getElevator() {
         return elev;
     }
+
+    /**
+     * Incoming Message Handlers
+     */
 
     // Handle door control messages
     private void handleDoorControl(Message msg) {
@@ -240,25 +283,30 @@ public class ElevatorMultiplexor {
 
     // Handle car dispatch messages
     private void handleCarDispatch(Message msg) {
-        int floor = msg.getBody();
-        int currentFloor = this.currentFloor;
-        int dir = floor - currentFloor;
-        if(dir > 0){
+        targetFloor = msg.getBody();
+        int dir = targetFloor - currentFloor;
+
+        elev.door.close();
+        if (elev.door.isObstructed() || !elev.door.isFullyClosed()) {
+            System.out.println("[MUX] Dispatch blocked — waiting for doors to close...");
+            pendingDispatch = true;
+            return;
+        }
+        pendingDispatch = false;
+
+        if (dir > 0) {
             currentDirection = "UP";
-            elev.display.updateFloorIndicator(currentFloor, "UP");
-            elev.panel.setDisplay(currentFloor, "UP");
             motionAPI.set_direction(Direction.UP);
-        } else if (dir < 0){
+        } else if (dir < 0) {
             currentDirection = "DOWN";
-            elev.display.updateFloorIndicator(currentFloor, "DOWN");
-            elev.panel.setDisplay(currentFloor, "DOWN");
             motionAPI.set_direction(Direction.DOWN);
         } else {
             currentDirection = "IDLE";
-            elev.display.updateFloorIndicator(currentFloor, "IDLE");
-            elev.panel.setDisplay(currentFloor, "IDLE");
             motionAPI.set_direction(Direction.NULL);
         }
+
+        elev.display.updateFloorIndicator(currentFloor, currentDirection);
+        elev.panel.setDisplay(currentFloor, currentDirection);
         motionAPI.start();
     }
 
@@ -271,11 +319,6 @@ public class ElevatorMultiplexor {
     private void handleCabinSelect(Message msg) {
         int floor = msg.getBody();
         elev.panel.pressFloorButton(floor);
-    }
-
-    // Handle car position messages
-    private void handleCarPosition(Message msg) {
-        // TODO: implement car position logic
     }
 
     // Handle door sensor messages
@@ -304,20 +347,5 @@ public class ElevatorMultiplexor {
     // Handle fire key messages
     private void handleFireKey(Message msg) {
         elev.panel.toggleFireKey();
-    }
-
-    /**
-     * Outgoing Emitter Function
-     */
-
-    // Pass information through the MUX to the console & publish to bus if needed
-    public void emit(String msg, boolean publish) {
-        System.out.println("Elevator-EMIT: " + msg);
-
-        // Publish to bus
-        if(publish){ 
-            Message message = Message.parseStringToMsg(msg); // Expects TOPIC-SUBTOPIC-BODY format
-            bus.publish(message); 
-        }
     }
 }

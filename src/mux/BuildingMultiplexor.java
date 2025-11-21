@@ -22,6 +22,9 @@ public class BuildingMultiplexor {
     // Listener for GUI/API integration
     private final SoftwareBus bus = new SoftwareBus(false);
     private final Building bldg = new Building(10);;
+    boolean[][] lastCallState = new boolean[bldg.totalFloors][3]; // Up/Down/Null
+    private boolean lastFireState = false;
+
 
     // Door Commands
     int DOOR_OPEN = 1;
@@ -34,16 +37,17 @@ public class BuildingMultiplexor {
     int FIRE_ON = 1;
 
     // Initialize the MUX
-    public void initialize() {
-        System.out.println("ready bldg");
+    public void initialize() { 
         bus.subscribe(Topic.FIRE_ALARM, 0);
         bus.subscribe(Topic.CALL_RESET, 0);
         bus.subscribe(Topic.HALL_CALL, 0);
+        System.out.println("BuildingMUX initialized and subscribed");
         startBusPoller();
+        startStatePoller(); 
     }
 
     /**
-     * Incoming Event Handling Functions
+     * Incoming Message Polling
      */
 
     // Polls the software bus for messages and handles them accordingly
@@ -61,10 +65,6 @@ public class BuildingMultiplexor {
                 if (msg != null) {
                     handleCallReset(msg);
                 }
-                msg = bus.get(Topic.HALL_CALL, 0);
-                if (msg != null) {
-                    handleHallCall(msg);
-                }
 
                 try {
                     Thread.sleep(50);
@@ -76,14 +76,54 @@ public class BuildingMultiplexor {
         t.start();
     }
 
-    // Handle Hall Call Message
-    public void handleHallCall(Message msg) {
-        int floor = msg.getSubTopic()-1;
-        int directionCode = msg.getBody();
-        System.out.println("Building MUX received hall call for floor " + floor + " direction " + directionCode);
-        if (directionCode == DIR_UP) { bldg.callButtons[floor].pressUpCall(); } 
-        else if (directionCode == DIR_DOWN) { bldg.callButtons[floor].pressDownCall(); }
+    /**
+     * Internal State Polling Functions
+     */
+
+    // Polls the bldg state periodically and publishes updates to the bus
+    private void startStatePoller() {
+        Thread statePoller = new Thread(() -> {
+            while (true) {
+                pollCallButtons();
+                pollFireAlarm();
+                
+                try {
+                    Thread.sleep(1000); 
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        statePoller.start();
     }
+
+    // Poll all call buttons
+    private void pollCallButtons() {
+        for (int floor = 0; floor < bldg.callButtons.length; floor++) {
+            if (bldg.callButtons[floor].isUpCallPressed() && !lastCallState[floor][0]) {
+                bus.publish(new Message(Topic.HALL_CALL, floor+1, DIR_UP));
+                lastCallState[floor][0] = true;
+            }
+
+            if (bldg.callButtons[floor].isDownCallPressed() && !lastCallState[floor][1]) {
+                bus.publish(new Message(Topic.HALL_CALL, floor+1, DIR_DOWN));
+                lastCallState[floor][1] = true;
+            }
+        }
+    }
+
+    // Poll fire alarm state
+    private void pollFireAlarm() {
+        boolean state = bldg.callButtons[0].getFireAlarmStatus();
+        if (state != lastFireState) {
+            bus.publish(new Message(Topic.FIRE_ALARM, 0, state ? FIRE_ON : FIRE_OFF));
+            lastFireState = state;
+        }
+    }
+
+    /**
+     * Incoming Message Handlers
+     */
 
     // Handle Fire Alarm Message
     public void handleFireAlarm(Message msg) {
@@ -99,22 +139,13 @@ public class BuildingMultiplexor {
     public void handleCallReset(Message msg) {
         int floor = msg.getSubTopic()-1;
         int directionCode = msg.getBody();
-        if (directionCode == DIR_UP) { bldg.callButtons[floor].resetCallButton("UP"); } 
-        else if (directionCode == DIR_DOWN) { bldg.callButtons[floor].resetCallButton("DOWN"); }
-    }
-
-    /**
-     * Outgoing Emitter Function
-     */
-
-    // Pass information through the MUX to the console & publish to bus if needed
-    public void emit(String msg, boolean publish) {
-        System.out.println("Building-EMIT: " + msg);
-
-        // Publish to bus
-        if(publish){ 
-            Message message = Message.parseStringToMsg(msg); // Expects TOPIC-SUBTOPIC-BODY format
-            bus.publish(message); 
+        if (directionCode == DIR_UP) {
+            bldg.callButtons[floor].resetCallButton("UP");
+            lastCallState[floor][0] = false;
+        } 
+        else if (directionCode == DIR_DOWN) {
+            bldg.callButtons[floor].resetCallButton("DOWN");
+            lastCallState[floor][1] = false;
         }
     }
 }
