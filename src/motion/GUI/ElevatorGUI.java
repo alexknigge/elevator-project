@@ -7,7 +7,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-import motion.Elevator_Controler.MotionAPI;
+import motion.MotionAPI;
 import motion.Hardware.*;
 import motion.Util.*;
 

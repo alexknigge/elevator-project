@@ -25,3 +25,7 @@ When bottom_sensor_triggered() returns the same floor, the elevator is aligned.
 Returns the floor number associated with the bottom sensor of the floor that was
 triggered by the car. If no sensor is triggered, this method returns null.
 When top_sensor_triggered() returns the same floor the elevator is aligned
+
+--------------
+Note: The package 'Elevator_Controler' was deleted as it looked redundant, if I was wrong to do so
+it may need to be re-added later. Only MotionAPI.java and this was kept, and this txt file was renamed. - Alex Maynes Team 10

@@ -3,6 +3,8 @@ package mux;
 import bus.Message;
 import bus.SoftwareBus;
 import bus.Topic;
+import motion.MotionAPI;
+import motion.Util.Direction;
 import pfdAPI.*;
 
 /**
@@ -27,12 +29,13 @@ public class ElevatorMultiplexor {
     private final int ID;
     private final Elevator elev;
     private final SoftwareBus bus = new SoftwareBus(false);
+    private final MotionAPI motionAPI = new MotionAPI();
 
     // Initialize the MUX  (placeholder example subscriptions)
     public void initialize() {
         bus.subscribe(Topic.DOOR_CONTROL, ID);
         bus.subscribe(Topic.DISPLAY_FLOOR, ID);
-        bus.subscribe(Topic.SELECTION_RESET, ID); //TODO: Jackie added
+        bus.subscribe(Topic.SELECTION_RESET, ID);
         bus.subscribe(Topic.DISPLAY_DIRECTION, ID);
         bus.subscribe(Topic.CAR_DISPATCH, ID);
         bus.subscribe(Topic.MODE_SET, 0);  // Global mode changes
@@ -154,8 +157,28 @@ public class ElevatorMultiplexor {
         }
     }
 
+    // Handle car dispatch messages
     private void handleCarDispatch(Message msg) {
-        // TODO: implement car dispatch logic
+        int floor = msg.getBody();
+        int currentFloor = this.currentFloor;
+        int dir = floor - currentFloor;
+        if(dir > 0){
+            currentDirection = "UP";
+            elev.display.updateFloorIndicator(currentFloor, "UP");
+            elev.panel.setDisplay(currentFloor, "UP");
+            motionAPI.set_direction(Direction.UP);
+        } else if (dir < 0){
+            currentDirection = "DOWN";
+            elev.display.updateFloorIndicator(currentFloor, "DOWN");
+            elev.panel.setDisplay(currentFloor, "DOWN");
+            motionAPI.set_direction(Direction.DOWN);
+        } else {
+            currentDirection = "IDLE";
+            elev.display.updateFloorIndicator(currentFloor, "IDLE");
+            elev.panel.setDisplay(currentFloor, "IDLE");
+            motionAPI.set_direction(Direction.NULL);
+        }
+        motionAPI.start();
     }
 
     private void handleModeSet(Message msg) {

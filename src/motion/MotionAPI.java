@@ -1,4 +1,4 @@
-package motion.Elevator_Controler;
+package motion;
 
 import java.util.HashMap;
 import motion.Hardware.Motor;
