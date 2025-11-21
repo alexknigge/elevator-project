@@ -77,7 +77,7 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
      */
     @Override
     public synchronized boolean isUpCallPressed() {
-        return hasUp && upPressed;
+        return hasUp && guiControl.isCallButtonActive(floorNumber, "UP");
     }
 
     /**
@@ -86,7 +86,7 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
      */
     @Override
     public synchronized boolean isDownCallPressed() {
-        return hasDown && downPressed;
+        return hasDown && guiControl.isCallButtonActive(floorNumber, "DOWN");
     }
 
     /**
@@ -96,10 +96,10 @@ public class FloorCallButtons implements FloorCallButtonsAPI {
      */
     @Override
     public synchronized void resetCallButton(String direction) {
-        if (direction.equals("UP") && hasUp) {
-            upPressed = false;
-        } else if (direction.equals("DOWN") && hasDown) {
-            downPressed = false;
+        if (direction.equalsIgnoreCase("UP") && hasUp) {
+            guiControl.resetCallButton(floorNumber);
+        } else if (direction.equalsIgnoreCase("DOWN") && hasDown) {
+            guiControl.resetCallButton(floorNumber);
         }
     }
 }

@@ -249,7 +249,17 @@ public class gui extends Application {
                     fireAlarm.fireAlarmImg.setImage(loader.imageList.get(11)); // Inactive image
                 }
             });
-        } 
+        }
+
+        // Query whether the floor call button is active or not
+        public boolean isCallButtonActive(int floorNumber, String direction) {
+            int buttonIndex = floorNumber - 1;
+            if (buttonIndex < 0 || buttonIndex >= numFloors) {
+                return false;
+            }
+            String currentDirection = callButtons[buttonIndex].direction;
+            return currentDirection.equalsIgnoreCase(direction);
+        }
     }
 
     /**************************************************
