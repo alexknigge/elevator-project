@@ -12,18 +12,22 @@ import Team7MotionControl.Hardware.Elevator;
  * floor display (up/down arrows and LEDs for displaying the floor number). The
  * notifier object does not receive any messages from the Software Bus.
  */
+
+//Todo: what am I supposed to do with overloaded here?
+    // Seems like the MUX should be telling us overloaded?
 public class Notifier {
     private int elevatorID;
     private SoftwareBus softwareBus;
 
     // Topic for car postion
     private static final int CAR_POSITION = Topic.CAR_POSITION;
-
     private static final int DISPLAY_DIRECTION=Topic.DISPLAY_DIRECTION;
+    private static final int PLAY_SOUND = Topic.PLAY_SOUND;
+    //bodies
+    private static final int ARRIVAL = 0;
+    private static final int OVERLOAD = 1;
 
     public  Notifier(int elevatorID, SoftwareBus softwareBus){
-        //TODO: does notifier need to subscribe? or can it just publish messages?
-        //TODO call subscribe on softwareBus w/ relevant topic/subtopic
         this.elevatorID = elevatorID;
         this.softwareBus = softwareBus;
     }
@@ -33,7 +37,9 @@ public class Notifier {
      * chime)
      * @param floorNDirection This elevator's current floor and direction
      */
-    public void arrivedAtFloor(FloorNDirection floorNDirection){}
+    public void arrivedAtFloor(FloorNDirection floorNDirection){
+        softwareBus.publish(new Message(PLAY_SOUND, elevatorID, ARRIVAL));
+    }
 
     /**
      * Notify Control Center and MUX of this elevator's status
@@ -53,11 +59,17 @@ public class Notifier {
     /**
      * Notify the MUX to play the capacity buzzer
      */
-    public void playCapacityNoise(){}
+    public void playCapacityNoise(){
+        // Todo: I p sure the mux needs to be ready to receive this command.
+        //  Don't see anything for it in the Photo Val sent me.
+    }
 
     /**
      * Notify the MUX to stop playing the capacity buzzer
      */
-    public void stopCapacityNoise(){}
+    public void stopCapacityNoise(){
+        // Todo: I p sure the mux needs to be ready to receive this command.
+        //  Don't see anything for it in the Photo Val sent me.
+    }
 
 }
