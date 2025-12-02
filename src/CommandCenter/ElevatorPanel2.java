@@ -2,7 +2,7 @@ package CommandCenter;
 
 
 import ElevatorController.Util.Direction;
-import ElevatorController.Util.FloorNDirection;
+import ElevatorController.Util.Destination;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -219,7 +219,7 @@ public class ElevatorPanel2 extends VBox {
 //                    });
 //                }
 
-                FloorNDirection f = commandCenter.getFloorNDirection(elevatorId);
+                Destination f = commandCenter.getFloorNDirection(elevatorId);
                 if (f != null && f.direction() == Direction.STOPPED) {
                     Platform.runLater(() -> {
                         updateCarPosition(f.getFloor(), true);

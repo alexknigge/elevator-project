@@ -3,7 +3,7 @@ package CommandCenter;
 import Bus.SoftwareBus;
 import Bus.SoftwareBusCodes;
 import ElevatorController.Util.Direction;
-import ElevatorController.Util.FloorNDirection;
+import ElevatorController.Util.Destination;
 import ElevatorController.Util.State;
 import Message.Message;
 
@@ -13,7 +13,7 @@ public class CommandCenter {
 
     private boolean[] elevatorEnabled={true,true,true,true};
 
-    private FloorNDirection[] floorNDirections={null,null,null,null};
+    private Destination[] destinations ={null,null,null,null};
 
     //Given to us by a startup
     public SoftwareBus bus;
@@ -140,19 +140,19 @@ public class CommandCenter {
      * @param id of the elevator
      * @return current floor and motion of the elevator
      */
-    public FloorNDirection getElevatorStatus(int id) {
+    public Destination getElevatorStatus(int id) {
         int message = bus.get(GET_ELEVATOR_STATUS,id).getBody();
-        FloorNDirection floorNDirection;
+        Destination destination;
         if (message > 200){
-            floorNDirection= new FloorNDirection(message-200,Direction.UP);
+            destination = new Destination(message-200,Direction.UP);
         }
         if (message > 100)
-            floorNDirection= new FloorNDirection(message-100,Direction.STOPPED);
+            destination = new Destination(message-100,Direction.STOPPED);
         else
-            floorNDirection= new FloorNDirection(message,Direction.DOWN);
+            destination = new Destination(message,Direction.DOWN);
 
-        floorNDirections[id-1]=floorNDirection;
-        return floorNDirection;
+        destinations[id-1]= destination;
+        return destination;
     }
 
     /**
@@ -166,8 +166,8 @@ public class CommandCenter {
         return -1;
     }
 
-    public FloorNDirection getFloorNDirection(int id){
-        return floorNDirections[id-1];
+    public Destination getFloorNDirection(int id){
+        return destinations[id-1];
     }
 
 

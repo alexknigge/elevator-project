@@ -1,6 +1,6 @@
 package CommandCenter;
 
-import ElevatorController.Util.FloorNDirection;
+import ElevatorController.Util.Destination;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -217,10 +217,10 @@ public class ElevatorPanel extends VBox {
                     applyEnabledUI();
                     logState("System Start");
                 }
-                FloorNDirection floorNDirection=commandCenter.getFloorNDirection(elevatorId);
-                if(floorNDirection!=null&&floorNDirection.direction()== ElevatorController.Util.Direction.STOPPED){
+                Destination destination =commandCenter.getFloorNDirection(elevatorId);
+                if(destination !=null&& destination.direction()== ElevatorController.Util.Direction.STOPPED){
                     Platform.runLater(() ->
-                            updateElevatorPosition(floorNDirection.getFloor(), true));
+                            updateElevatorPosition(destination.getFloor(), true));
                     setDirection(ElevatorPanel.Direction.IDLE);
 
                 }
