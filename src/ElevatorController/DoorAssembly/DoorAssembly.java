@@ -1,5 +1,7 @@
 package ElevatorController.DoorAssembly;
 
+import Bus.SoftwareBus;
+
 /**
  * The door assembly is a virtualization of the physical interfaces which
  * comprise the doors: fully open sensors, fully closed sensors, door
@@ -9,8 +11,31 @@ package ElevatorController.DoorAssembly;
  * sensors, the scale, and the door obstruction sensors.
  */
 public class DoorAssembly {
+    private SoftwareBus softwareBus;
+    private int currentElevatorId;
 
-    public DoorAssembly() {
+    public DoorAssembly(SoftwareBus softwareBus, int currentElevatorId) {
+        this.softwareBus = softwareBus;
+        this.currentElevatorId = currentElevatorId;
+    }
 
+    public void open() {
+
+    }
+
+    public void close() {
+
+    }
+
+    public boolean fullyOpen() {
+        return false;
+    }
+
+    public boolean fullyClosed() {
+        return false;
+    }
+
+    public boolean obstructionDetected() {
+        return false;
     }
 }

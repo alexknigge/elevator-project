@@ -7,13 +7,13 @@ public enum Direction {
     DOWN(SoftwareBusCodes.down),
     STOPPED(SoftwareBusCodes.none);
 
-    // Directions associated with numbers from MUX's body handling
-    private int integerVersion;
+    private final int intValue;
 
-    public int getIntegerVersion() {
-        return integerVersion;
+    public int getIntValue() {
+        return intValue;
     }
-    private Direction(int integerVersion){
-        this.integerVersion=integerVersion;
+
+    Direction(int intValue){
+        this.intValue = intValue;
     }
 }
