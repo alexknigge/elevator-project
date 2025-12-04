@@ -33,7 +33,8 @@ public class Main extends Application {
         commandCenter = new ElevatorControlSystem(softwareBus);
         multiplexorApp = new gui();
 
-        for (int i = 1; i <= MAX_ELEVATORS; i++) {
+        // Change bounds for the array (start 0 while < MAX_ELEVATORS)
+        for (int i = 0; i < MAX_ELEVATORS; i++) {
             ElevatorController elevatorController = new ElevatorController(i, softwareBus);
             ElevatorMultiplexor elevatorMultiplexor = new ElevatorMultiplexor(i, softwareBus);
             elevatorControllers[i] = elevatorController;

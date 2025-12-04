@@ -72,21 +72,21 @@ public class gui {
 
         // Getters for internal state variables
         public ArrayList<Integer> getPressedFloors(int ID) {
-            int panelIndex = ID - 1;
+            int panelIndex = ID;
             return (panelIndex >= 0 && panelIndex < numElevators) ? pressedFloors[panelIndex] : new ArrayList<>();
         }
         public boolean getIsDoorObstructed(int ID) {
-            int panelIndex = ID - 1;
+            int panelIndex = ID;
             return (panelIndex >= 0 && panelIndex < numElevators) ? doorObstructions[panelIndex] : false;
         }
         public boolean getIsCabinOverloaded(int ID) {
-            int panelIndex = ID - 1;
+            int panelIndex = ID;
             return (panelIndex >= 0 && panelIndex < numElevators) ? cabinOverloads[panelIndex] : false;
         }
         public boolean getFireAlarm() { return fireAlarmActive; }
 
         public boolean getIsFireKeyActive(int ID){
-            int panelIndex = ID - 1;
+            int panelIndex = ID;
             return (panelIndex >= 0 && panelIndex < numElevators) ? fireKeys[panelIndex] : false;
         }
 
@@ -96,12 +96,12 @@ public class gui {
         }
 
         public void setPanelButtonsDisabled(int ID, boolean disabled) {
-            int panelIndex = ID - 1;
+            int panelIndex = ID;
             panelButtonsDisabled[panelIndex] = disabled;
         }
 
         public void setSingleSelection(int ID, boolean single) {
-            int panelIndex = ID - 1;
+            int panelIndex = ID;
             lastSelected = 0;
             singleSelection[panelIndex] = single;
         }
@@ -109,11 +109,11 @@ public class gui {
         // Press panel button
         public void pressPanelButton(int ID, int floorNumber) {
             Platform.runLater(() -> {
-                for (Node n : panels[ID-1].panelOverlay.getChildren()) {
+                for (Node n : panels[ID].panelOverlay.getChildren()) {
                     if (n instanceof Label lbl && lbl.getText().equals(String.valueOf(floorNumber))) {
-                        if (n == panels[ID-1].digitalLabel) continue;
+                        if (n == panels[ID].digitalLabel) continue;
                         lbl.setStyle("-fx-text-fill: white;");
-                        pressedFloors[ID-1].add(floorNumber);
+                        pressedFloors[ID].add(floorNumber);
                     }
                 }
             });
@@ -122,11 +122,11 @@ public class gui {
         // Reset panel button
         public void resetPanelButton(int ID, int floorNumber) {
             Platform.runLater(() -> {
-                for (Node n : panels[ID-1].panelOverlay.getChildren()) {
-                    if (n == panels[ID-1].digitalLabel) continue;
+                for (Node n : panels[ID].panelOverlay.getChildren()) {
+                    if (n == panels[ID].digitalLabel) continue;
                     if (n instanceof Label lbl && lbl.getText().equals(String.valueOf(floorNumber))) {
                         lbl.setStyle("-fx-text-fill: black;");
-                        pressedFloors[ID-1].remove(Integer.valueOf(floorNumber));
+                        pressedFloors[ID].remove(Integer.valueOf(floorNumber));
                     }
                 }
                 if(floorNumber == lastSelected){
@@ -138,21 +138,21 @@ public class gui {
         // Reset all panel buttons
         public void resetPanel(int ID) {
             Platform.runLater(() -> {
-                for (Node n : panels[ID-1].panelOverlay.getChildren()) {
-                    if (n == panels[ID-1].digitalLabel) continue;
+                for (Node n : panels[ID].panelOverlay.getChildren()) {
+                    if (n == panels[ID].digitalLabel) continue;
                     if (n instanceof Label lbl) {
                         lbl.setStyle("-fx-text-fill: black;");
                     }
                 }
-                pressedFloors[ID-1].clear();
+                pressedFloors[ID].clear();
             });
         }
 
         // Set the door obstruction state of a given elevator
         public void setDoorObstruction(int ID, boolean isObstructed) {
             Platform.runLater(() -> {
-                doorObstructions[ID-1] = isObstructed;
-                ImageView doorImg = doors[ID-1].elevDoorsImg;
+                doorObstructions[ID] = isObstructed;
+                ImageView doorImg = doors[ID].elevDoorsImg;
 
                 // Update image based on current door state + new obstruction state
                 if (loader.imageList.get(6).equals(doorImg.getImage()) ||
@@ -170,44 +170,44 @@ public class gui {
             Platform.runLater(() -> {
                 if (open) {
                     // Opening doors, show midway transition then fully open
-                    if (doorObstructions[ID-1]) {
-                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(5));
+                    if (doorObstructions[ID]) {
+                        doors[ID].elevDoorsImg.setImage(loader.imageList.get(5));
                     } else {
-                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(4));
+                        doors[ID].elevDoorsImg.setImage(loader.imageList.get(4));
                     }
 
                     new Thread(() -> {
                         try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
                         Platform.runLater(() -> {
-                            if (doorObstructions[ID-1]) {
-                                doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(7));
+                            if (doorObstructions[ID]) {
+                                doors[ID].elevDoorsImg.setImage(loader.imageList.get(7));
                             } else {
-                                doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(6));
+                                doors[ID].elevDoorsImg.setImage(loader.imageList.get(6));
                             }
                         });
                     }).start();
                 } else {
                     // Closing doors, show midway transition
-                    if (doorObstructions[ID-1]) {
-                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(5));
+                    if (doorObstructions[ID]) {
+                        doors[ID].elevDoorsImg.setImage(loader.imageList.get(5));
                     } else {
-                        doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(4));
+                        doors[ID].elevDoorsImg.setImage(loader.imageList.get(4));
                     }
 
                     new Thread(() -> {
                         try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(); }
                         Platform.runLater(() -> {
-                            if (doorObstructions[ID-1]) {
+                            if (doorObstructions[ID]) {
                                 // reopen doors, Obstruction detected
                                 System.out.println("Obstruction detected - reopening doors for elevator " + ID);
-                                if (doorObstructions[ID-1]) {
-                                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(7));
+                                if (doorObstructions[ID]) {
+                                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(7));
                                 } else {
-                                    doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(6));
+                                    doors[ID].elevDoorsImg.setImage(loader.imageList.get(6));
                                 }
                             } else {
                                 // No obstruction, close fully
-                                doors[ID-1].elevDoorsImg.setImage(loader.imageList.get(3));
+                                doors[ID].elevDoorsImg.setImage(loader.imageList.get(3));
                             }
                         });
                     }).start();
@@ -219,11 +219,11 @@ public class gui {
         // Set the cabin overload state of a given elevator
         public void setCabinOverload(int ID, boolean isOverloaded) {
             Platform.runLater(() -> {
-                cabinOverloads[ID-1] = isOverloaded;
+                cabinOverloads[ID] = isOverloaded;
                 if (isOverloaded) {
-                    weighScales[ID-1].weightTriggerButton.setStyle("-fx-background-color: #684b4bff; -fx-text-fill: black;");
+                    weighScales[ID].weightTriggerButton.setStyle("-fx-background-color: #684b4bff; -fx-text-fill: black;");
                 } else {
-                    weighScales[ID-1].weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
+                    weighScales[ID].weightTriggerButton.setStyle("-fx-background-color: #bdbdbdff; -fx-text-fill: black;");
                 }
             });
         }
@@ -231,24 +231,24 @@ public class gui {
         // Set the floor display of a given elevator
         public void setDisplay(int carId, int floorNumber, String direction) {
             Platform.runLater(() -> {
-                displays[carId-1].digitalLabel.setText(String.valueOf(floorNumber));
-                panels[carId-1].digitalLabel.setText(String.valueOf(floorNumber));
+                displays[carId].digitalLabel.setText(String.valueOf(floorNumber));
+                panels[carId].digitalLabel.setText(String.valueOf(floorNumber));
                 if (direction.contains("UP")) {
-                    displays[carId-1].floorDispImg.setImage(loader.imageList.get(10));
-                    panels[carId-1].elevPanelImg.setImage(loader.imageList.get(2));
+                    displays[carId].floorDispImg.setImage(loader.imageList.get(10));
+                    panels[carId].elevPanelImg.setImage(loader.imageList.get(2));
                 } else if (direction.contains("DOWN")) {
-                    displays[carId-1].floorDispImg.setImage(loader.imageList.get(9));
-                    panels[carId-1].elevPanelImg.setImage(loader.imageList.get(1));
+                    displays[carId].floorDispImg.setImage(loader.imageList.get(9));
+                    panels[carId].elevPanelImg.setImage(loader.imageList.get(1));
                 } else {
-                    displays[carId-1].floorDispImg.setImage(loader.imageList.get(8));
-                    panels[carId-1].elevPanelImg.setImage(loader.imageList.get(0));
+                    displays[carId].floorDispImg.setImage(loader.imageList.get(8));
+                    panels[carId].elevPanelImg.setImage(loader.imageList.get(0));
                 }
             });
         }
 
         // Set the floor call button state
         public void setCallButton(int floorNumber, String direction) {
-            int buttonIndex = floorNumber - 1;  // Convert floor number (1-10) to array index (0-9)
+            int buttonIndex = floorNumber;  // Convert floor number (1-10) to array index (0-9)
             if (buttonIndex >= 0 && buttonIndex < numFloors) {
                 Platform.runLater(() -> {
                     if (direction.contains("UP")) {
@@ -263,7 +263,7 @@ public class gui {
 
         // Reset the floor call button state
         public void resetCallButton(int floorNumber, String direction) {
-            int buttonIndex = floorNumber - 1;  // Convert floor number (1-10) to array index (0-9)
+            int buttonIndex = floorNumber;  // Convert floor number (1-10) to array index (0-9)
             if (buttonIndex >= 0 && buttonIndex < numFloors) {
                 Platform.runLater(() -> {
                     if(callButtons[buttonIndex]==null){
@@ -299,7 +299,7 @@ public class gui {
 
         // Query whether the floor call button is active or not
         public boolean isCallButtonActive(int floorNumber, String direction) {
-            int buttonIndex = floorNumber - 1;
+            int buttonIndex = floorNumber;
             if (buttonIndex < 0 || buttonIndex >= numFloors) {
                 return false;
             }
