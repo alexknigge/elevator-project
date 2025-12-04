@@ -348,8 +348,12 @@ public class Buttons {
 
 
     public Destination nextService(Destination destination) {
-        //TODO deal with method call
-//        handleCabinSelect();
+        Message message = softwareBus.get(TOPIC_CABIN_SELECT, currentElevatorId);
+        while(message!=null){
+            int floor = message.getBody();
+            destinations.add(new Destination(floor, null));
+            message=softwareBus.get(TOPIC_CABIN_SELECT, currentElevatorId);
+        }
 
 
         currentDirection = destination.direction();
@@ -364,7 +368,7 @@ public class Buttons {
         if (!multipleRequests) {
             Destination nextService = destinations.getFirst();
             destinations.clear();
-            destinations.add(nextService); //TODO: this seems incorrect?
+            destinations.add(nextService);
             return nextService;
         }
 

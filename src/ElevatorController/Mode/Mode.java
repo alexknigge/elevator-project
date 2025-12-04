@@ -17,25 +17,6 @@ public class Mode {
     private Destination currentDestination;
     private State currentMode;
     private int currentElevatorId;
-    // *** Topic Constants ***
-    // From Command Center to Mode
-    private static final int TOPIC_ON_OFF = SoftwareBusCodes.elevatorOnOff;
-    private static final int TOPIC_MODE = SoftwareBusCodes.setMode;
-    private static final int TOPIC_DESTINATION =
-            SoftwareBusCodes.setDestination;
-    // From Mode to Command Center
-    private static final int TOPIC_FIRE_MODE = SoftwareBusCodes.fireMode;
-
-    // From MUX to Mode
-    private static final int TOPIC_FIRE_ALARM =
-            SoftwareBusCodes.fireAlarmActive;
-    // From Mode to MUX
-    private static final int TOPIC_SET_FIRE = SoftwareBusCodes.fireAlarm;
-
-    // Body for mode changes
-    private static final int BODY_CENTRALIZED_MODE  = SoftwareBusCodes.centralized;
-    private static final int BODY_NORMAL_MODE = SoftwareBusCodes.normal;
-    private static final int BODY_FIRE_MODE = SoftwareBusCodes.fire;
 
     public Mode(SoftwareBus softwareBus, int currentElevatorId) {
         this.softwareBus = softwareBus;
@@ -52,23 +33,22 @@ public class Mode {
     }
 
     public State getMode(){
-        Message modeMessage = softwareBus.get(currentElevatorId,TOPIC_MODE);
-        Message fireMessage = softwareBus.get(currentElevatorId,TOPIC_FIRE_ALARM);
-        Message statusMessage = softwareBus.get(currentElevatorId,TOPIC_ON_OFF);
+        Message modeMessage = softwareBus.get(SoftwareBusCodes.setMode, currentElevatorId);
+        Message fireMessage = softwareBus.get(SoftwareBusCodes.fireAlarmActive, currentElevatorId);
+        Message statusMessage = softwareBus.get(SoftwareBusCodes.elevatorOnOff, currentElevatorId);
 
         int state;
         if(modeMessage!=null){
             state = modeMessage.getBody();
             switch (state){
-                case BODY_CENTRALIZED_MODE -> currentMode = State.CONTROL;
-                case BODY_NORMAL_MODE -> currentMode = State.NORMAL;
+                case SoftwareBusCodes.centralized -> currentMode = State.CONTROL;
+                case SoftwareBusCodes.normal -> currentMode = State.NORMAL;
             }
         }
         if(fireMessage!=null){
             state = fireMessage.getBody();
             if (state == SoftwareBusCodes.pulled){
-                softwareBus.publish(new Message(TOPIC_FIRE_MODE, currentElevatorId,
-                        SoftwareBusCodes.emptyBody));
+                softwareBus.publish(new Message(SoftwareBusCodes.fireMode, currentElevatorId, SoftwareBusCodes.emptyBody));
                 currentMode = State.FIRE;
             }
         }
@@ -80,11 +60,9 @@ public class Mode {
             }
         }
 
-        // Notify the MUX that the fire is active
         if (currentMode == State.FIRE) {
-            softwareBus.publish(new Message(TOPIC_SET_FIRE, currentElevatorId,
-                    SoftwareBusCodes.emptyBody));
-            softwareBus.publish(new Message(TOPIC_SET_FIRE, SoftwareBusCodes.buildingMUX, SoftwareBusCodes.emptyBody));
+            softwareBus.publish(new Message(SoftwareBusCodes.fireAlarm, currentElevatorId, SoftwareBusCodes.emptyBody));
+            softwareBus.publish(new Message(SoftwareBusCodes.fireAlarm, SoftwareBusCodes.buildingMUX, SoftwareBusCodes.emptyBody));
         }
         return currentMode;
     }

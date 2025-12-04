@@ -172,14 +172,23 @@ public class ElevatorController implements Runnable{
 
 
     private void beginInitialState() {
-        State nowMode = normalMode();
         running = true;
-
         while (running) {
+            System.out.println("Elevator " + currentElevatorId + " is running.--------------------------------------------------------");
+            State nowMode = normalMode();
             switch (nowMode) {
-                case NORMAL -> normalMode();
-                case FIRE -> fireMode();
-                case CONTROL -> controlledMode();
+                case NORMAL -> {
+                    System.out.println("Normal Mode for " + currentElevatorId + " is running");
+                    normalMode();
+                }
+                case FIRE -> {
+                    System.out.println("Fire Mode for " + currentElevatorId + " is running");
+                    fireMode();
+                }
+                case CONTROL -> {
+                    System.out.println("Control Mode for " + currentElevatorId + " is running");
+                    controlledMode();
+                }
                 default -> {
                     running = false;
                 }
@@ -189,7 +198,6 @@ public class ElevatorController implements Runnable{
 
     private void initElevatorController(int elevatorId) {
         currentElevatorId = elevatorId;
-//        softwareBus = new SoftwareBus(false);
 
         cabin = new Cabin(softwareBus, currentElevatorId);
         buttons = new Buttons(softwareBus, currentElevatorId);

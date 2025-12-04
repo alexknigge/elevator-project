@@ -27,19 +27,21 @@ public class Main extends Application {
 
         SoftwareBus softwareBus = new SoftwareBus(true);
 
-        elevatorMultiplexors = new ElevatorMultiplexor[MAX_ELEVATORS + 1];
-        elevatorControllers = new ElevatorController[MAX_ELEVATORS + 1];
+        elevatorMultiplexors = new ElevatorMultiplexor[MAX_ELEVATORS];
+        elevatorControllers = new ElevatorController[MAX_ELEVATORS];
 
         commandCenter = new ElevatorControlSystem(softwareBus);
         multiplexorApp = new gui();
 
         // Change bounds for the array (start 0 while < MAX_ELEVATORS)
         for (int i = 0; i < MAX_ELEVATORS; i++) {
-            ElevatorController elevatorController = new ElevatorController(i, softwareBus);
-            ElevatorMultiplexor elevatorMultiplexor = new ElevatorMultiplexor(i, softwareBus);
-            elevatorControllers[i] = elevatorController;
+            ElevatorMultiplexor elevatorMultiplexor = new ElevatorMultiplexor(i + 1, softwareBus);
             elevatorMultiplexors[i] = elevatorMultiplexor;
+        }
 
+        for (int i = 0; i < MAX_ELEVATORS; i++) {
+            ElevatorController elevatorController = new ElevatorController(i, softwareBus);
+            elevatorControllers[i] = elevatorController;
             Thread eThread = new Thread(elevatorControllers[i]);
             eThread.start();
         }
