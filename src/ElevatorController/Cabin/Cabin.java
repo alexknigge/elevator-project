@@ -92,6 +92,7 @@ public class Cabin implements Runnable {
      */
     private void updateTopAlignment() {
         Message message = softwareBus.get(currentElevatorId, SoftwareBusCodes.topSensor);
+        if (message == null) return;
         topAlignment = message.getBody();
     }
 
@@ -100,6 +101,8 @@ public class Cabin implements Runnable {
      */
     private void updateBottomAlignment() {
         Message message = softwareBus.get(currentElevatorId, SoftwareBusCodes.bottomSensor);
+        if (message == null) return;
+
         bottomAlignment = message.getBody();
     }
 

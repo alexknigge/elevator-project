@@ -7,59 +7,61 @@ import PFDGUI.gui;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
-import java.util.ArrayList;
 
 public class Main extends Application {
-    private record Elevator(ElevatorController elevatorController, ElevatorMultiplexor elevatorMultiplexor) {}
-
+    private ElevatorMultiplexor elevatorMultiplexors[];
+    private ElevatorController elevatorControllers[];
     private gui multiplexorApp;
-    private Stage muxStage;
-    private Stage commandCenterStage;
+    ElevatorControlSystem commandCenter;
 
     private final static int MAX_ELEVATORS = 4;
 
-    public Main() {
-        System.out.println("Hello world!");
-
-        SoftwareBus softwareBus = new SoftwareBus(true);
-
+    @Override
+    public void init() {
         //In main, we will create all the required devices to simulate the
         // elevator controller system, specifically, we will instantiate, 4
         // elevator controllers, 4 device multiplexers, 1 command center and
         // 9 software buses.
 
-        ArrayList<ElevatorController> elevatorControllers = new ArrayList<>();
-        ArrayList<ElevatorMultiplexor> elevatorMultiplexors = new ArrayList<>();
+        System.out.println("Hello world! We are running!");
 
-        ElevatorControlSystem commandCenter = new ElevatorControlSystem(softwareBus);
+        SoftwareBus softwareBus = new SoftwareBus(true);
+
+        elevatorMultiplexors = new ElevatorMultiplexor[MAX_ELEVATORS];
+        elevatorControllers = new ElevatorController[MAX_ELEVATORS];
+
+        commandCenter = new ElevatorControlSystem(softwareBus);
+        multiplexorApp = new gui();
 
         for (int i = 0; i < MAX_ELEVATORS; i++) {
             ElevatorController elevatorController = new ElevatorController(i, softwareBus);
             ElevatorMultiplexor elevatorMultiplexor = new ElevatorMultiplexor(i, softwareBus);
+            elevatorControllers[i] = elevatorController;
+            elevatorMultiplexors[i] = elevatorMultiplexor;
 
-            elevatorControllers.add(elevatorController);
-            elevatorMultiplexors.add(elevatorMultiplexor);
-
+            Thread eThread = new Thread(elevatorControllers[i]);
+            eThread.start();
         }
 
         // UI setup
-        multiplexorApp = new gui();
-        muxStage = multiplexorApp.getStage();
-
-        commandCenterStage = commandCenter.getStage();
+        multiplexorApp.initilizeMuxs(elevatorMultiplexors);
 
         BuildingMultiplexor buildingMultiplexor = new BuildingMultiplexor(softwareBus);
-
-
-
 
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        new Main();
-        muxStage.show();
+        Stage commandCenterStage = commandCenter.getStage();
+        Stage multiplexorAppStage = multiplexorApp.getStage();
+
         commandCenterStage.show();
+        Thread.sleep(5000);
+        multiplexorAppStage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
     }
     
 }

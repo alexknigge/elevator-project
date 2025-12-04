@@ -10,7 +10,7 @@ import ElevatorController.Util.Destination;
 import ElevatorController.Util.State;
 import ElevatorController.Util.Timer;
 
-public class ElevatorController {
+public class ElevatorController implements Runnable{
     private SoftwareBus softwareBus;
     private Cabin cabin;
     private Buttons buttons;
@@ -24,7 +24,6 @@ public class ElevatorController {
     public ElevatorController(int currentElevatorId, SoftwareBus softwareBus) {
         this.softwareBus = softwareBus;
         initElevatorController(currentElevatorId);
-        beginInitialState();
     }
 
     public State controlledMode() {
@@ -197,5 +196,10 @@ public class ElevatorController {
         doors = new DoorAssembly(softwareBus, currentElevatorId);
         notifications = new Notifier(softwareBus, currentElevatorId);
         mode = new Mode(softwareBus, currentElevatorId);
+    }
+
+    @Override
+    public void run() {
+        beginInitialState();
     }
 }
