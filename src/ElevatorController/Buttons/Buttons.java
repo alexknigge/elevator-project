@@ -41,6 +41,7 @@ public class Buttons {
             else if (body == SoftwareBusCodes.inactive) fireKey = false;
             msg = softwareBus.get(SoftwareBusCodes.fireKey, elevatorId);
         }
+//        System.out.println("fire key handle went through");
     }
 
     private void handleCabinSelect() {
