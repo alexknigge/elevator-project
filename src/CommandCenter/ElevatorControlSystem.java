@@ -19,8 +19,8 @@ public class ElevatorControlSystem{
     private SoftwareBus softwareBus;
 
 
-    public ElevatorControlSystem() {
-        this.softwareBus = new SoftwareBus(true);
+    public ElevatorControlSystem(SoftwareBus softwareBus) {
+        this.softwareBus = softwareBus;
         commandCenter = new CommandCenter(softwareBus);
         commandPanel = new CommandPanel(commandCenter);
 

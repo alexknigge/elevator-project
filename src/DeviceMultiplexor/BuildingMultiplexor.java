@@ -16,8 +16,8 @@ import static java.lang.Math.abs;
 public class BuildingMultiplexor {
     private final SoftwareBus bus;
     // Constructor
-    public BuildingMultiplexor(){
-        bus = new SoftwareBus(false);
+    public BuildingMultiplexor(SoftwareBus softwareBus){
+        bus = softwareBus;
         initialize();
     }
 

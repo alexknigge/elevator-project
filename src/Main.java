@@ -1,3 +1,4 @@
+import Bus.SoftwareBus;
 import CommandCenter.ElevatorControlSystem;
 import DeviceMultiplexor.BuildingMultiplexor;
 import DeviceMultiplexor.ElevatorMultiplexor;
@@ -13,11 +14,14 @@ public class Main extends Application {
 
     private gui multiplexorApp;
     private Stage muxStage;
+    private Stage commandCenterStage;
 
     private final static int MAX_ELEVATORS = 4;
 
     public Main() {
         System.out.println("Hello world!");
+
+        SoftwareBus softwareBus = new SoftwareBus(true);
 
         //In main, we will create all the required devices to simulate the
         // elevator controller system, specifically, we will instantiate, 4
@@ -27,12 +31,11 @@ public class Main extends Application {
         ArrayList<ElevatorController> elevatorControllers = new ArrayList<>();
         ArrayList<ElevatorMultiplexor> elevatorMultiplexors = new ArrayList<>();
 
-        ElevatorControlSystem commandCenter = new ElevatorControlSystem();
-        BuildingMultiplexor buildingMultiplexor = new BuildingMultiplexor();
+        ElevatorControlSystem commandCenter = new ElevatorControlSystem(softwareBus);
 
         for (int i = 0; i < MAX_ELEVATORS; i++) {
-            ElevatorController elevatorController = new ElevatorController(i);
-            ElevatorMultiplexor elevatorMultiplexor = new ElevatorMultiplexor(i);
+            ElevatorController elevatorController = new ElevatorController(i, softwareBus);
+            ElevatorMultiplexor elevatorMultiplexor = new ElevatorMultiplexor(i, softwareBus);
 
             elevatorControllers.add(elevatorController);
             elevatorMultiplexors.add(elevatorMultiplexor);
@@ -43,13 +46,20 @@ public class Main extends Application {
         multiplexorApp = new gui();
         muxStage = multiplexorApp.getStage();
 
+        commandCenterStage = commandCenter.getStage();
+
+        BuildingMultiplexor buildingMultiplexor = new BuildingMultiplexor(softwareBus);
+
+
 
 
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-
+        new Main();
+        muxStage.show();
+        commandCenterStage.show();
     }
     
 }

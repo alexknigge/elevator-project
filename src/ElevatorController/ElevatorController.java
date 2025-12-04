@@ -21,7 +21,8 @@ public class ElevatorController {
 
     boolean running = false;
 
-    public ElevatorController(int currentElevatorId) {
+    public ElevatorController(int currentElevatorId, SoftwareBus softwareBus) {
+        this.softwareBus = softwareBus;
         initElevatorController(currentElevatorId);
         beginInitialState();
     }
@@ -42,7 +43,7 @@ public class ElevatorController {
                 cabin.gotoFloor(next.floor());
             }
 
-            if (cabin.arrived()) {
+            if (cabin.stopped()) {
                 arrivalSequence(next);
             }
         }
@@ -59,18 +60,18 @@ public class ElevatorController {
 
         Destination req = null;
 
-        while (mode.getMode() == State.FIRE && cabin.getTargetFloor() != 1 && !cabin.arrived())
+        while (mode.getMode() == State.FIRE && cabin.getTargetFloor() != 1 && !cabin.stopped())
         {
 
             if (req == null)
-                req = buttons.nextService(cabin.currentStatus());
+                req = buttons.nextService(cabin.getDestination());
 
             if (req != null)
                 cabin.gotoFloor(req.floor());
             else if (cabin.getTargetFloor() != 1)
                 cabin.gotoFloor(1);
 
-            if (cabin.arrived()) {
+            if (cabin.stopped()) {
                 arrivalSequence(req);
                 req = null;
             }
@@ -87,21 +88,20 @@ public class ElevatorController {
         }
 
         buttons.enableCalls();
-         buttons.enableMultipleRequests();
-
-         closeDoors();
+        buttons.enableMultipleRequests();
+        closeDoors();
 
         Destination req = null;
 
         while (mode.getMode() == State.NORMAL) {
 
             if (req == null) {
-                req = buttons.nextService(cabin.currentStatus());
+                req = buttons.nextService(cabin.getDestination());
             } else {
                 cabin.gotoFloor(req.floor());
             }
 
-            if (cabin.arrived() && req != null) {
+            if (cabin.stopped() && req != null) {
                 arrivalSequence(req);
                 req = null;
             }
@@ -190,7 +190,7 @@ public class ElevatorController {
 
     private void initElevatorController(int elevatorId) {
         currentElevatorId = elevatorId;
-        softwareBus = new SoftwareBus(false);
+//        softwareBus = new SoftwareBus(false);
 
         cabin = new Cabin(softwareBus, currentElevatorId);
         buttons = new Buttons(softwareBus, currentElevatorId);

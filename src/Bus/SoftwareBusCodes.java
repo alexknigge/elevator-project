@@ -26,6 +26,7 @@ public class SoftwareBusCodes {
     public static final int selectionsEnable = 114;
     public static final int selectionsType = 115;
     public static final int playSound = 116;
+    public static final int stopSound = 117;
 
     public static final int fireAlarm = 120;
 

@@ -4,7 +4,6 @@ import Bus.SoftwareBus;
 import Bus.SoftwareBusCodes;
 import Message.Message;
 import ElevatorController.Util.Destination;
-import ElevatorController.Util.State;
 
 /**
  * The notifier object is used to communicate all necessary visual and audio
@@ -59,6 +58,11 @@ public class Notifier {
      */
     public void overloadOn() {
         Message overLoadMessageOn = new Message(SoftwareBusCodes.playSound, currentElevatorId, 1);
+        softwareBus.publish(overLoadMessageOn);
+    }
+
+    public void overloadOff() {
+        Message overLoadMessageOn = new Message(SoftwareBusCodes.stopSound, currentElevatorId, 1);
         softwareBus.publish(overLoadMessageOn);
     }
 }
