@@ -61,13 +61,4 @@ public class Notifier {
         Message overLoadMessageOn = new Message(SoftwareBusCodes.playSound, currentElevatorId, 1);
         softwareBus.publish(overLoadMessageOn);
     }
-
-    /**
-     * sends a bus message to stop playing noise
-     */
-    public void overloadOff() {
-        Message overLoadMessageOff;
-    }
-
-
 }
