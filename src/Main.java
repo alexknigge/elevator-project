@@ -25,21 +25,19 @@ public class Main extends Application {
 
         System.out.println("Hello world! We are running!");
 
-        SoftwareBus softwareBus = new SoftwareBus(true);
-
         elevatorMultiplexors = new ElevatorMultiplexor[MAX_ELEVATORS];
         elevatorControllers = new ElevatorController[MAX_ELEVATORS];
 
-        commandCenter = new ElevatorControlSystem(softwareBus);
+        commandCenter = new ElevatorControlSystem();
         multiplexorApp = new gui();
 
         for (int i = 0; i < MAX_ELEVATORS; i++) {
-            ElevatorMultiplexor elevatorMultiplexor = new ElevatorMultiplexor(i + 1, softwareBus);
+            ElevatorMultiplexor elevatorMultiplexor = new ElevatorMultiplexor(i + 1);
             elevatorMultiplexors[i] = elevatorMultiplexor;
         }
 
         for (int i = 0; i < MAX_ELEVATORS; i++) {
-            ElevatorController elevatorController = new ElevatorController(i + 1, softwareBus);
+            ElevatorController elevatorController = new ElevatorController(i + 1);
             elevatorControllers[i] = elevatorController;
             Thread eThread = new Thread(elevatorControllers[i]);
             eThread.start();
@@ -48,7 +46,7 @@ public class Main extends Application {
         // UI setup
         multiplexorApp.initilizeMuxs(elevatorMultiplexors);
 
-        BuildingMultiplexor buildingMultiplexor = new BuildingMultiplexor(softwareBus);
+        BuildingMultiplexor buildingMultiplexor = new BuildingMultiplexor();
 
     }
 

@@ -21,8 +21,8 @@ public class ElevatorController implements Runnable{
 
     boolean running = false;
 
-    public ElevatorController(int currentElevatorId, SoftwareBus softwareBus) {
-        this.softwareBus = softwareBus;
+    public ElevatorController(int currentElevatorId) {
+        this.softwareBus = new SoftwareBus(false);
         initElevatorController(currentElevatorId);
     }
 

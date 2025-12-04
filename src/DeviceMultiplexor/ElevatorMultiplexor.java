@@ -16,8 +16,8 @@ import PFDAPI.*;
 public class ElevatorMultiplexor {
     private final SoftwareBus bus;
     // Constructor
-    public ElevatorMultiplexor(int ID, SoftwareBus softwareBus) {
-        bus = softwareBus;
+    public ElevatorMultiplexor(int ID) {
+        bus = new SoftwareBus(false);
         this.ID = ID;
         this.elev = new Elevator(ID, 10);
         initialize();
