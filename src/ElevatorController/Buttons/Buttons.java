@@ -67,28 +67,37 @@ public class Buttons {
 
     private void handleHallCall() {
         Message msg = softwareBus.get(TOPIC_HALL_CALL, elevatorId);
+        Message last = null;
         while (msg != null) {
-            int destCode = msg.getBody();
-            int floor;
-            Destination dst;
-
-            if (destCode >= 100) {
-                floor = destCode - SoftwareBusCodes.upOffset;
-                dst = new Destination(floor, Direction.UP);
-            } else {
-                floor = destCode - SoftwareBusCodes.downOffset;
-                dst = new Destination(floor, Direction.DOWN);
-            }
-
-            if (floor < 1 || floor > 10) {
-                System.out.println("ERROR in Buttons elevator " + elevatorId +
-                        ": floor=" + floor + ", destCode=" + destCode);
-            } else {
-                destinations.add(dst);
-            }
-
+            last = msg;
             msg = softwareBus.get(TOPIC_HALL_CALL, elevatorId);
         }
+        msg = last;
+
+        if (msg == null) {
+            return;
+        }
+
+        int destCode = msg.getBody();
+        int floor;
+        Destination dst;
+
+        if (destCode >= 100) {
+            floor = destCode - SoftwareBusCodes.upOffset;
+            dst = new Destination(floor, Direction.UP);
+        } else {
+            floor = destCode - SoftwareBusCodes.downOffset;
+            dst = new Destination(floor, Direction.DOWN);
+        }
+
+        if (floor < 1 || floor > 10) {
+            System.out.println("ERROR in Buttons elevator " + elevatorId +
+                    ": floor=" + floor + ", destCode=" + destCode);
+        } else {
+            destinations.add(dst);
+        }
+
+        msg = softwareBus.get(TOPIC_HALL_CALL, elevatorId);
     }
 
     public void clearCall(Destination dest) {
@@ -155,9 +164,14 @@ public class Buttons {
             currentDirection = current.direction();
         }
 
-        if (!callEnabled && !fireKey) return null;
-        if (destinations.isEmpty()) return null;
+        if (!callEnabled && !fireKey) {
+            return null;
+        }
+        if (destinations.isEmpty()) {
+            return null;
+        }
 
+        // Single-request mode
         if (!multipleRequests) {
             Destination first = destinations.getFirst();
             destinations.clear();
@@ -165,35 +179,56 @@ public class Buttons {
             return first;
         }
 
-        List<Destination> unreachable = getDestinations();
-
-        destinations.removeAll(unreachable);
-
-        int sortFactor = 0;
-        if (currentDirection == Direction.UP) sortFactor = 1;
-        if (currentDirection == Direction.DOWN) sortFactor = -1;
-
-        if (sortFactor != 0) {
-            int finalSortFactor = sortFactor;
-            destinations.sort((a, b) -> (a.floor() - b.floor()) * finalSortFactor);
+        if (currentDirection == Direction.STOPPED) {
+            return findClosest();
         }
 
-        destinations.addAll(unreachable);
-        return destinations.getFirst();
-    }
+        if (currentDirection == Direction.UP) {
+            Destination bestUp = null;
+            for (Destination d : destinations) {
+                if (d.floor() >= currentFloor) {
+                    if (bestUp == null || d.floor() < bestUp.floor()) {
+                        bestUp = d;
+                    }
+                }
+            }
 
-    private List<Destination> getDestinations() {
-        List<Destination> unreachable = new ArrayList<>();
-        int firstFloor = destinations.getFirst().floor();
-
-        for (Destination d : new ArrayList<>(destinations)) {
-            boolean s1 = d.direction() == Direction.DOWN && d.floor() < firstFloor;
-            boolean s2 = d.direction() == Direction.UP   && d.floor() > firstFloor;
-            boolean s3 = d.direction() == Direction.UP   && d.floor() < currentFloor;
-            boolean s4 = d.direction() == Direction.DOWN && d.floor() > currentFloor;
-
-            if (s1 || s2 || s3 || s4) unreachable.add(d);
+            if (bestUp != null) return bestUp;
         }
-        return unreachable;
+
+        if (currentDirection == Direction.DOWN) {
+            Destination bestDown = null;
+            for (Destination d : destinations) {
+                if (d.floor() <= currentFloor) {
+                    if (bestDown == null || d.floor() > bestDown.floor()) {
+                        bestDown = d;
+                    }
+                }
+            }
+
+            if (bestDown != null) return bestDown;
+        }
+
+        return findClosest();
     }
+
+
+    private Destination findClosest() {
+        if (destinations.isEmpty()) return null;
+
+        Destination closest = destinations.get(0);
+        int bestDist = Math.abs(closest.floor() - currentFloor);
+
+        for (Destination d : destinations) {
+            int dist = Math.abs(d.floor() - currentFloor);
+            if (dist < bestDist) {
+                closest = d;
+                bestDist = dist;
+            }
+        }
+
+        return closest;
+    }
+
+
 }

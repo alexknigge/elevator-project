@@ -90,19 +90,34 @@ public class ElevatorController implements Runnable{
         buttons.enableMultipleRequests();
         closeDoors();
 
-        Destination req = null;
+        Destination pendingReq = null;
+        Destination activeReq = null;
 
         while (mode.getMode() == State.NORMAL) {
 
-            if (req == null) {
-                req = buttons.nextService(cabin.getDestination());
+            if (activeReq == null) {
+                pendingReq = buttons.nextService(cabin.getDestination());
+
+                if (pendingReq != null) {
+                    activeReq = pendingReq;    // lock it in as the active request
+                    cabin.gotoFloor(activeReq.floor());
+                }
             } else {
-                cabin.gotoFloor(req.floor());
+                // Continue heading toward activeReq
+                cabin.gotoFloor(activeReq.floor());
             }
 
-            if (cabin.stopped() && req != null) {
-                arrivalSequence(req);
-                req = null;
+            // When we arrive
+            if (activeReq != null && cabin.stopped()) {
+
+                arrivalSequence(activeReq);
+
+                // clear calls for this floor
+                buttons.clearCall(activeReq);
+
+                // allow new requests to be fetched next loop
+                activeReq = null;
+                pendingReq = null;
             }
         }
 

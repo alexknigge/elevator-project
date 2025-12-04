@@ -14,9 +14,9 @@ public class Cabin implements Runnable {
     private final int elevatorId;
 
     // Current state
-    private int currentFloor = 1;
+    private int currentFloor = 0;
     private Direction currentDirection = Direction.STOPPED;
-    private int currentDestination = 1;
+    private int currentDestination = 0;
 
     // Sensor alignment values
     private int topAlignment = 0;
