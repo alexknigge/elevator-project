@@ -60,7 +60,7 @@ public class DoorAssembly {
     }
 
     public boolean fullyOpen() {
-        Message message = softwareBus.get(currentElevatorId, TOPIC_DOOR_STATUS);
+        Message message = softwareBus.get(TOPIC_DOOR_STATUS, currentElevatorId);
         if (message != null ) {
             if (message.getBody() == OPEN_CODE) fullyOpened = true;
             if (message.getBody() == OPEN_CODE) fullyOpened = false;
@@ -69,19 +69,19 @@ public class DoorAssembly {
     }
 
     public boolean fullyClosed() {
-        Message message = softwareBus.get(TOPIC_DOOR_STATUS,currentElevatorId);
+        Message message = softwareBus.get(TOPIC_DOOR_STATUS, currentElevatorId);
+
         if (message != null ) {
             if (message.getBody() == OPEN_CODE) fullyClosed = false;
             if (message.getBody() == CLOSE_CODE) fullyClosed = true;
             else System.out.println("Unexpected body in SoftwareBusCodes.doorStatus Message in DoorAssembly: body = " + message.getBody());
-        }else{
-            //System.out.println("NULL MESSAGE IN DOOR ASSEMBLY YOU MORON OF COURSE ITS A NULL MESSAGE");
         }
+
         return fullyClosed;
     }
 
     public boolean obstructed(){
-        Message message = softwareBus.get(currentElevatorId, TOPIC_DOOR_SENSOR);
+        Message message = softwareBus.get(TOPIC_DOOR_SENSOR, currentElevatorId);
         if (message != null ) {
             if (message.getBody() == OBSTRUCTED_CODE) obstructed = true;
             if (message.getBody() == NOT_OBSTRUCTED_CODE) obstructed = false;
@@ -90,7 +90,7 @@ public class DoorAssembly {
     }
 
     public boolean overCapacity(){
-        Message message =  softwareBus.get(currentElevatorId, TOPIC_CABIN_LOAD);
+        Message message =  softwareBus.get(TOPIC_CABIN_LOAD, currentElevatorId);
         if (message != null ) {
             if (message.getBody() == OVER_CAPACITY_CODE) overCapacity = true;
             if (message.getBody() == NOT_OVER_CAPACITY_CODE) overCapacity = false;

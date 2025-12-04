@@ -4,111 +4,99 @@ import Bus.SoftwareBus;
 import Bus.SoftwareBusCodes;
 import ElevatorController.Util.ConstantsElevatorControl;
 import ElevatorController.Util.Timer;
-import Message.Message;
 import ElevatorController.Util.Destination;
 import ElevatorController.Util.Direction;
+import Message.Message;
 
-/**
- * The cabin provides a means for the elevator controller to send the elevator to a destination.
- * The cabin indirectly controls the motor by sending messages to the Software Bus.
- * Additionally, the cabin indirectly receives messages from physical sensors through the Software Bus.
- */
 public class Cabin implements Runnable {
-    private SoftwareBus softwareBus;
-    private int currentElevatorId;
 
-    private int currentFloor;
-    private Direction currentDirection; //or target
-    private int currentDestination;
+    private final SoftwareBus softwareBus;
+    private final int elevatorId;
 
-    private int topAlignment;
-    private int bottomAlignment;
+    // Current state
+    private int currentFloor = 1;
+    private Direction currentDirection = Direction.STOPPED;
+    private int currentDestination = 1;
 
-    private boolean motorStatus;
+    // Sensor alignment values
+    private int topAlignment = 0;
+    private int bottomAlignment = 0;
 
-    private Timer timeToStop;
+    // Motor, timing
+    private boolean motorRunning = false;
+    private Timer timeToStop = null;
 
-    public Cabin(SoftwareBus softwareBus, int currentElevatorId) {
+    private static final int TOPIC_TOP_SENSOR    = SoftwareBusCodes.topSensor;
+    private static final int TOPIC_BOTTOM_SENSOR = SoftwareBusCodes.bottomSensor;
+    private static final int TOPIC_CAR_DISPATCH  = SoftwareBusCodes.carDispatch;
+    private static final int TOPIC_CAR_STOP      = SoftwareBusCodes.carStop;
+
+    public Cabin(SoftwareBus softwareBus, int elevatorId) {
         this.softwareBus = softwareBus;
-        this.currentElevatorId = currentElevatorId;
+        this.elevatorId = elevatorId;
 
-        currentFloor = 0;
-        currentDirection = Direction.STOPPED;
-        currentDestination = 0;
-
-        //Subcribe to elevator motion sensors
-        softwareBus.subscribe(SoftwareBusCodes.topSensor, currentElevatorId);
-        softwareBus.subscribe(SoftwareBusCodes.bottomSensor, currentElevatorId);
+        softwareBus.subscribe(TOPIC_TOP_SENSOR, elevatorId);
+        softwareBus.subscribe(TOPIC_BOTTOM_SENSOR, elevatorId);
 
         Thread thread = new Thread(this);
         thread.start();
     }
 
-    /**
-     * Run the Cabin, updates the movement of the cabin
-     */
     @Override
     public void run() {
         while (true) {
-            moveElevator();
+            step();
         }
     }
 
     /**
-     * Move elevator towards target floor
+     * The working-branch movement cycle.
      */
-    private void moveElevator() {
-        //Update current elevator alignment
-        updateTopAlignment();
-        updateBottomAlignment();
+    private synchronized void step() {
+
+        drainTopSensor();
+        drainBottomSensor();
         updateCurrentFloor();
 
-        boolean finalSensor;
-        if (currentDirection == Direction.DOWN) {
-            finalSensor = (sensorToFloor(topAlignment) == currentDestination);
-        } else {
-            finalSensor = (sensorToFloor(bottomAlignment) == currentDestination);
-        }
+        boolean alignedAtDestination =
+                (currentDirection == Direction.DOWN
+                        ? sensorToFloor(topAlignment) == currentDestination
+                        : sensorToFloor(bottomAlignment) == currentDestination);
 
-        //If the motor is on, and we have stopped moving, we can turn of the
-        // motor
-        if (motorStatus && finalSensor) {
+        if (motorRunning && alignedAtDestination) {
+
             if (timeToStop != null && timeToStop.timeout()) {
-                stopElevatorMotor();
+                stopMotor();
             } else if (timeToStop == null) {
-                timeToStop = timeStop();
+                timeToStop = new Timer(ConstantsElevatorControl.TIME_TO_STOP);
             }
-            //Check if motor not turn on yet, if so need to turn on
-        } else if (!motorStatus && currentFloor != currentDestination) {
+
+        } else if (!motorRunning && currentFloor != currentDestination) {
+
             updateCurrentDirection(currentDestination);
-            startElevatorMotor(currentDirection);
+            startMotor(currentDirection);
+
         } else {
             timeToStop = null;
         }
     }
 
-    /**
-     * Update top alignment value
-     */
-    private void updateTopAlignment() {
-        Message message = softwareBus.get(currentElevatorId, SoftwareBusCodes.topSensor);
-        if (message == null) return;
-        topAlignment = message.getBody();
+    private void drainTopSensor() {
+        Message msg = softwareBus.get(TOPIC_TOP_SENSOR, elevatorId);
+        while (msg != null) {
+            topAlignment = msg.getBody();
+            msg = softwareBus.get(TOPIC_TOP_SENSOR, elevatorId);
+        }
     }
 
-    /**
-     * Update bottom alignment value
-     */
-    private void updateBottomAlignment() {
-        Message message = softwareBus.get(currentElevatorId, SoftwareBusCodes.bottomSensor);
-        if (message == null) return;
-
-        bottomAlignment = message.getBody();
+    private void drainBottomSensor() {
+        Message msg = softwareBus.get(TOPIC_BOTTOM_SENSOR, elevatorId);
+        while (msg != null) {
+            bottomAlignment = msg.getBody();
+            msg = softwareBus.get(TOPIC_BOTTOM_SENSOR, elevatorId);
+        }
     }
 
-    /**
-     * Update current floor based on alignment
-     */
     private void updateCurrentFloor() {
         if (currentDirection == Direction.UP) {
             currentFloor = bottomAlignment / 2 + 1;
@@ -118,105 +106,60 @@ public class Cabin implements Runnable {
     }
 
     /**
-     * Start elevator motor
-     *
-     * @param direction Direction motor is moving towards
+     * Converting sensor alignment to floor index.
      */
-    private void startElevatorMotor(Direction direction) {
-        motorStatus = true;
-        if (direction == Direction.UP) {
-            softwareBus.publish(new Message(SoftwareBusCodes.carDispatch, currentElevatorId, SoftwareBusCodes.up));
-        } else if (direction == Direction.DOWN) {
-            softwareBus.publish(new Message(SoftwareBusCodes.carDispatch, currentElevatorId, SoftwareBusCodes.down));
+    private int sensorToFloor(int sensor) {
+        return sensor / 2 + 1;
+    }
+
+    private void startMotor(Direction dir) {
+        motorRunning = true;
+        int code;
+
+        if (dir == Direction.UP) {
+            code = SoftwareBusCodes.up;
+        } else if (dir == Direction.DOWN) {
+            code = SoftwareBusCodes.down;
+        } else {
+            return;
         }
+
+        softwareBus.publish(new Message(TOPIC_CAR_DISPATCH, elevatorId, code));
     }
 
-    /**
-     * Stop elevator motor
-     */
-    private void stopElevatorMotor() {
-        motorStatus = false;
-        softwareBus.publish(new Message(SoftwareBusCodes.carStop, currentElevatorId, 0));
+    private void stopMotor() {
+        motorRunning = false;
+        softwareBus.publish(new Message(TOPIC_CAR_STOP, elevatorId, 0));
     }
 
-    /**
-     * Start timer
-     * @return New timer
-     */
-    private Timer timeStop() {
-        return new Timer(ConstantsElevatorControl.TIME_TO_STOP);
-    }
-
-    /**
-     * Update direction and destination value
-     *
-     * @param floor destination
-     */
     public void gotoFloor(int floor) {
-        //Determine the direction
         updateCurrentDirection(floor);
         currentDestination = floor;
     }
 
-    /**
-     * Get current target floor
-     *
-     * @return
-     */
     public int getTargetFloor() {
         return currentDestination;
     }
 
-    /**
-     * Checks to see if the elevator has stopped moving
-     *
-     * @return True if not moving, else false
-     */
     public boolean stopped() {
-        //Can assume we stopped moving if we reached our destination
         return currentFloor == currentDestination;
     }
 
-    /**
-     * Return current floor and direction elevator is moving
-     *
-     * @return Current floor and direction
-     */
     public Destination getDestination() {
         return new Destination(currentFloor, currentDirection);
     }
 
-    /**
-     * Return current elevator floor
-     *
-     * @return Elevator floor
-     */
     public int getCurrentFloor() {
         return currentFloor;
     }
 
-    /**
-     * Translate sensor to floor
-     * @param sensorPosition Sensor position
-     * @return Floor number
-     */
-    private int sensorToFloor(int sensorPosition) {
-        return sensorPosition / 2 + 1;
-    }
-
-    /**
-     * Update currnet direction elevator is moving based on given floor
-     * @param floor Floor being compared to with current position
-     */
     private void updateCurrentDirection(int floor) {
         if (currentFloor < floor) {
             currentDirection = Direction.UP;
         } else if (currentFloor > floor) {
             currentDirection = Direction.DOWN;
-        } else if (currentFloor == floor) {
+        } else {
             currentDirection = Direction.STOPPED;
         }
     }
-
-
 }
