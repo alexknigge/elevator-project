@@ -1,7 +1,5 @@
 package CommandCenter;
 
-import CommandCenter.ElevatorPanel;
-import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
@@ -14,7 +12,7 @@ import Bus.*;
 
 public class ElevatorControlSystem{
 
-    private ElevatorPanel2[] elevators;
+    private ElevatorPanel[] elevators;
     private CommandCenter commandCenter;
     private CommandPanel commandPanel;
 
@@ -27,9 +25,9 @@ public class ElevatorControlSystem{
 
         commandPanel=new CommandPanel(commandCenter);
 
-        elevators = new ElevatorPanel2[4];
+        elevators = new ElevatorPanel[4];
         for (int i = 0; i < 4; i++) {
-            elevators[i] = new ElevatorPanel2(i + 1, commandCenter); //Changed by team 6,7
+            elevators[i] = new ElevatorPanel(i + 1, commandCenter); //Changed by team 6,7
 
         }
 

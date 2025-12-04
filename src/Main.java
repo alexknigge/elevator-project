@@ -1,3 +1,5 @@
+import Bus.SoftwareBus;
+
 public class Main {
     public static void main(String[] args) {
         System.out.println("Hello world!");
@@ -6,6 +8,10 @@ public class Main {
         // elevator controller system, specifically, we will instantiate, 4
         // elevator controllers, 4 device multiplexers, 1 command center and
         // 9 software buses.
+
+        SoftwareBus softwareBus = new SoftwareBus(true);
+
+
 
 
     }

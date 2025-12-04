@@ -1,5 +1,7 @@
 package CommandCenter;
 
+
+import ElevatorController.Util.Direction;
 import ElevatorController.Util.Destination;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
@@ -16,291 +18,263 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
 import javafx.util.Duration;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
 /**
  * TODO: IMPLEMENT BUTTONS FOR CONTROL MODE
  */
 public class ElevatorPanel extends VBox {
 
-    private CommandCenter commandCenter;
-
-    public enum Direction { UP, DOWN, IDLE }
-
-    // state flags
-
-    private int currentFloor = 1;
-    private ElevatorPanel.Direction currentDirection = ElevatorPanel.Direction.IDLE;
-    private boolean isDoorOpen = false;
-    private boolean isEnabled = true;     // true = running
-    private boolean autoMode = false;     // true = INDEPENDENT (AUTO)
-    private boolean isFireMode = false;   // true = in FIRE recall
-
-    // BUS client
-    //private final SoftwareBus bus;
+    private final CommandCenter commandCenter;
     private final int elevatorId;
 
-    // ui widgets
+
+    private int currentFloor = 1;
+    private boolean isDoorOpen = false;
+    private boolean isEnabled = true;         // RUN/STOP
+    private boolean autoMode = false;
+    private boolean isFireMode = false;
+
+
+    //Since they use 'diffenet' directions then us, im just traping them in
+    //here TODO: FIX THIS
+    private enum GUIDIRECTIONCHGME { UP, DOWN, IDLE }
+    private GUIDIRECTIONCHGME currentDirection =GUIDIRECTIONCHGME.IDLE;
+
+    //Start stop button, into one now
     private Button mainControlButton;
-    private final String btnText_START = "START";
-    private final String btnColor_START = "-fx-background-color: #228B22;";
-    private final String btnText_STOP  = "STOP";
-    private final String btnColor_STOP = "-fx-background-color: #B22222;";
     private StackPane shaftPane;
-    private VBox floorButtonColumn;
+    private VBox floorsColumn;
     private Pane carPane;
     private VBox movingCar;
     private Label carFloorLabel;
-    private TranslateTransition elevatorAnimation;
+    private TranslateTransition animation;
 
-    private final ConcurrentHashMap<Integer, ElevatorPanel.DualDotIndicatorPanel> floorCallIndicators =
-            new ConcurrentHashMap<>();
-    private final ElevatorPanel.DirectionIndicatorPanel directionIndicator;
-    private final Label currentFloorDisplay;
+    //Floor to indicators
+    private HashMap<Integer, DualDotIndicatorPanel> floorCallIndicators =
+            new HashMap<>();
+    private DirectionIndicatorPanel directionIndicator;
+    private Label currentFloorDisplay;
 
-    private static final double FLOOR_HEIGHT = 20.0;
-    private static final double FLOOR_SPACING = 3.0;
-    private static final double TOTAL_FLOOR_HEIGHT = FLOOR_HEIGHT + FLOOR_SPACING;
-    private static final double ANIMATION_SPEED_PER_FLOOR = 400.0; // ms per floor
 
-    // ui components
+    private static final double FLOOR_HEIGHT = 30;
+    private static final double SPACING = 3;
+    private static final double TOTAL_HEIGHT = FLOOR_HEIGHT + SPACING;
+    private static final double SPEED_PER_FLOOR = 400; // ms
+
+    //TODO: make this actually in tune
     private class DualDotIndicatorPanel extends VBox {
         private final Circle upDot = new Circle(3, Color.web("#505050"));
         private final Circle downDot = new Circle(3, Color.web("#505050"));
 
-        DualDotIndicatorPanel(int floor, ElevatorPanel parentPanel) {
+        DualDotIndicatorPanel() {
             super(6);
             getChildren().addAll(upDot, downDot);
             setAlignment(Pos.CENTER);
-            setPadding(new Insets(0, 5, 0, 5));
+            setPadding(new Insets(0, 4, 0, 4));
         }
 
-        void setDotLit(ElevatorPanel.Direction direction, boolean lit) {
-            Color color = lit ? Color.WHITE : Color.web("#505050");
-            if (direction == ElevatorPanel.Direction.UP)   upDot.setFill(color);
-            if (direction == ElevatorPanel.Direction.DOWN) downDot.setFill(color);
+        void setDotLit(GUIDIRECTIONCHGME dir, boolean lit) {
+            Color c = lit ? Color.WHITE : Color.web("#505050");
+            if (dir == GUIDIRECTIONCHGME.UP) upDot.setFill(c);
+            if (dir == GUIDIRECTIONCHGME.DOWN) downDot.setFill(c);
         }
     }
-
+    //TODO: Same issue here
     private class DirectionIndicatorPanel extends VBox {
-        private final Polygon upTriangle, downTriangle;
-        private final Color UNLIT_COLOR = Color.BLACK;
+        private final Polygon upTri;
+        private final Polygon downTri;
+        private final Color OFF = Color.BLACK;
 
         DirectionIndicatorPanel() {
             super(6);
-            upTriangle   = new Polygon(6.0, 0.0, 0.0, 8.0, 12.0, 8.0);
-            downTriangle = new Polygon(6.0, 8.0, 0.0, 0.0, 12.0, 0.0);
-            setDirection(ElevatorPanel.Direction.IDLE);
-            getChildren().addAll(upTriangle, downTriangle);
+            upTri = new Polygon(6,0, 0,8, 12,8);
+            downTri = new Polygon(6,8, 0,0, 12,0);
             setAlignment(Pos.CENTER);
             setPadding(new Insets(5));
+            setDirection(GUIDIRECTIONCHGME.IDLE);
+            getChildren().addAll(upTri, downTri);
         }
 
-        void setDirection(ElevatorPanel.Direction newDirection) {
-            upTriangle.setFill(newDirection == ElevatorPanel.Direction.UP   ? Color.WHITE : UNLIT_COLOR);
-            downTriangle.setFill(newDirection == ElevatorPanel.Direction.DOWN ? Color.WHITE : UNLIT_COLOR);
+        void setDirection(GUIDIRECTIONCHGME d) {
+            upTri.setFill(d == GUIDIRECTIONCHGME.UP ? Color.WHITE : OFF);
+            downTri.setFill(d == GUIDIRECTIONCHGME.DOWN ? Color.WHITE : OFF);
         }
     }
 
-    public ElevatorPanel(int id, CommandCenter commandCenter) {
-        super(3);
-        this.elevatorId = id;
-        this.commandCenter=commandCenter;
+    //rewrite part 2 !!!!! how fun!!!!
 
-        setAlignment(Pos.CENTER);
-        setStyle("-fx-background-color: #333333;");
-        setPrefWidth(100);
+    public ElevatorPanel(int id, CommandCenter cc) {
+        super(1);
+        this.elevatorId = id;
+        this.commandCenter = cc;
+
+        setAlignment(Pos.TOP_CENTER);
+        setStyle("-fx-background-color: #333;");
+        setPrefWidth(110);
 
         Label title = new Label("Elevator " + id);
         title.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
 
-        mainControlButton = new Button(btnText_STOP);
-        mainControlButton.setStyle(
-                btnColor_STOP + " -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 0;");
+        // START/STOP button now in one button!!!
+        mainControlButton = new Button("OFF");
+        mainControlButton.setStyle("-fx-background-color: #B22222; -fx-text-fill: white;");
         mainControlButton.setPrefWidth(90);
-        // Local toggle only (visual); real RUN/STOP comes from BUS topics 1,2,6,7
-        mainControlButton.setOnAction(e -> toggleEnabledState());
-
+        mainControlButton.setOnAction(e -> toggleLocalRunStop());
         HBox statusRow = new HBox(5);
-        statusRow.setAlignment(Pos.CENTER_RIGHT);
-        statusRow.setPrefWidth(90);
-
-        currentFloorDisplay = new Label(String.valueOf(this.currentFloor));
+        statusRow.setAlignment(Pos.CENTER);
+        currentFloorDisplay = new Label("1");
+        currentFloorDisplay.setPrefSize(30, 30);
+        currentFloorDisplay.setAlignment(Pos.CENTER);
         currentFloorDisplay.setStyle(
                 "-fx-background-color: white; -fx-text-fill: black; " +
-                        "-fx-font-size: 18px; -fx-font-weight: bold; -fx-alignment: center;");
-        currentFloorDisplay.setPrefSize(30, 30);
+                        "-fx-font-weight: bold; -fx-font-size: 18px;");
 
-        directionIndicator = new ElevatorPanel.DirectionIndicatorPanel();
+        directionIndicator = new DirectionIndicatorPanel();
         statusRow.getChildren().addAll(currentFloorDisplay, directionIndicator);
 
-        getChildren().addAll(title, mainControlButton, statusRow);
 
-        // Shaft + car layout
         shaftPane = new StackPane();
-        floorButtonColumn = new VBox(FLOOR_SPACING);
+        floorsColumn = new VBox(SPACING);
         carPane = new Pane();
         carPane.setMouseTransparent(true);
 
-        for (int i = 10; i >= 1; i--) {
-            floorButtonColumn.getChildren().add(createFloorRow(i));
+        for (int floor = 10; floor >= 1; floor--) {
+            floorsColumn.getChildren().add(createFloorRow(floor));
         }
 
-        carFloorLabel = new Label(String.valueOf(this.currentFloor));
-        carFloorLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold;");
+        carFloorLabel = new Label("1");
+        carFloorLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
 
         movingCar = new VBox(carFloorLabel);
         movingCar.setAlignment(Pos.CENTER);
         movingCar.setPrefSize(40, FLOOR_HEIGHT);
-        movingCar.setStyle("-fx-background-color: #606060;-fx-border-color: black;-fx-border-width: 0 2 0 2;");
+        movingCar.setStyle("-fx-background-color: #606060; -fx-border-color:black; -fx-border-width:0 2 0 2;");
+        movingCar.setLayoutX(42);
+
         carPane.getChildren().add(movingCar);
-        movingCar.setLayoutX(40.5);
+        shaftPane.getChildren().addAll(floorsColumn, carPane);
 
-        shaftPane.getChildren().addAll(floorButtonColumn, carPane);
-        getChildren().add(shaftPane);
+        getChildren().addAll(title, mainControlButton, statusRow, shaftPane);
+        animation = new TranslateTransition();
+        animation.setNode(movingCar);
 
-        // Animation
-        elevatorAnimation = new TranslateTransition();
-        elevatorAnimation.setNode(movingCar);
-
-        // Start visually at floor 10
-        updateElevatorPosition(this.currentFloor, false);
-
-        //startBusListener();
-        updateGUI();
+        updateCarPosition(1, false);
+        startGuiUpdateThread(); //zz replaces bus call
     }
 
+
+    // Floor row builder (NOW WITH BUTTONS!(WOAW))
+
     private HBox createFloorRow(int floor) {
-        HBox row = new HBox(5);
+        HBox row = new HBox(4);
         row.setAlignment(Pos.CENTER);
-        row.setPrefSize(90, FLOOR_HEIGHT);
+        row.setPrefSize(95, FLOOR_HEIGHT);
 
-        ElevatorPanel.DualDotIndicatorPanel callIndicator = new ElevatorPanel.DualDotIndicatorPanel(floor, this);
-        floorCallIndicators.put(floor, callIndicator);
+        DualDotIndicatorPanel ind = new DualDotIndicatorPanel();
+        floorCallIndicators.put(floor, ind);
 
-        Label floorLabel = new Label(String.valueOf(floor));
-        floorLabel.setStyle("-fx-background-color: #404040; -fx-text-fill: white;");
-        floorLabel.setPrefSize(40, 25);
-        floorLabel.setAlignment(Pos.CENTER);
+        // Floor number button
+        Button floorBtn = new Button(String.valueOf(floor));
+        floorBtn.setStyle("-fx-background-color:#404040; -fx-text-fill:white;");
+        floorBtn.setPrefSize(40, 25);
+        floorBtn.setOnAction(e -> {
 
-        row.getChildren().addAll(callIndicator, floorLabel);
+            commandCenter.sendServiceMessage(elevatorId, floor);   // woaw
+        });
+
+        row.getChildren().addAll(ind, floorBtn);
         return row;
     }
 
-    private void toggleEnabledState() {
-        isEnabled = !isEnabled;
-        applyEnabledUI();
-    }
 
-    private void applyEnabledUI() {
+    // START/STOP button local handler
+    private void toggleLocalRunStop() {
+        isEnabled = !isEnabled;
+        updateRunStopUI();
+    }
+    // Flips button and lets command center know about it
+    private void updateRunStopUI() {
         if (isEnabled) {
-            mainControlButton.setText(btnText_STOP);
-            mainControlButton.setStyle(btnColor_STOP
-                    + " -fx-text-fill: white; -fx-font-weight: bold;");
+            mainControlButton.setText("OFF");
+            mainControlButton.setStyle("-fx-background-color:#B22222; -fx-text-fill:white;");
+            commandCenter.disableSingleElevator(elevatorId);
         } else {
-            mainControlButton.setText(btnText_START);
-            mainControlButton.setStyle(btnColor_START
-                    + " -fx-text-fill: white; -fx-font-weight: bold;");
+            mainControlButton.setText("ON");
+            mainControlButton.setStyle("-fx-background-color:#228B22; -fx-text-fill:white;");
+            commandCenter.enableSingleElevator(elevatorId);
         }
     }
 
-    // BUS listener
-    private void updateGUI() {
+    //REPLACE THE BUS UPDATE zz
+    private void startGuiUpdateThread() {
         Thread t = new Thread(() -> {
             while (true) {
-                if(!commandCenter.elevatorOn(elevatorId)){
-                    isEnabled = false;
-                    applyEnabledUI();
-                    logState("System Stop");
-                }else{
-                    isEnabled = true;
-                    applyEnabledUI();
-                    logState("System Start");
+                //my bad guys im just silly
+//                boolean systemOn = commandCenter.elevatorOn(elevatorId);
+//                if (systemOn != isEnabled) {
+//                    Platform.runLater(() -> {
+//                        isEnabled = systemOn;
+//                        updateRunStopUI();
+//                    });
+//                }
+
+                Destination f = commandCenter.getDestination(elevatorId);
+                if (f != null && f.direction() == Direction.STOPPED) {
+                    Platform.runLater(() -> {
+                        updateCarPosition(f.getFloor(), true);
+                        setDirection(GUIDIRECTIONCHGME.IDLE);
+                    });
                 }
-                Destination destination =commandCenter.getFloorNDirection(elevatorId);
-                if(destination !=null&& destination.direction()== ElevatorController.Util.Direction.STOPPED){
-                    Platform.runLater(() ->
-                            updateElevatorPosition(destination.getFloor(), true));
-                    setDirection(ElevatorPanel.Direction.IDLE);
 
-                }
+                // TODO: DO INDICATOR LIGHTS
+                // TODO: display floor, hall floors and door info
 
-                //TODO: DO INDICATOR LIGHTS
-                //TODO: display floor, hall floors  and door info
-
-
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException ignored) {}
+                try { Thread.sleep(20); }
+                catch (InterruptedException ignored) {}
             }
         });
         t.setDaemon(true);
         t.start();
     }
 
-    private void updateElevatorPosition(int newFloor, boolean animate) {
-        double targetY = (10 - newFloor) * TOTAL_FLOOR_HEIGHT;
-        int floorsToTravel = Math.abs(newFloor - this.currentFloor);
-        this.currentFloor = newFloor;
+    //only once it reaches the floor
+    private void updateCarPosition(int floor, boolean animateFlag) {
+        int diff = Math.abs(floor - currentFloor);
+        currentFloor = floor;
 
-        // show the target floor in the displays
-        this.currentFloorDisplay.setText(String.valueOf(newFloor));
-        this.carFloorLabel.setText(String.valueOf(newFloor));
+        currentFloorDisplay.setText(String.valueOf(floor));
+        carFloorLabel.setText(String.valueOf(floor));
 
-        if (animate) {
-            elevatorAnimation.stop();
-            elevatorAnimation.setDuration(
-                    Duration.millis(Math.max(1, floorsToTravel) * ANIMATION_SPEED_PER_FLOOR));
-            elevatorAnimation.setToY(targetY);
-            elevatorAnimation.playFromStart();
+        double targetY = (10 - floor) * TOTAL_HEIGHT;
+
+        if (animateFlag) {
+            animation.stop();
+            animation.setDuration(Duration.millis(Math.max(1, diff) * SPEED_PER_FLOOR));
+            animation.setToY(targetY);
+            animation.playFromStart();
         } else {
             movingCar.setTranslateY(targetY);
         }
-        setDirection(ElevatorPanel.Direction.IDLE);
     }
 
+    private void setDirection(GUIDIRECTIONCHGME dir) {
+        currentDirection = dir;
+        directionIndicator.setDirection(dir);
+    }
+
+    //TODO: Hook this up
     private void setDoorStatus(boolean open) {
-        this.isDoorOpen = open;
-        String borderColor = open ? "white" : "black";
-        movingCar.setStyle(
-                "-fx-background-color: #606060;-fx-border-color: "
-                        + borderColor + ";-fx-border-width: 0 2 0 2;");
+        isDoorOpen = open;
+        String color = open ? "white" : "black";
+        movingCar.setStyle("-fx-background-color:#606060; -fx-border-color:" +
+                color + "; -fx-border-width:0 2 0 2;");
     }
 
-    private void closeDoor() {
-        setDoorStatus(false);
-    }
-
-    private void setDirection(ElevatorPanel.Direction d) {
-        this.currentDirection = d;
-        directionIndicator.setDirection(d);
-    }
-
-    // Helper to clear all call indicators (used on CLEAR FIRE)
-    private void clearAllCallIndicators() {
-        for (int floor = 1; floor <= 10; floor++) {
-            ElevatorPanel.DualDotIndicatorPanel indicator = floorCallIndicators.get(floor);
-            if (indicator != null) {
-                indicator.setDotLit(ElevatorPanel.Direction.UP, false);
-                indicator.setDotLit(ElevatorPanel.Direction.DOWN, false);
-            }
-        }
-        System.out.println("Elevator " + elevatorId + " - ALL call indicators cleared");
-    }
-
-    // Debug helper method
-    private void logState(String action) {
-        System.out.println("Elevator " + elevatorId + " [" + action +
-                "] - Floor: " + currentFloor +
-                ", Enabled: " + isEnabled +
-                ", FireMode: " + isFireMode +
-                ", AutoMode: " + autoMode);
-    }
-
-    // Getters
-    public int getCurrentFloor()   { return currentFloor; }
-    public boolean isDoorOpen()    { return isDoorOpen; }
-    public boolean isAutoMode()    { return autoMode; }
-    public boolean isFireMode()    { return isFireMode; }
-    public boolean isEnabled()     { return isEnabled; }
+    //huh
+    public int getCurrentFloor() { return currentFloor; }
+    public boolean isDoorOpen() { return isDoorOpen; }
+    public boolean isAutoMode() { return autoMode; }
+    public boolean isFireMode() { return isFireMode; }
+    public boolean isEnabled() { return isEnabled; }
 }

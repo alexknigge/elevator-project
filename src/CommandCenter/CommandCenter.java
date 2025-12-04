@@ -13,7 +13,7 @@ public class CommandCenter {
 
     private boolean[] elevatorEnabled={true,true,true,true};
 
-    private Destination[] destinations ={null,null,null,null};
+    private Destination[] Destinations = {null,null,null,null};
 
     //Given to us by a startup
     public SoftwareBus bus;
@@ -142,17 +142,17 @@ public class CommandCenter {
      */
     public Destination getElevatorStatus(int id) {
         int message = bus.get(GET_ELEVATOR_STATUS,id).getBody();
-        Destination destination;
+        Destination Destination;
         if (message > 200){
-            destination = new Destination(message-200,Direction.UP);
+            Destination = new Destination(message-200,Direction.UP);
         }
         if (message > 100)
-            destination = new Destination(message-100,Direction.STOPPED);
+            Destination= new Destination(message-100,Direction.STOPPED);
         else
-            destination = new Destination(message,Direction.DOWN);
+            Destination= new Destination(message,Direction.DOWN);
 
-        destinations[id-1]= destination;
-        return destination;
+        Destinations[id-1]=Destination;
+        return Destination;
     }
 
     /**
@@ -166,8 +166,8 @@ public class CommandCenter {
         return -1;
     }
 
-    public Destination getFloorNDirection(int id){
-        return destinations[id-1];
+    public Destination getDestination(int id){
+        return Destinations[id-1];
     }
 
 
