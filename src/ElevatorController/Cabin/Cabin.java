@@ -103,6 +103,9 @@ public class Cabin implements Runnable {
         bottomAlignment = message.getBody();
     }
 
+    /**
+     * Update current floor based on alignment
+     */
     private void updateCurrentFloor() {
         if (currentDirection == Direction.UP) {
             currentFloor = bottomAlignment / 2 + 1;
@@ -111,6 +114,11 @@ public class Cabin implements Runnable {
         }
     }
 
+    /**
+     * Start elevator motor
+     *
+     * @param direction Direction motor is moving towards
+     */
     private void startElevatorMotor(Direction direction) {
         motorStatus = true;
         if (direction == Direction.UP) {
@@ -120,11 +128,18 @@ public class Cabin implements Runnable {
         }
     }
 
+    /**
+     * Stop elevator motor
+     */
     private void stopElevatorMotor() {
         motorStatus = false;
         softwareBus.publish(new Message(SoftwareBusCodes.carStop, currentElevatorId, 0));
     }
 
+    /**
+     * Start timer
+     * @return New timer
+     */
     private Timer timeStop() {
         return new Timer(ConstantsElevatorControl.TIME_TO_STOP);
     }
@@ -186,6 +201,10 @@ public class Cabin implements Runnable {
         return sensorPosition / 2 + 1;
     }
 
+    /**
+     * Update currnet direction elevator is moving based on given floor
+     * @param floor Floor being compared to with current position
+     */
     private void updateCurrentDirection(int floor) {
         if (currentFloor < floor) {
             currentDirection = Direction.UP;
