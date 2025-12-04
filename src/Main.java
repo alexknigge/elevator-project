@@ -40,7 +40,7 @@ public class Main extends Application {
         }
 
         for (int i = 0; i < MAX_ELEVATORS; i++) {
-            ElevatorController elevatorController = new ElevatorController(i, softwareBus);
+            ElevatorController elevatorController = new ElevatorController(i+1, softwareBus);
             elevatorControllers[i] = elevatorController;
             Thread eThread = new Thread(elevatorControllers[i]);
             eThread.start();
