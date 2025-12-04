@@ -98,7 +98,6 @@ public class ElevatorController implements Runnable{
 
 
     public State normalMode() {
-
         if (mode.getMode() != State.NORMAL) {
             System.out.println("not in normal mode anymore");
             return mode.getMode();
@@ -196,6 +195,18 @@ public class ElevatorController implements Runnable{
         }
     }
 
+    private State waitingMode() {
+        if(mode.getMode()!= State.OFF) {
+            return mode.getMode();
+        }
+        while(mode.getMode() == State.OFF) {
+            //do nothing lol
+        }
+        System.out.println("i keft");
+
+        return null;
+    }
+
 
     private void beginInitialState() {
         running = true;
@@ -215,6 +226,11 @@ public class ElevatorController implements Runnable{
                 case CONTROL -> {
                     System.out.println("Control Mode for " + currentElevatorId + " is running");
                     controlledMode();
+                }
+                case OFF -> {
+                    //System.out.println("Off Mode for " + currentElevatorId
+                    // + " is running");
+                    waitingMode();
                 }
                 default -> {
                     running = false;

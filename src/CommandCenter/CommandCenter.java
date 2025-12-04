@@ -150,6 +150,7 @@ public class CommandCenter implements Runnable{
      */
     public void sendServiceMessage(int elevatorID, int floor) {
         System.out.println("Sent service message for elevator: "+ elevatorID+ " to floor "+ floor);
+        //TODO HAVE THIS BE SENT OUT ONLY WHEN IN COMMAND MODE
         bus.publish(new Message(SERVICE_MESSAGE,elevatorID,floor));
     }
     /**

@@ -18,21 +18,31 @@ public class Mode {
         this.softwareBus = softwareBus;
         this.currentElevatorId = currentElevatorId;
         this.currentDestination = null;
-        this.currentMode = State.NORMAL;
-
+        this.currentMode = State.OFF;
         softwareBus.subscribe(SoftwareBusCodes.elevatorOnOff, currentElevatorId);
         softwareBus.subscribe(SoftwareBusCodes.setMode, currentElevatorId);
         softwareBus.subscribe(SoftwareBusCodes.setDestination, currentElevatorId);
         softwareBus.subscribe(SoftwareBusCodes.fireAlarmActive, currentElevatorId);
-
-
     }
 
     public State getMode() {
 
-        Message statusMessage = drain(SoftwareBusCodes.elevatorOnOff, currentElevatorId, softwareBus);
-        if (statusMessage != null && statusMessage.getBody() == SoftwareBusCodes.off) {
+//        Message statusMessage = drain(SoftwareBusCodes.elevatorOnOff, currentElevatorId, softwareBus);
+        Message statusMessage =
+                softwareBus.get(SoftwareBusCodes.elevatorOnOff, currentElevatorId);
+        //System.out.println("Message: " + statusMessage);
+
+        if (statusMessage != null) {
+            System.out.println("i got here");
+            System.out.println(statusMessage);
+        }
+        if (statusMessage != null && statusMessage.getBody() == SoftwareBusCodes.off && currentMode != State.OFF) {
             currentMode = State.OFF;
+            System.out.println("i go in here L");
+            return currentMode;
+        } else if( statusMessage != null && statusMessage.getBody() == SoftwareBusCodes.on && currentMode != State.ON) {
+            currentMode = State.NORMAL;
+            System.out.println("i go in here R");
             return currentMode;
         }
 
@@ -60,7 +70,14 @@ public class Mode {
             return currentMode;
         }
 
-        Message modeMessage = drain(SoftwareBusCodes.setMode, currentElevatorId, softwareBus);
+        //Message modeMessage = drain(SoftwareBusCodes.setMode,
+        // currentElevatorId, softwareBus);
+        Message modeMessage = softwareBus.get(SoftwareBusCodes.setMode, currentElevatorId);
+
+        if(modeMessage != null) {
+            System.out.println("I got here");
+            System.out.println(modeMessage);
+        }
 
         if (modeMessage != null) {
             int body = modeMessage.getBody();
