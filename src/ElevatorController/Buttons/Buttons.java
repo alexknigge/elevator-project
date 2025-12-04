@@ -337,14 +337,16 @@ public class Buttons {
 
 
     public Destination nextService(Destination destination) {
-        //TODO fix this
-        handleCabinSelect();
+        //TODO deal with method call
+//        handleCabinSelect();
+
+
         currentDirection = destination.direction();
         currentFloor = destination.floor();
 
-        // TODO deal with this somehow
+        // TODO deal fire key somehow
         // Calls disabled case
-        if (!callEnabled && !fireKey) {
+        if (!callEnabled /* && !fireKey */) {
             return null;
         }
 
