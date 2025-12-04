@@ -48,11 +48,12 @@ public class Buttons {
 //    private final static int BODY_F_KEY_INACTIVE = SoftwareBusCodes.inactive;
 
 
+    //TODO will likely need to deal with fire/firekey within the code
     public Buttons(SoftwareBus softwareBus, int currentElevatorId) {
         this.softwareBus = softwareBus;
         this.currentElevatorId = currentElevatorId;
 
-        //TODO need to add something here in constructor
+        //TODO may need to add id for elevators
 
         // Assuming normal mode settings initially
         this.callEnabled = true;
