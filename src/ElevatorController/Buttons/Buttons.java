@@ -70,7 +70,6 @@ public class Buttons {
 
     }
 
-
     /**
      * Call publish on the softwareBus with a message that the call button of the given floor, and given direction can be
      * turned off
