@@ -57,35 +57,40 @@ public class ElevatorController implements Runnable{
 
         buttons.disableCalls();
         buttons.enableSingleRequests();
-
-        System.out.println("Closing doors");
         closeDoors();
 
         Destination req = null;
 
-        while (mode.getMode() == State.FIRE && cabin.getTargetFloor() != 1 && !cabin.stopped())
-        {
-            System.out.println("In while loop");
+        while (mode.getMode() == State.FIRE) {
 
-            if (req == null) {
+            if (cabin.getCurrentFloor() == 1) {
+
+                arrivalSequence(null);
+                System.out.println("Fire mode: elevator parked at floor 1");
+
+                // park the elevator here until fire cleared
+                while (mode.getMode() == State.FIRE) {
+                    try { Thread.sleep(50); } catch (Exception e) {}
+                }
+
+                System.out.println("Fire cleared. Exiting fire mode.");
+                return mode.getMode();
+            }
+
+            if (req == null)
                 req = buttons.nextService(cabin.getDestination());
-            }
 
-            if (req != null) {
+            if (req != null)
                 cabin.gotoFloor(req.floor());
-                System.out.println("req isn't null so we are going to " + req.floor());
-            }
-            else if (cabin.getTargetFloor() != 1) {
+            else
                 cabin.gotoFloor(1);
-                System.out.println("We are going to " + 1);
-            }
 
             if (cabin.stopped()) {
                 arrivalSequence(req);
-                System.out.println("arrived at the first floor");
                 req = null;
-
             }
+
+            try { Thread.sleep(10); } catch (Exception ignored) {}
         }
 
         return mode.getMode();

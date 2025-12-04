@@ -28,58 +28,51 @@ public class Mode {
 
     }
 
-    public State getMode(){
-        Message modeMessage = drain(SoftwareBusCodes.setMode, currentElevatorId, softwareBus);
-        Message fireMessage = drain(SoftwareBusCodes.fireAlarmActive, currentElevatorId, softwareBus);
+    public State getMode() {
+
         Message statusMessage = drain(SoftwareBusCodes.elevatorOnOff, currentElevatorId, softwareBus);
+        if (statusMessage != null && statusMessage.getBody() == SoftwareBusCodes.off) {
+            currentMode = State.OFF;
+            return currentMode;
+        }
 
-        boolean fireJustActivated = false;
-        int state;
-
-        if (statusMessage != null) {
-            state = statusMessage.getBody();
-            if (state == SoftwareBusCodes.off) {
-                currentMode = State.OFF;
-                return currentMode;
-            }
+        Message fireMessage = null;
+        if (currentMode != State.FIRE) {
+            fireMessage = softwareBus.get(SoftwareBusCodes.fireAlarmActive, currentElevatorId);
         }
 
         if (fireMessage != null) {
-            state = fireMessage.getBody();
-            if (state == SoftwareBusCodes.pulled) {
-                if (currentMode != State.FIRE) {
-                    fireJustActivated = true;
-                }
+            int body = fireMessage.getBody();
+            if (body == SoftwareBusCodes.pulled) {
                 currentMode = State.FIRE;
+                softwareBus.publish(new Message(SoftwareBusCodes.fireMode,
+                        currentElevatorId, SoftwareBusCodes.emptyBody));
+
+                softwareBus.publish(new Message(SoftwareBusCodes.fireAlarm,
+                        currentElevatorId, SoftwareBusCodes.emptyBody));
+
+                softwareBus.publish(new Message(SoftwareBusCodes.fireAlarm,
+                        SoftwareBusCodes.buildingMUX, SoftwareBusCodes.emptyBody));
             }
-        }
-
-        if (fireJustActivated) {
-            System.out.println("from Mode, fire has just been activated");
-            softwareBus.publish(new Message(SoftwareBusCodes.fireMode,
-                    currentElevatorId, SoftwareBusCodes.emptyBody));
-
-            softwareBus.publish(new Message(SoftwareBusCodes.fireAlarm,
-                    currentElevatorId, SoftwareBusCodes.emptyBody));
-
-            softwareBus.publish(new Message(SoftwareBusCodes.fireAlarm,
-                    SoftwareBusCodes.buildingMUX, SoftwareBusCodes.emptyBody));
         }
 
         if (currentMode == State.FIRE) {
             return currentMode;
         }
 
+        Message modeMessage = drain(SoftwareBusCodes.setMode, currentElevatorId, softwareBus);
+
         if (modeMessage != null) {
-            state = modeMessage.getBody();
-            switch (state) {
-                case SoftwareBusCodes.centralized -> currentMode = State.CONTROL;
-                case SoftwareBusCodes.normal      -> currentMode = State.NORMAL;
-            }
+            int body = modeMessage.getBody();
+            if (body == SoftwareBusCodes.centralized)
+                currentMode = State.CONTROL;
+            else if (body == SoftwareBusCodes.normal)
+                currentMode = State.NORMAL;
         }
 
         return currentMode;
     }
+
 
     public Destination nextService() {
         Message nextService = drain(SoftwareBusCodes.setDestination,  currentElevatorId, softwareBus);
