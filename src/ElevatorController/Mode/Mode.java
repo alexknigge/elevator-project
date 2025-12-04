@@ -88,7 +88,6 @@ public class Mode {
 
         // Notify the MUX that the fire is active
         if (currentMode == State.FIRE) {
-            //TODO are these bodies okay?
             softwareBus.publish(new Message(TOPIC_SET_FIRE, currentElevatorId,
                     SoftwareBusCodes.emptyBody));
             softwareBus.publish(new Message(TOPIC_SET_FIRE, SoftwareBusCodes.buildingMUX, SoftwareBusCodes.emptyBody));
