@@ -6,6 +6,9 @@ import ElevatorController.Cabin.Cabin;
 import ElevatorController.DoorAssembly.DoorAssembly;
 import ElevatorController.Mode.Mode;
 import ElevatorController.Notifier.Notifier;
+import ElevatorController.Util.Destination;
+import ElevatorController.Util.State;
+import ElevatorController.Util.Timer;
 
 public class ElevatorController {
     private SoftwareBus softwareBus;
@@ -16,13 +19,173 @@ public class ElevatorController {
     private Mode mode;
     private int currentElevatorId;
 
+    boolean running = false;
+
     public ElevatorController(int currentElevatorId) {
         initElevatorController(currentElevatorId);
-
+        beginInitialState();
     }
 
-    private void beginInitialState() {
+    public State controlledMode() {
 
+        buttons.disableCalls();
+        buttons.enableSingleRequests();
+
+        closeDoors();
+
+        while (mode.getMode() == State.CONTROL) {
+
+            Destination next = mode.nextService();
+            if (next == null) continue;
+
+            if (cabin.getTargetFloor() != next.floor()) {
+                cabin.gotoFloor(next.floor());
+            }
+
+            if (cabin.arrived()) {
+                arrivalSequence(next);
+            }
+        }
+
+        return mode.getMode();
+    }
+
+    public State fireMode() {
+
+        buttons.disableCalls();
+        buttons.enableSingleRequests();
+
+        closeDoors();
+
+        Destination req = null;
+
+        while (mode.getMode() == State.FIRE && cabin.getTargetFloor() != 1 && !cabin.arrived())
+        {
+
+            if (req == null)
+                req = buttons.nextService(cabin.currentStatus());
+
+            if (req != null)
+                cabin.gotoFloor(req.floor());
+            else if (cabin.getTargetFloor() != 1)
+                cabin.gotoFloor(1);
+
+            if (cabin.arrived()) {
+                arrivalSequence(req);
+                req = null;
+            }
+        }
+
+        return mode.getMode();
+    }
+
+
+    public State normalMode() {
+
+        if (mode.getMode() != State.NORMAL) {
+            return mode.getMode();
+        }
+
+        buttons.enableCalls();
+         buttons.enableMultipleRequests();
+
+         closeDoors();
+
+        Destination req = null;
+
+        while (mode.getMode() == State.NORMAL) {
+
+            if (req == null) {
+                req = buttons.nextService(cabin.currentStatus());
+            } else {
+                cabin.gotoFloor(req.floor());
+            }
+
+            if (cabin.arrived() && req != null) {
+                arrivalSequence(req);
+                req = null;
+            }
+        }
+
+        return mode.getMode();
+    }
+
+    private void arrivalSequence(Destination request) {
+        if (request != null)
+            buttons.clearCall(request);
+
+        openDoors();
+        waitDoorsOpen();
+        closeDoors();
+    }
+
+    private void openDoors() {
+        Timer t = new Timer(10000);
+
+        doors.open();
+
+        while (!doors.fullyOpen()) {
+            if (t.timeout()) {
+                doors.open();      // try once more
+                if (t.timeout()) break;
+            }
+        }
+    }
+
+    private void waitDoorsOpen() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException ignored) {}
+    }
+
+    private void closeDoors() {
+
+        Timer timer = new Timer(10000);
+        boolean playingNoise = false;
+
+        doors.close();
+
+        while (!doors.fullyClosed()) {
+
+            if (doors.obstructed()) {
+                doors.open();
+                doors.close();
+                continue;
+            }
+
+            if (doors.overCapacity()) {
+                if (!playingNoise) {
+                    notifications.overloadOn();
+                    playingNoise = true;
+                }
+                doors.open();
+                doors.close();
+                continue;
+            }
+
+            if (timer.timeout()) break;
+        }
+
+        if (playingNoise) {
+            notifications.overloadOff();
+        }
+    }
+
+
+    private void beginInitialState() {
+        State nowMode = normalMode();
+        running = true;
+
+        while (running) {
+            switch (nowMode) {
+                case NORMAL -> normalMode();
+                case FIRE -> fireMode();
+                case CONTROL -> controlledMode();
+                default -> {
+                    running = false;
+                }
+            }
+        }
     }
 
     private void initElevatorController(int elevatorId) {

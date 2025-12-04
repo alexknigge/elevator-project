@@ -52,11 +52,6 @@ public class Mode {
     }
 
     public State getMode(){
-        setCurrentMode();
-        return currentMode;
-    }
-
-    private void setCurrentMode(){
         Message modeMessage = softwareBus.get(currentElevatorId,TOPIC_MODE);
         Message fireMessage = softwareBus.get(currentElevatorId,TOPIC_FIRE_ALARM);
         Message statusMessage = softwareBus.get(currentElevatorId,TOPIC_ON_OFF);
@@ -85,14 +80,13 @@ public class Mode {
             }
         }
 
-
         // Notify the MUX that the fire is active
         if (currentMode == State.FIRE) {
             softwareBus.publish(new Message(TOPIC_SET_FIRE, currentElevatorId,
                     SoftwareBusCodes.emptyBody));
             softwareBus.publish(new Message(TOPIC_SET_FIRE, SoftwareBusCodes.buildingMUX, SoftwareBusCodes.emptyBody));
         }
-
+        return currentMode;
     }
 
     public Destination nextService() {
