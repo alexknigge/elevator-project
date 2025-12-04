@@ -1,7 +1,22 @@
-import Bus.SoftwareBus;
+import CommandCenter.ElevatorControlSystem;
+import DeviceMultiplexor.BuildingMultiplexor;
+import DeviceMultiplexor.ElevatorMultiplexor;
+import ElevatorController.ElevatorController;
+import PFDGUI.gui;
+import javafx.application.Application;
+import javafx.stage.Stage;
 
-public class Main {
-    public static void main(String[] args) {
+import java.util.ArrayList;
+
+public class Main extends Application {
+    private record Elevator(ElevatorController elevatorController, ElevatorMultiplexor elevatorMultiplexor) {}
+
+    private gui multiplexorApp;
+    private Stage muxStage;
+
+    private final static int MAX_ELEVATORS = 4;
+
+    public Main() {
         System.out.println("Hello world!");
 
         //In main, we will create all the required devices to simulate the
@@ -9,10 +24,31 @@ public class Main {
         // elevator controllers, 4 device multiplexers, 1 command center and
         // 9 software buses.
 
-        SoftwareBus softwareBus = new SoftwareBus(true);
+        ArrayList<ElevatorController> elevatorControllers = new ArrayList<>();
+        ArrayList<ElevatorMultiplexor> elevatorMultiplexors = new ArrayList<>();
+
+        ElevatorControlSystem commandCenter = new ElevatorControlSystem();
+        BuildingMultiplexor buildingMultiplexor = new BuildingMultiplexor();
+
+        for (int i = 0; i < MAX_ELEVATORS; i++) {
+            ElevatorController elevatorController = new ElevatorController(i);
+            ElevatorMultiplexor elevatorMultiplexor = new ElevatorMultiplexor(i);
+
+            elevatorControllers.add(elevatorController);
+            elevatorMultiplexors.add(elevatorMultiplexor);
+
+        }
+
+        // UI setup
+        multiplexorApp = new gui();
+        muxStage = multiplexorApp.getStage();
 
 
 
+    }
+
+    @Override
+    public void start(Stage primaryStage) throws Exception {
 
     }
     

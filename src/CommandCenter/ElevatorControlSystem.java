@@ -19,11 +19,10 @@ public class ElevatorControlSystem{
     private SoftwareBus softwareBus;
 
 
-    public ElevatorControlSystem(SoftwareBus softwareBus){
-        this.softwareBus=softwareBus;
-        commandCenter=new CommandCenter(softwareBus);
-
-        commandPanel=new CommandPanel(commandCenter);
+    public ElevatorControlSystem() {
+        this.softwareBus = new SoftwareBus(true);
+        commandCenter = new CommandCenter(softwareBus);
+        commandPanel = new CommandPanel(commandCenter);
 
         elevators = new ElevatorPanel[4];
         for (int i = 0; i < 4; i++) {
