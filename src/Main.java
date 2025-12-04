@@ -27,13 +27,13 @@ public class Main extends Application {
 
         SoftwareBus softwareBus = new SoftwareBus(true);
 
-        elevatorMultiplexors = new ElevatorMultiplexor[MAX_ELEVATORS];
-        elevatorControllers = new ElevatorController[MAX_ELEVATORS];
+        elevatorMultiplexors = new ElevatorMultiplexor[MAX_ELEVATORS + 1];
+        elevatorControllers = new ElevatorController[MAX_ELEVATORS + 1];
 
         commandCenter = new ElevatorControlSystem(softwareBus);
         multiplexorApp = new gui();
 
-        for (int i = 0; i < MAX_ELEVATORS; i++) {
+        for (int i = 1; i <= MAX_ELEVATORS; i++) {
             ElevatorController elevatorController = new ElevatorController(i, softwareBus);
             ElevatorMultiplexor elevatorMultiplexor = new ElevatorMultiplexor(i, softwareBus);
             elevatorControllers[i] = elevatorController;
