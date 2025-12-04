@@ -30,6 +30,7 @@ public class Cabin implements Runnable {
     private static final int TOPIC_BOTTOM_SENSOR = SoftwareBusCodes.bottomSensor;
     private static final int TOPIC_CAR_DISPATCH  = SoftwareBusCodes.carDispatch;
     private static final int TOPIC_CAR_STOP      = SoftwareBusCodes.carStop;
+    private static final int TOPIC_COMMAND_CENTER_STATUS = SoftwareBusCodes.elevatorStatus;
 
     public Cabin(SoftwareBus softwareBus, int elevatorId) {
         this.softwareBus = softwareBus;
@@ -56,7 +57,13 @@ public class Cabin implements Runnable {
 
         drainTopSensor();
         drainBottomSensor();
+        int tempFloor = currentFloor;
         updateCurrentFloor();
+        //If current floor got updated, we need to have the command center
+        // show that
+        if(tempFloor != currentFloor) {
+            sendCommandCenterStatus(currentFloor);
+        }
 
         boolean alignedAtDestination =
                 (currentDirection == Direction.DOWN
@@ -130,6 +137,15 @@ public class Cabin implements Runnable {
     private void stopMotor() {
         motorRunning = false;
         softwareBus.publish(new Message(TOPIC_CAR_STOP, elevatorId, 0));
+    }
+
+    /**
+     * Publish a message intended for the command center. Command center will
+     * use the message to display the current floor an elevator is on
+     * @param floor Elevator floor
+     */
+    private void sendCommandCenterStatus(int floor) {
+        softwareBus.publish(new Message(TOPIC_COMMAND_CENTER_STATUS, elevatorId, floor));
     }
 
     public void gotoFloor(int floor) {

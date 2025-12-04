@@ -6,10 +6,11 @@ import ElevatorController.Util.Direction;
 import ElevatorController.Util.Destination;
 import ElevatorController.Util.State;
 import Message.Message;
+import javafx.application.Platform;
 
 import java.util.Arrays;
 
-public class CommandCenter {
+public class CommandCenter implements Runnable{
 
     private boolean[] elevatorEnabled={true,true,true,true};
 
@@ -44,12 +45,37 @@ public class CommandCenter {
 
     private State currMode = State.NORMAL;
 
-    public CommandCenter(SoftwareBus bus){
+    private ElevatorPanel[] elevators;
+
+    public CommandCenter(SoftwareBus bus)  {
         this.bus=bus;
         bus.subscribe(GET_MODE,0);
         bus.subscribe(GET_ELEVATOR_STATUS, 0);
         bus.subscribe(GET_DOOR_STATUS,0);
 
+        Thread thread = new Thread(this);
+        thread.start();
+    }
+
+    @Override
+    public void run() {
+        while(true) {
+            checkElevatorStatus();
+        }
+    }
+
+    private void checkElevatorStatus() {
+        while (true) {
+            Message message = bus.get(GET_ELEVATOR_STATUS,0);
+            if(message != null) {
+                int elevatorID = message.getSubTopic();
+                int elevatorFloor = message.getBody();
+                ElevatorPanel elevatorPanel = elevators[elevatorID];
+                Platform.runLater(() -> {
+                    elevatorPanel.updateCarPosition(elevatorFloor,true);
+                });
+            }
+        }
     }
 
     /**
@@ -170,5 +196,7 @@ public class CommandCenter {
         return Destinations[id-1];
     }
 
-
+    public void setElevators(ElevatorPanel[] elevators) {
+        this.elevators = elevators;
+    }
 }

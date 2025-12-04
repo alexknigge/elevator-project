@@ -239,7 +239,7 @@ public class ElevatorPanel extends VBox {
     }
 
     //only once it reaches the floor
-    private void updateCarPosition(int floor, boolean animateFlag) {
+    public void updateCarPosition(int floor, boolean animateFlag) {
         int diff = Math.abs(floor - currentFloor);
         currentFloor = floor;
 

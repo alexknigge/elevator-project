@@ -29,6 +29,7 @@ public class ElevatorControlSystem{
             elevators[i] = new ElevatorPanel(i + 1, commandCenter); //Changed by team 6,7
 
         }
+        commandCenter.setElevators(elevators);
 
     }
 
