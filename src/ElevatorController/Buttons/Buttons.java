@@ -44,8 +44,8 @@ public class Buttons {
     private final static int SUBTOPIC_BUILD_MUX = SoftwareBusCodes.buildingMUX;
 
     // Bodies for the fire key
-    private final static int BODY_F_KEY_ACTIVE = SoftwareBusCodes.active;
-    private final static int BODY_F_KEY_INACTIVE = SoftwareBusCodes.inactive;
+//    private final static int BODY_F_KEY_ACTIVE = SoftwareBusCodes.active;
+//    private final static int BODY_F_KEY_INACTIVE = SoftwareBusCodes.inactive;
 
 
     public Buttons(SoftwareBus softwareBus, int currentElevatorId) {
@@ -53,6 +53,19 @@ public class Buttons {
         this.currentElevatorId = currentElevatorId;
 
         //TODO need to add something here in constructor
+
+        // Assuming normal mode settings initially
+        this.callEnabled = true;
+        this.multipleRequests = true;
+
+        this.destinations = new ArrayList<>();
+        this.softwareBus = softwareBus;
+        this.currentElevatorId = currentElevatorId;
+
+        // Subscribing
+        softwareBus.subscribe(TOPIC_CABIN_SELECT, currentElevatorId);
+        softwareBus.subscribe(TOPIC_HALL_CALL, currentElevatorId);
+        softwareBus.subscribe(TOPIC_FIRE_KEY, currentElevatorId);
 
     }
 
@@ -78,8 +91,6 @@ public class Buttons {
         //Floor Button Reset
 
         int floor = destination.floor();
-        Direction direction = destination.direction();
-
         if (floor == 1) {
             switch (destination.direction()) {
                 case UP ->
@@ -323,7 +334,7 @@ public class Buttons {
     /**
      * In Normal mode, all request buttons are enabled
      */
-    public void enableMultipleRequests(int floor) {
+    public void enableMultipleRequests() {
         // Notify MUX
         softwareBus.publish(new Message(TOPIC_REQS_ENABLED, currentElevatorId,
                 SoftwareBusCodes.on));
