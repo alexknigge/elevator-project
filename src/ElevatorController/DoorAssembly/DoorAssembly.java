@@ -4,10 +4,8 @@ import Bus.SoftwareBus;
 import Bus.SoftwareBusCodes;
 import Message.Message;
 
-/**
- * Corrected DoorAssembly with proper message draining,
- * correct fullyOpen/fullyClosed logic, and correct sensor handling.
- */
+import static Message.Message.drain;
+
 public class DoorAssembly {
 
     private final SoftwareBus softwareBus;
@@ -18,20 +16,6 @@ public class DoorAssembly {
     private boolean fullyOpened;
     private boolean overCapacity;
 
-    // Topic codes
-    private static final int TOPIC_DOOR_CONTROL = SoftwareBusCodes.doorControl;
-    private static final int TOPIC_DOOR_SENSOR  = SoftwareBusCodes.doorSensor;
-    private static final int TOPIC_CABIN_LOAD   = SoftwareBusCodes.cabinLoad;
-    private static final int TOPIC_DOOR_STATUS  = SoftwareBusCodes.doorStatus;
-
-    // Body codes
-    private static final int OPEN_CODE            = SoftwareBusCodes.doorOpen;
-    private static final int CLOSE_CODE           = SoftwareBusCodes.doorClose;
-    private static final int OBSTRUCTED_CODE      = SoftwareBusCodes.obstructed;
-    private static final int NOT_OBSTRUCTED_CODE  = SoftwareBusCodes.clear;
-    private static final int OVER_CAPACITY_CODE   = SoftwareBusCodes.overloaded;
-    private static final int NOT_OVER_CAPACITY_CODE = SoftwareBusCodes.normal;
-
     public DoorAssembly(SoftwareBus softwareBus, int currentElevatorId) {
         this.softwareBus = softwareBus;
         this.currentElevatorId = currentElevatorId;
@@ -41,53 +25,41 @@ public class DoorAssembly {
         fullyOpened = true;
         overCapacity = false;
 
-        softwareBus.subscribe(TOPIC_DOOR_SENSOR, currentElevatorId);
-        softwareBus.subscribe(TOPIC_CABIN_LOAD, currentElevatorId);
-        softwareBus.subscribe(TOPIC_DOOR_STATUS, currentElevatorId);
+        softwareBus.subscribe(SoftwareBusCodes.doorSensor, currentElevatorId);
+        softwareBus.subscribe(SoftwareBusCodes.cabinLoad, currentElevatorId);
+        softwareBus.subscribe(SoftwareBusCodes.doorStatus, currentElevatorId);
     }
 
     public void open() {
-        softwareBus.publish(new Message(TOPIC_DOOR_CONTROL, currentElevatorId, OPEN_CODE));
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.doorControl,
+                currentElevatorId,
+                SoftwareBusCodes.doorOpen));
     }
 
     public void close() {
-        softwareBus.publish(new Message(TOPIC_DOOR_CONTROL, currentElevatorId, CLOSE_CODE));
-    }
-
-    private Message drain(int topic) {
-        Message msg = softwareBus.get(topic, currentElevatorId);
-        Message last = null;
-
-        while (msg != null) {
-            last = msg;
-            msg = softwareBus.get(topic, currentElevatorId);
-        }
-        return last;
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.doorControl,
+                currentElevatorId,
+                SoftwareBusCodes.doorClose));
     }
 
     public boolean fullyOpen() {
-        Message msg = drain(TOPIC_DOOR_STATUS);
-        if (msg != null) {
-            int body = msg.getBody();
-            if (body == OPEN_CODE) {
-                fullyOpened = true;
-                fullyClosed = false;
-            } else if (body == CLOSE_CODE) {
-                fullyOpened = false;
-                fullyClosed = true;
-            }
-        }
-        return fullyOpened;
+        return doorClosedOrOpened();
     }
 
     public boolean fullyClosed() {
-        Message msg = drain(TOPIC_DOOR_STATUS);
+        return doorClosedOrOpened();
+    }
+
+    private boolean doorClosedOrOpened() {
+        Message msg = drain(SoftwareBusCodes.doorStatus, currentElevatorId, softwareBus);
         if (msg != null) {
             int body = msg.getBody();
-            if (body == CLOSE_CODE) {
+            if (body == SoftwareBusCodes.doorClose) {
                 fullyClosed = true;
                 fullyOpened = false;
-            } else if (body == OPEN_CODE) {
+            } else if (body == SoftwareBusCodes.doorOpen) {
                 fullyClosed = false;
                 fullyOpened = true;
             }
@@ -96,12 +68,13 @@ public class DoorAssembly {
     }
 
     public boolean obstructed() {
-        Message msg = drain(TOPIC_DOOR_SENSOR);
+        Message msg = drain(SoftwareBusCodes.doorSensor, currentElevatorId, softwareBus);
+
         if (msg != null) {
             int body = msg.getBody();
-            if (body == OBSTRUCTED_CODE) {
+            if (body == SoftwareBusCodes.obstructed) {
                 obstructed = true;
-            } else if (body == NOT_OBSTRUCTED_CODE) {
+            } else if (body == SoftwareBusCodes.clear) {
                 obstructed = false;
             }
         }
@@ -109,12 +82,12 @@ public class DoorAssembly {
     }
 
     public boolean overCapacity() {
-        Message msg = drain(TOPIC_CABIN_LOAD);
+        Message msg = drain(SoftwareBusCodes.cabinLoad, currentElevatorId, softwareBus);
         if (msg != null) {
             int body = msg.getBody();
-            if (body == OVER_CAPACITY_CODE) {
+            if (body == SoftwareBusCodes.overloaded) {
                 overCapacity = true;
-            } else if (body == NOT_OVER_CAPACITY_CODE) {
+            } else if (body == SoftwareBusCodes.normal) {
                 overCapacity = false;
             }
         }

@@ -210,14 +210,6 @@ public class ElevatorPanel extends VBox {
     private void startGuiUpdateThread() {
         Thread t = new Thread(() -> {
             while (true) {
-                //my bad guys im just silly
-//                boolean systemOn = commandCenter.elevatorOn(elevatorId);
-//                if (systemOn != isEnabled) {
-//                    Platform.runLater(() -> {
-//                        isEnabled = systemOn;
-//                        updateRunStopUI();
-//                    });
-//                }
 
                 Destination f = commandCenter.getDestination(elevatorId);
                 if (f != null && f.direction() == Direction.STOPPED) {
@@ -226,9 +218,6 @@ public class ElevatorPanel extends VBox {
                         setDirection(GUIDIRECTIONCHGME.IDLE);
                     });
                 }
-
-                // TODO: DO INDICATOR LIGHTS
-                // TODO: display floor, hall floors and door info
 
                 try { Thread.sleep(20); }
                 catch (InterruptedException ignored) {}
@@ -263,7 +252,6 @@ public class ElevatorPanel extends VBox {
         directionIndicator.setDirection(dir);
     }
 
-    //TODO: Hook this up
     private void setDoorStatus(boolean open) {
         isDoorOpen = open;
         String color = open ? "white" : "black";

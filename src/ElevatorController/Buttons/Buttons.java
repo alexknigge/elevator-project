@@ -23,60 +23,45 @@ public class Buttons {
 
     private final List<Destination> destinations;
 
-    private static final int TOPIC_HALL_CALL      = SoftwareBusCodes.hallCall;
-    private static final int TOPIC_CABIN_SELECT   = SoftwareBusCodes.cabinSelect;
-    private static final int TOPIC_FIRE_KEY       = SoftwareBusCodes.fireKey;
-
-    private static final int TOPIC_RESET_CALL     = SoftwareBusCodes.resetCall;
-    private static final int TOPIC_RESET_FLOOR    = SoftwareBusCodes.resetFloorSelection;
-
-    private static final int TOPIC_CALLS_ENABLED  = SoftwareBusCodes.callsEnable;
-    private static final int TOPIC_REQS_ENABLED   = SoftwareBusCodes.selectionsEnable;
-    private static final int TOPIC_SELECTION_TYPE = SoftwareBusCodes.selectionsType;
-
-    private static final int SUBTOPIC_BUILD_MUX   = SoftwareBusCodes.buildingMUX;
-
     public Buttons(SoftwareBus bus, int elevatorId) {
         this.softwareBus = bus;
         this.elevatorId = elevatorId;
         this.destinations = new ArrayList<>();
 
-        softwareBus.subscribe(TOPIC_CABIN_SELECT, elevatorId);
-        softwareBus.subscribe(TOPIC_HALL_CALL, elevatorId);
-        softwareBus.subscribe(TOPIC_FIRE_KEY, elevatorId);
+        softwareBus.subscribe(SoftwareBusCodes.cabinSelect, elevatorId);
+        softwareBus.subscribe(SoftwareBusCodes.hallCall, elevatorId);
+        softwareBus.subscribe(SoftwareBusCodes.fireKey, elevatorId);
     }
 
     private void handleFireKey() {
-        Message msg = softwareBus.get(TOPIC_FIRE_KEY, elevatorId);
+        Message msg = softwareBus.get(SoftwareBusCodes.fireKey, elevatorId);
         while (msg != null) {
             int body = msg.getBody();
             if (body == SoftwareBusCodes.active) fireKey = true;
             else if (body == SoftwareBusCodes.inactive) fireKey = false;
-            msg = softwareBus.get(TOPIC_FIRE_KEY, elevatorId);
+            msg = softwareBus.get(SoftwareBusCodes.fireKey, elevatorId);
         }
     }
 
     private void handleCabinSelect() {
-        Message msg = softwareBus.get(TOPIC_CABIN_SELECT, elevatorId);
+        Message msg = softwareBus.get(SoftwareBusCodes.cabinSelect, elevatorId);
         while (msg != null) {
             int floor = msg.getBody();
             destinations.add(new Destination(floor, null));
-            msg = softwareBus.get(TOPIC_CABIN_SELECT, elevatorId);
+            msg = softwareBus.get(SoftwareBusCodes.cabinSelect, elevatorId);
         }
     }
 
     private void handleHallCall() {
-        Message msg = softwareBus.get(TOPIC_HALL_CALL, elevatorId);
+        Message msg = softwareBus.get(SoftwareBusCodes.hallCall, elevatorId);
         Message last = null;
         while (msg != null) {
             last = msg;
-            msg = softwareBus.get(TOPIC_HALL_CALL, elevatorId);
+            msg = softwareBus.get(SoftwareBusCodes.hallCall, elevatorId);
         }
         msg = last;
 
-        if (msg == null) {
-            return;
-        }
+        if (msg == null) return;
 
         int destCode = msg.getBody();
         int floor;
@@ -96,15 +81,16 @@ public class Buttons {
         } else {
             destinations.add(dst);
         }
-
-        msg = softwareBus.get(TOPIC_HALL_CALL, elevatorId);
     }
 
     public void clearCall(Destination dest) {
         if (dest == null || !destinations.contains(dest)) return;
 
         if (dest.direction() == null) {
-            softwareBus.publish(new Message(TOPIC_RESET_FLOOR, elevatorId, dest.floor()));
+            softwareBus.publish(new Message(
+                    SoftwareBusCodes.resetFloorSelection,
+                    elevatorId,
+                    dest.floor()));
             destinations.remove(dest);
             return;
         }
@@ -127,29 +113,55 @@ public class Buttons {
             default -> throw new IllegalStateException("Invalid floor: " + f);
         };
 
-        softwareBus.publish(new Message(TOPIC_RESET_CALL, SUBTOPIC_BUILD_MUX, body));
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.resetCall,
+                SoftwareBusCodes.buildingMUX,
+                body));
+
         destinations.remove(dest);
     }
 
     public void enableCalls() {
-        softwareBus.publish(new Message(TOPIC_CALLS_ENABLED, SUBTOPIC_BUILD_MUX, SoftwareBusCodes.on));
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.callsEnable,
+                SoftwareBusCodes.buildingMUX,
+                SoftwareBusCodes.on));
         callEnabled = true;
     }
 
     public void disableCalls() {
-        softwareBus.publish(new Message(TOPIC_CALLS_ENABLED, SUBTOPIC_BUILD_MUX, SoftwareBusCodes.off));
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.callsEnable,
+                SoftwareBusCodes.buildingMUX,
+                SoftwareBusCodes.off));
         callEnabled = false;
     }
 
     public void enableSingleRequests() {
-        softwareBus.publish(new Message(TOPIC_REQS_ENABLED, elevatorId, SoftwareBusCodes.on));
-        softwareBus.publish(new Message(TOPIC_SELECTION_TYPE, elevatorId, SoftwareBusCodes.single));
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.selectionsEnable,
+                elevatorId,
+                SoftwareBusCodes.on));
+
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.selectionsType,
+                elevatorId,
+                SoftwareBusCodes.single));
+
         multipleRequests = false;
     }
 
     public void enableMultipleRequests() {
-        softwareBus.publish(new Message(TOPIC_REQS_ENABLED, elevatorId, SoftwareBusCodes.on));
-        softwareBus.publish(new Message(TOPIC_SELECTION_TYPE, elevatorId, SoftwareBusCodes.multiple));
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.selectionsEnable,
+                elevatorId,
+                SoftwareBusCodes.on));
+
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.selectionsType,
+                elevatorId,
+                SoftwareBusCodes.multiple));
+
         multipleRequests = true;
     }
 
@@ -164,14 +176,10 @@ public class Buttons {
             currentDirection = current.direction();
         }
 
-        if (!callEnabled && !fireKey) {
-            return null;
-        }
-        if (destinations.isEmpty()) {
-            return null;
-        }
+        if (!callEnabled && !fireKey) return null;
 
-        // Single-request mode
+        if (destinations.isEmpty()) return null;
+
         if (!multipleRequests) {
             Destination first = destinations.getFirst();
             destinations.clear();
@@ -192,7 +200,6 @@ public class Buttons {
                     }
                 }
             }
-
             if (bestUp != null) return bestUp;
         }
 
@@ -205,13 +212,11 @@ public class Buttons {
                     }
                 }
             }
-
             if (bestDown != null) return bestDown;
         }
 
         return findClosest();
     }
-
 
     private Destination findClosest() {
         if (destinations.isEmpty()) return null;
@@ -229,6 +234,5 @@ public class Buttons {
 
         return closest;
     }
-
 
 }

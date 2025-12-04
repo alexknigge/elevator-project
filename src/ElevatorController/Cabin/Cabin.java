@@ -8,6 +8,8 @@ import ElevatorController.Util.Destination;
 import ElevatorController.Util.Direction;
 import Message.Message;
 
+import static Message.Message.drain;
+
 public class Cabin implements Runnable {
 
     private final SoftwareBus softwareBus;
@@ -26,18 +28,12 @@ public class Cabin implements Runnable {
     private boolean motorRunning = false;
     private Timer timeToStop = null;
 
-    private static final int TOPIC_TOP_SENSOR    = SoftwareBusCodes.topSensor;
-    private static final int TOPIC_BOTTOM_SENSOR = SoftwareBusCodes.bottomSensor;
-    private static final int TOPIC_CAR_DISPATCH  = SoftwareBusCodes.carDispatch;
-    private static final int TOPIC_CAR_STOP      = SoftwareBusCodes.carStop;
-    private static final int TOPIC_COMMAND_CENTER_STATUS = SoftwareBusCodes.elevatorStatus;
-
     public Cabin(SoftwareBus softwareBus, int elevatorId) {
         this.softwareBus = softwareBus;
         this.elevatorId = elevatorId;
 
-        softwareBus.subscribe(TOPIC_TOP_SENSOR, elevatorId);
-        softwareBus.subscribe(TOPIC_BOTTOM_SENSOR, elevatorId);
+        softwareBus.subscribe(SoftwareBusCodes.topSensor,    elevatorId);
+        softwareBus.subscribe(SoftwareBusCodes.bottomSensor, elevatorId);
 
         Thread thread = new Thread(this);
         thread.start();
@@ -50,18 +46,16 @@ public class Cabin implements Runnable {
         }
     }
 
-    /**
-     * The working-branch movement cycle.
-     */
     private synchronized void step() {
 
         drainTopSensor();
         drainBottomSensor();
         int tempFloor = currentFloor;
+
         updateCurrentFloor();
-        //If current floor got updated, we need to have the command center
-        // show that
-        if(tempFloor != currentFloor) {
+
+        // If current floor changed, notify command center
+        if (tempFloor != currentFloor) {
             sendCommandCenterStatus(currentFloor);
         }
 
@@ -89,18 +83,16 @@ public class Cabin implements Runnable {
     }
 
     private void drainTopSensor() {
-        Message msg = softwareBus.get(TOPIC_TOP_SENSOR, elevatorId);
-        while (msg != null) {
+        Message msg = drain(SoftwareBusCodes.topSensor, elevatorId, softwareBus);
+        if (msg != null) {
             topAlignment = msg.getBody();
-            msg = softwareBus.get(TOPIC_TOP_SENSOR, elevatorId);
         }
     }
 
     private void drainBottomSensor() {
-        Message msg = softwareBus.get(TOPIC_BOTTOM_SENSOR, elevatorId);
-        while (msg != null) {
+        Message msg = drain(SoftwareBusCodes.bottomSensor, elevatorId, softwareBus);
+        if (msg != null) {
             bottomAlignment = msg.getBody();
-            msg = softwareBus.get(TOPIC_BOTTOM_SENSOR, elevatorId);
         }
     }
 
@@ -112,17 +104,14 @@ public class Cabin implements Runnable {
         }
     }
 
-    /**
-     * Converting sensor alignment to floor index.
-     */
     private int sensorToFloor(int sensor) {
         return sensor / 2 + 1;
     }
 
     private void startMotor(Direction dir) {
         motorRunning = true;
-        int code;
 
+        int code;
         if (dir == Direction.UP) {
             code = SoftwareBusCodes.up;
         } else if (dir == Direction.DOWN) {
@@ -131,12 +120,19 @@ public class Cabin implements Runnable {
             return;
         }
 
-        softwareBus.publish(new Message(TOPIC_CAR_DISPATCH, elevatorId, code));
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.carDispatch,
+                elevatorId,
+                code));
     }
 
     private void stopMotor() {
         motorRunning = false;
-        softwareBus.publish(new Message(TOPIC_CAR_STOP, elevatorId, 0));
+
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.carStop,
+                elevatorId,
+                0));
     }
 
     /**
@@ -145,7 +141,10 @@ public class Cabin implements Runnable {
      * @param floor Elevator floor
      */
     private void sendCommandCenterStatus(int floor) {
-        softwareBus.publish(new Message(TOPIC_COMMAND_CENTER_STATUS, elevatorId, floor));
+        softwareBus.publish(new Message(
+                SoftwareBusCodes.elevatorStatus,
+                elevatorId - 1,
+                floor));
     }
 
     public void gotoFloor(int floor) {

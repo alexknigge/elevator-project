@@ -1,5 +1,7 @@
 package Message;
 
+import Bus.SoftwareBus;
+
 public class Message {
     private int topic;
     private int subTopic;
@@ -69,5 +71,16 @@ public class Message {
         int st = Integer.parseInt(parts[1]);
         int body = Integer.parseInt(parts[2]);
         return new Message(t, st, body);
+    }
+
+    public static Message drain(int topic, int id, SoftwareBus softwareBus) {
+        Message msg = softwareBus.get(topic, id);
+        Message last = null;
+
+        while (msg != null) {
+            last = msg;
+            msg = softwareBus.get(topic, id);
+        }
+        return last;
     }
 }

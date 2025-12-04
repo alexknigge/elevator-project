@@ -6,12 +6,8 @@ import ElevatorController.Util.Destination;
 import ElevatorController.Util.State;
 import Message.Message;
 
-/**
- * The mode serves as a means for the Elevator Controller to be put into and track its current mode.
- * The mode is indirectly being updated by the Control Room, a separate entity outside of the Elevator Controller system.
- * Additionally, the mode is responsible for taking in demands from the Control Room when the elevator is being remotely controlled.
- * The mode object receives messages via the software bus but does not post messages to the software bus.
- */
+import static Message.Message.drain;
+
 public class Mode {
     private SoftwareBus softwareBus;
     private Destination currentDestination;
@@ -33,53 +29,66 @@ public class Mode {
     }
 
     public State getMode(){
-        Message modeMessage = softwareBus.get(SoftwareBusCodes.setMode, currentElevatorId);
-        Message fireMessage = softwareBus.get(SoftwareBusCodes.fireAlarmActive, currentElevatorId);
-        Message statusMessage = softwareBus.get(SoftwareBusCodes.elevatorOnOff, currentElevatorId);
+        Message modeMessage = drain(SoftwareBusCodes.setMode, currentElevatorId, softwareBus);
+        Message fireMessage = drain(SoftwareBusCodes.fireAlarmActive, currentElevatorId, softwareBus);
+        Message statusMessage = drain(SoftwareBusCodes.elevatorOnOff, currentElevatorId, softwareBus);
 
+        boolean fireJustActivated = false;
         int state;
-        if(modeMessage!=null){
-            state = modeMessage.getBody();
-            switch (state){
-                case SoftwareBusCodes.centralized -> currentMode = State.CONTROL;
-                case SoftwareBusCodes.normal -> currentMode = State.NORMAL;
+
+        if (statusMessage != null) {
+            state = statusMessage.getBody();
+            if (state == SoftwareBusCodes.off) {
+                currentMode = State.OFF;
+                return currentMode;
             }
         }
-        if(fireMessage!=null){
+
+        if (fireMessage != null) {
             state = fireMessage.getBody();
-            if (state == SoftwareBusCodes.pulled){
-                softwareBus.publish(new Message(SoftwareBusCodes.fireMode, currentElevatorId, SoftwareBusCodes.emptyBody));
+            if (state == SoftwareBusCodes.pulled) {
+                if (currentMode != State.FIRE) {
+                    fireJustActivated = true;
+                }
                 currentMode = State.FIRE;
             }
         }
 
-        if(statusMessage!=null){
-            state = statusMessage.getBody();
-            if (state == SoftwareBusCodes.off){
-                currentMode = State.OFF;
-            }
+        if (fireJustActivated) {
+            System.out.println("from Mode, fire has just been activated");
+            softwareBus.publish(new Message(SoftwareBusCodes.fireMode,
+                    currentElevatorId, SoftwareBusCodes.emptyBody));
+
+            softwareBus.publish(new Message(SoftwareBusCodes.fireAlarm,
+                    currentElevatorId, SoftwareBusCodes.emptyBody));
+
+            softwareBus.publish(new Message(SoftwareBusCodes.fireAlarm,
+                    SoftwareBusCodes.buildingMUX, SoftwareBusCodes.emptyBody));
         }
 
         if (currentMode == State.FIRE) {
-            softwareBus.publish(new Message(SoftwareBusCodes.fireAlarm, currentElevatorId, SoftwareBusCodes.emptyBody));
-            softwareBus.publish(new Message(SoftwareBusCodes.fireAlarm, SoftwareBusCodes.buildingMUX, SoftwareBusCodes.emptyBody));
+            return currentMode;
         }
+
+        if (modeMessage != null) {
+            state = modeMessage.getBody();
+            switch (state) {
+                case SoftwareBusCodes.centralized -> currentMode = State.CONTROL;
+                case SoftwareBusCodes.normal      -> currentMode = State.NORMAL;
+            }
+        }
+
         return currentMode;
     }
 
     public Destination nextService() {
-        Message last = null;
-        Message current;
+        Message nextService = drain(SoftwareBusCodes.setDestination,  currentElevatorId, softwareBus);
 
-        while ((current = softwareBus.get(SoftwareBusCodes.setDestination, currentElevatorId)) != null) {
-            last = current;
-        }
-
-        if (last == null) {
+        if (nextService == null) {
             return currentDestination;
         }
 
-        int newFloor = last.getBody();
+        int newFloor = nextService.getBody();
         Destination newDestination = new Destination(newFloor, null);
         currentDestination = newDestination;
         return newDestination;

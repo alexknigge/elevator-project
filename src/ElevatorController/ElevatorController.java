@@ -34,6 +34,7 @@ public class ElevatorController implements Runnable{
         closeDoors();
 
         while (mode.getMode() == State.CONTROL) {
+            System.out.println("in control");
 
             Destination next = mode.nextService();
             if (next == null) continue;
@@ -52,27 +53,38 @@ public class ElevatorController implements Runnable{
 
     public State fireMode() {
 
+        System.out.println("Fire mode is now on.");
+
         buttons.disableCalls();
         buttons.enableSingleRequests();
 
+        System.out.println("Closing doors");
         closeDoors();
 
         Destination req = null;
 
         while (mode.getMode() == State.FIRE && cabin.getTargetFloor() != 1 && !cabin.stopped())
         {
+            System.out.println("In while loop");
 
-            if (req == null)
+            if (req == null) {
                 req = buttons.nextService(cabin.getDestination());
+            }
 
-            if (req != null)
+            if (req != null) {
                 cabin.gotoFloor(req.floor());
-            else if (cabin.getTargetFloor() != 1)
+                System.out.println("req isn't null so we are going to " + req.floor());
+            }
+            else if (cabin.getTargetFloor() != 1) {
                 cabin.gotoFloor(1);
+                System.out.println("We are going to " + 1);
+            }
 
             if (cabin.stopped()) {
                 arrivalSequence(req);
+                System.out.println("arrived at the first floor");
                 req = null;
+
             }
         }
 
@@ -83,6 +95,7 @@ public class ElevatorController implements Runnable{
     public State normalMode() {
 
         if (mode.getMode() != State.NORMAL) {
+            System.out.println("not in normal mode anymore");
             return mode.getMode();
         }
 
@@ -90,34 +103,27 @@ public class ElevatorController implements Runnable{
         buttons.enableMultipleRequests();
         closeDoors();
 
-        Destination pendingReq = null;
+        Destination pendingReq;
         Destination activeReq = null;
 
-        while (mode.getMode() == State.NORMAL) {
+        while ( mode.getMode() == State.NORMAL) {
 
             if (activeReq == null) {
                 pendingReq = buttons.nextService(cabin.getDestination());
 
                 if (pendingReq != null) {
-                    activeReq = pendingReq;    // lock it in as the active request
+                    activeReq = pendingReq;
                     cabin.gotoFloor(activeReq.floor());
                 }
             } else {
-                // Continue heading toward activeReq
                 cabin.gotoFloor(activeReq.floor());
             }
 
-            // When we arrive
             if (activeReq != null && cabin.stopped()) {
-
                 arrivalSequence(activeReq);
-
-                // clear calls for this floor
                 buttons.clearCall(activeReq);
 
-                // allow new requests to be fetched next loop
                 activeReq = null;
-                pendingReq = null;
             }
         }
 
@@ -190,11 +196,12 @@ public class ElevatorController implements Runnable{
         running = true;
         while (running) {
             System.out.println("Elevator " + currentElevatorId + " is running.--------------------------------------------------------");
-            State nowMode = normalMode();
-            switch (nowMode) {
+            State current = mode.getMode();   // DO NOT call normalMode() here first
+
+            switch (current) {
                 case NORMAL -> {
                     System.out.println("Normal Mode for " + currentElevatorId + " is running");
-                    normalMode();
+                    normalMode();   // one call, and it returns when mode changes
                 }
                 case FIRE -> {
                     System.out.println("Fire Mode for " + currentElevatorId + " is running");
@@ -213,6 +220,8 @@ public class ElevatorController implements Runnable{
 
     private void initElevatorController(int elevatorId) {
         currentElevatorId = elevatorId;
+
+        System.out.println("I am elevator " +  currentElevatorId + ", and I now exist.");
 
         cabin = new Cabin(softwareBus, currentElevatorId);
         buttons = new Buttons(softwareBus, currentElevatorId);

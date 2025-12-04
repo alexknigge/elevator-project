@@ -144,7 +144,11 @@ public class BuildingMultiplexor {
     private void pollFireAlarm() {
         boolean state = bldg.callButtons[0].getFireAlarmStatus();
         if (state != lastFireState) {
-            bus.publish(new Message(SoftwareBusCodes.fireAlarmActive, 5, state ? FIRE_ON : FIRE_OFF));
+            for (int i = 0; i < 4; i++) {
+                System.out.println("Publishing fire alarm active message to " + (i+1));
+                bus.publish(new Message(SoftwareBusCodes.fireAlarmActive, i + 1, state ? FIRE_ON : FIRE_OFF));
+            }
+
             lastFireState = state;
             if(state){
                 fireAlarmResets(true);
